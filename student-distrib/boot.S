@@ -25,6 +25,7 @@ _start:
 
 continue:
     # Load the GDT
+	lgdt gdt_init_val #Loads the gdt_val into the global descriptor table
 
     # Load CS with the new descriptor value
     ljmp    $KERNEL_CS, $keep_going

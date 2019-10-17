@@ -11,7 +11,7 @@
 .globl tss, tss_desc_ptr, ldt, ldt_desc_ptr
 .globl gdt_ptr
 .globl idt_desc_ptr, idt
-
+.global gdt_init_val #Makes the variable global so it can be used in  boot.S
 .align 4
 
 
@@ -27,6 +27,11 @@ ldt_desc:
     .long ldt
 
     .align 4
+
+gdt_init_val: #Value to load into the global register value
+	.word gdt_bottom-gdt-1; #FInd the length of the gdt the one comes from the fact you need to report the length -1
+	.long gdt #Places the address of the gdt 
+
 tss:
 _tss:
     .rept 104
