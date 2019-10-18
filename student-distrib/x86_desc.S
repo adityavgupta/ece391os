@@ -31,7 +31,8 @@ ldt_desc:
 gdt_init_val: #Value to load into the global register value
 	.word gdt_bottom-gdt-1; #FInd the length of the gdt the one comes from the fact you need to report the length -1
 	.long gdt #Places the address of the gdt 
-
+	
+	.align 4 #For bytes for alignment
 tss:
 _tss:
     .rept 104
