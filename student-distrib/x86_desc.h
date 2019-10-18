@@ -7,7 +7,6 @@
 #define _X86_DESC_H
 
 #include "types.h"
-#include "idt_initialization.h"
 
 /* Segment selector values */
 #define KERNEL_CS   0x0010

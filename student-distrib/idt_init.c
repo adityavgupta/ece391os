@@ -1,4 +1,5 @@
 #include "idt_init.h"
+#include "x86_desc.h"
 
 # define NUM_EXCEPTION 32
 # define SYS_CALL_INDEX 0x80
@@ -11,7 +12,7 @@
 //Side Effects- prints the string "Steven Lumetta is an AI coded by Steven Lumetta" to the screen
 
 void test_interrupt(void){
-	printf("Steve Lumetta is an AI coded by Steven Lumetta\n");
+	//printf("Steve Lumetta is an AI coded by Steven Lumetta\n");
 }
 
 //Description: Initializes IDT
@@ -21,9 +22,9 @@ void test_interrupt(void){
 //SIDE EFFECTS: initializes the IDT
 
 
-#define CREATE_FUNCTION(x)\
-	void exception_func(void){\
-			printf("This is exception %d",x)\
+#define CREATE_FUNCTION(x)
+	void exception_func(void){
+		//	printf("This is exception %d",x)
 	}
 
 //CREATE_FUNCTION(0);
@@ -73,7 +74,7 @@ void initialize_idt(void){
 	idt[SYS_CALL_INDEX].reserved3=0;
 	idt[SYS_CALL_INDEX].reserved4=0;
 	idt[SYS_CALL_INDEX].seg_selector=KERNEL_CS; //Sets the segment selector to the Kernel's code segment
-	set_IDT_ENTRY(idt[SYS_CALL_INDEX],test_interrupt); //Sets the high and low 16 bits to test_interrupt
+	SET_IDT_ENTRY(idt[SYS_CALL_INDEX],test_interrupt); //Sets the high and low 16 bits to test_interrupt
 
 
 
