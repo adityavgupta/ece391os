@@ -26,6 +26,21 @@ _start:
 continue:
     # Load the GDT
 	lgdt gdt_init_val #Loads the gdt_val into the global descriptor table
+	
+	push %eax;
+	push %ecx;
+	push %edx;
+
+	call initialize_idt
+	
+	pop %edx
+	pop %ecx
+	pop %eax
+
+	
+	lidt idt_desc_ptr
+
+
 
     # Load CS with the new descriptor value
     ljmp    $KERNEL_CS, $keep_going
