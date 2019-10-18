@@ -13,21 +13,25 @@ static mask[8] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
 
 /* Initialize the 8259 PIC */
 void i8259_init(void) {
+    // Set the current masks for slave and master (all masked)
     master_mask = 0xFF;
     slave_mask = 0xFF;
 
+    // Mask all PIC interrupts
     outb(master_mask, MASTER_8259_PORT+1);
     outb(slave_mask, SLAVE_8259_PORT+1);
 
-    outb(ICW1, MASTER_8259_PORT);
-    outb(ICW2_MASTER, MASTER_8259_PORT+1);
-    outb(ICW3_MASTER, MASTER_8259_PORT+1);
-    outb(ICW4, MASTER_8259_PORT+1);
+    // Master ICWs
+    outb(ICW1, MASTER_8259_PORT); // Master ICW1
+    outb(ICW2_MASTER, MASTER_8259_PORT+1); // Master ICW2
+    outb(ICW3_MASTER, MASTER_8259_PORT+1); // Master ICW3
+    outb(ICW4, MASTER_8259_PORT+1); // Master ICW4
 
-    outb(ICW1, SLAVE_8259_PORT);
-    outb(ICW2_SLAVE, SLAVE_8259_PORT+1);
-    outb(ICW3_SLAVE, SLAVE_8259_PORT+1);
-    outb(ICW4, SLAVE_8259_PORT+1);
+    // Slave ICWS
+    outb(ICW1, SLAVE_8259_PORT); // Slave ICW1
+    outb(ICW2_SLAVE, SLAVE_8259_PORT+1); // Slave ICW2
+    outb(ICW3_SLAVE, SLAVE_8259_PORT+1); // Slave ICW3
+    outb(ICW4, SLAVE_8259_PORT+1); // Slave ICW4
 }
 
 /* Enable (unmask) the specified IRQ */
