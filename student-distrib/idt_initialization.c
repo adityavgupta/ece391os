@@ -3,9 +3,22 @@
 # define NUM_EXCEPTION 32
 # define SYS_CALL_INDEX 0x80
 
+
+//Description- Random test function
+//INPUTS-None
+//Outputs-None
+//Return Value- none
+//Side Effects- prints the string "I love Srijan to the screen"
+
 void test_interrupt(void){
 	printf("I love Srijan\n");
 }
+
+//Description: Initializes IDT
+//Inputs- None
+//Outputs- None
+// Return Value- None
+//SIDE EFFECTS: initializes the IDT 
 
 
 void initialize_idt(void){
