@@ -15,6 +15,8 @@ void rtc_interrupt_handler(void){
   disable_irq(RTC_IRQ_NUM);//disable same interrupts
   send_eoi(RTC_IRQ_NUM);//send eoi to allow more interrupts
   test_interrupts(); //do some work
+  outb(REGISTER_C,RTC_PORT0); //read register C
+  inb(RTC_PORT1);//throw contents away, so that rtc interrupts can happen again
   sti(); //enable interrupts
   enable_irq(RTC_IRQ_NUM); //reenable same interrupts
 }
