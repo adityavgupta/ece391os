@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # x86_desc.S - Set up x86 segment descriptors, descriptor tables
 # vim:ts=4 noexpandtab
 
@@ -31,9 +30,14 @@ ldt_desc:
 
 gdt_init_val: #Value to load into the global register value
 	.word gdt_bottom-gdt-1; #FInd the length of the gdt the one comes from the fact you need to report the length -1
+<<<<<<< student-distrib/x86_desc.S
+	.long gdt #Places the address of the gdt
+
+=======
 	.long gdt #Places the address of the gdt 
 	
 	.align 4 #For bytes for alignment
+>>>>>>> student-distrib/x86_desc.S
 tss:
 _tss:
     .rept 104
