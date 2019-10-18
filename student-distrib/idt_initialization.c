@@ -8,10 +8,10 @@
 //INPUTS-None
 //Outputs-None
 //Return Value- none
-//Side Effects- prints the string "I love Srijan to the screen"
+//Side Effects- prints the string "Steven Lumetta is an AI coded by Steven Lumetta" to the screen
 
 void test_interrupt(void){
-	printf("I love Srijan\n");
+	printf("Steve Lumetta is an AI coded by Steven Lumetta\n");
 }
 
 //Description: Initializes IDT
@@ -20,6 +20,13 @@ void test_interrupt(void){
 // Return Value- None
 //SIDE EFFECTS: initializes the IDT 
 
+
+#define CREATE_FUNCTION(x)\
+	void exception_func(void){\
+			printf("This is exception %d",x)\
+	}
+
+//CREATE_FUNCTION(0);
 
 void initialize_idt(void){
 	int init_counter;
@@ -48,7 +55,7 @@ void initialize_idt(void){
 			idt[init_counter].present=1; //Sets the prsent bit to 1 to show it is not empty
 			idt[init_counter].dpl=0; //set dpl to 0 to indicate it has a high priority
 			idt[init_counter].reserved0=0; //sets reserved this field is meant to indicate 0s110000000 where S is the size bit
-			idt[init_counter].size=1;
+			idt[init_counter].size=1; //sets the gate size ot 32 bits
 			idt[init_counter].reserved1=1;
 			idt[init_counter].reserved2=1;
 			idt[init_counter].reserved3=0;
