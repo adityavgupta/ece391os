@@ -1,6 +1,7 @@
 #include "idt_init.h"
 #include "x86_desc.h"
 #include "rtc.h"
+#include "lib.h"
 
 # define NUM_EXCEPTION 32
 # define SYS_CALL_INDEX 0x80
@@ -13,7 +14,7 @@
 //Side Effects- prints the string "Steven Lumetta is an AI coded by Steven Lumetta" to the screen
 
 void test_interrupt(void){
-//	printf("Steve Lumetta is an AI coded by Steven Lumetta\n");
+	printf("Steve Lumetta is an AI coded by Steven Lumetta\n");
 }
 
 //Description: Initializes IDT
@@ -25,7 +26,7 @@ void test_interrupt(void){
 
 #define CREATE_FUNCTION(x)\
 	void exception_func(void){\
-	//		printf("This is exception %d",x)\
+			printf("This is exception %d",x)\
 	}
 
 //CREATE_FUNCTION(0);

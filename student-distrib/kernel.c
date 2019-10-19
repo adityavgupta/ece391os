@@ -9,6 +9,7 @@
 #include "debug.h"
 #include "tests.h"
 #include "rtc.h"
+#include "paging.h"
 
 #define RUN_TESTS
 
@@ -144,6 +145,8 @@ void entry(unsigned long magic, unsigned long addr) {
      * PIC, any other initialization stuff... */
      rtc_init();
      printf("rtc initialized\n");
+     init_paging();
+     printf("paging init\n");
     /* Enable interrupts */
     /* Do not enable the following until after you have set up your
      * IDT correctly otherwise QEMU will triple fault and simple close
