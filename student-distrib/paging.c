@@ -9,6 +9,7 @@
 #define VIDEO_MEM_ADDR 0xB8000 //taken from lib.c
 #define PT_OFFSET 12 //how many bits to right shift linear address to get offset in the page table
 #define PAGE_SIZE 4096
+#define KERNEL_ADDR 4096*1024
 
 static uint32_t page_directory[TABLE_ENTRIES]  __attribute__((aligned (PAGE_SIZE)));
 static uint32_t page_table[TABLE_ENTRIES]  __attribute__((aligned (PAGE_SIZE)));
@@ -26,6 +27,7 @@ void init_page_directory(void){
     page_directory[i]=RW_NOT_PRESENT;//mark all table entries to not present
   }
   page_directory[0]=((unsigned int)page_table)|RW_PRESENT; //only one page table in page directory
+  page_directory[KERNEL_ADDR>>22]= (KERNEL_ADDR | 0x83);
 }
 
 void init_page_table(void){
@@ -38,7 +40,11 @@ void init_page_table(void){
 
 void enable_paging(void){
   uint32_t enable = 0x80000001;
-  asm volatile ("movl %0,%%eax\n\
+  asm volatile ("\n\
+              movl %%cr4,%%eax\n\
+              or $0x10,%%eax\n\
+              mov %%eax, %%cr4\n\
+              movl %0,%%eax\n\
               movl %%eax,%%cr3\n\
               movl %%cr0,%%eax\n\
               orl %1,%%eax\n\
