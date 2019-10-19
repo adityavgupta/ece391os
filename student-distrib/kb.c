@@ -3,6 +3,11 @@
 #include "i8259.h"
 #include "lib.h"
 
+#define IRQ_NUM 1
+#define RECENT_RELEASE 0x80 
+#define LEFT_SHIFT 42
+#define RIGHT_SHIFT 52
+
 unsigned char kbdus[128] =
 {
     0,  27, '1', '2', '3', '4', '5', '6', '7', '8',	/* 9 */
@@ -80,39 +85,51 @@ unsigned char kbdus[128] =
 };
 
 
+//Will need to go back to get rid of magic numbers
 
 
+//Description- Initilizes the keyboard for use
+//Inputs- None
+//Outputs-None
+//Return Value- None
+//Side Effects- None
 
 void keyboard_init(void){
 		
 		enable_irq(1); //enables te IRQ for the keyboard which is mapped to IRQ 1
-		SET_IDT_ENTRY(idt[0x21],keyboard_interrupt_handler);
+		SET_IDT_ENTRY(idt[0x21],keyboard_interrupt_handler); //Sets IRQ #1 to have the keyboard_intterupt_handler 0x21 is the index of IRQ #1
 	
 }
 
+//Description- Interuupt_handler for th event that the keyboard is pressed
+//Inputs- None
+//Outpus- none
+//Return Value- none
+//Side Effects- prints a character to the screen depending on the key tht has beeen pressed
+
 void keyboard_interrupt_handler(void){
 		
-		disable_irq(1); //Disables the IRQ
-		send_eoi(1); //Sends the EOI signal
-		unsigned char scan_code= inb(0x60); //Writes to the port 0x60
+		disable_irq(IRQ_NUM); //Disables the IRQ
+		send_eoi(IRQ_NUM); //Sends the EOI signal
+		unsigned char scan_code= inb(0x60); //Writes to the port 0x60 the port used to as the data buffer for the keyboard
 		
-		if(!(scan_code &0x80)){ // tests if the character is to be printed or not
+		if(!(scan_code & RECENT_RELEASE){ // tests if the character is to be printed or not
 			
-				putc(kdbus[scan_code]+128*shift_pressed);	//If the shift key is pressed adds 128 to index into capital characters
+				putc(kdbus[scan_code]+128*shift_pressed);	//If the shift key is pressed adds 128 to index into capital characters 128 is the for the additonal 128 character when they are captialized
 				
-				if(scan_code==(0x80+42) || scan_code==( 0x80+54)){
+				if(scan_code==(RECENT_RELEASE+LEFT_SHIFT) || scan_code==( RECENT_RELEASE+RIHGT_SHIFT)){ //Checks to see if the shift key has been recently released or not
 					
-						shift_pressed=1;
+						shift_pressed=1; //Sets to shift pressed to be pressed 1 is used ot indicate an on state
 					
 				}
 		} else{
-				if(scan_code== 42 || scan_code== 54 ){
-						shift_pressed=0;
+				if(scan_code== 42 || scan_code== 54 ){ // If the key is recntly released gets rid of the shift_pressed flag
+						shift_pressed=0; // 0 is used ot indicate a off state
 				} 
 			
 		}
-		sti()
-		enable_irq(1);
+		sti() // Allows keyboard interrupts to occur again
+		enable_irq(IRQ_NUM); //Enables the interrupts to IRQ #1
 		
 		
 		
