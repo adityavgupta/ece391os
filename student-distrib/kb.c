@@ -8,7 +8,7 @@
 #define LEFT_SHIFT 42
 #define RIGHT_SHIFT 52
 
-unsigned char kbdus[128] =
+unsigned char kbdus[256] =
 {
     0,  27, '1', '2', '3', '4', '5', '6', '7', '8',	/* 9 */
   '9', '0', '-', '=', '\b',	/* Backspace */
@@ -123,7 +123,7 @@ void keyboard_interrupt_handler(void){
 					
 				}
 		} else{
-				if(scan_code== 42 || scan_code== 54 ){ // If the key is recntly released gets rid of the shift_pressed flag
+				if(scan_code== LEFT_SHIFT || scan_code== RIGHT_SHIFT ){ // If the key is recntly released gets rid of the shift_pressed flag
 						shift_pressed=0; // 0 is used ot indicate a off state
 				} 
 			
