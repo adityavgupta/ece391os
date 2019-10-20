@@ -8,8 +8,7 @@
 
 
 keyboard_linkage:
-
-	pushl %eax
+	  pushl %eax
     pushl %ebx
     pushl %ecx
     pushl %edx
@@ -24,10 +23,10 @@ keyboard_linkage:
     popl %ecx
     popl %ebx
     popl %eax
-	iret
+	  iret
 
 rtc_linkage:
-	pushl %eax
+	  pushl %eax
     pushl %ebx
     pushl %ecx
     pushl %edx
