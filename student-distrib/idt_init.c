@@ -1,3 +1,5 @@
+/* idt_init.c - Initializes the interrupt descriptor table */
+
 #include "idt_init.h"
 #include "x86_desc.h"
 #include "rtc.h"
