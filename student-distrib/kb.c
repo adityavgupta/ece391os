@@ -7,6 +7,7 @@
 #define RECENT_RELEASE 0x80
 #define LEFT_SHIFT 42
 #define RIGHT_SHIFT 52
+
 unsigned char shift_pressed=0;
 unsigned char kbdus[256] =
 {
@@ -84,28 +85,26 @@ unsigned char kbdus[256] =
     0,	/* All other keys are undefined */
 };
 
-
-//Will need to go back to get rid of magic numbers
-
-
-//Description- Initilizes the keyboard for use
-//Inputs- None
-//Outputs-None
-//Return Value- None
-//Side Effects- None
-
+/*
+ * keyboard_init
+ *    DESCRIPTION: Enables keyboard interrupts
+ *    INPUTS: none
+ *    OUTPUTS: none
+ *    RETURN VALUE: none
+ *    SIDE EFFECTS: Unmasks IRQ for keyboard interrupts on PIC
+ */
 void keyboard_init(void){
-
 		enable_irq(1); //enables te IRQ for the keyboard which is mapped to IRQ 1
-
 }
 
-//Description- Interuupt_handler for th event that the keyboard is pressed
-//Inputs- None
-//Outpus- none
-//Return Value- none
-//Side Effects- prints a character to the screen depending on the key tht has beeen pressed
-
+/*
+ * keyboard_interrupt_handler
+ *    DESCRIPTION: Handler for keyboard interrupts
+ *    INPUTS: none
+ *    OUTPUTS: none
+ *    RETURN VALUE: none
+ *    SIDE EFFECTS: Prints keyboard input to screen, and sends EOI
+ */
 void keyboard_interrupt_handler(void){
     unsigned long flags;
     cli_and_save(flags);
@@ -130,7 +129,4 @@ void keyboard_interrupt_handler(void){
 		}
 		restore_flags(flags); // Allows keyboard interrupts to occur again
 		enable_irq(IRQ_NUM); //Enables the interrupts to IRQ #1
-
-
-
 }
