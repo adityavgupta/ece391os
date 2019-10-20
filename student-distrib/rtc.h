@@ -9,4 +9,5 @@
 #ifndef ASM
 void rtc_init(void);
 void rtc_interrupt_handler(void);
+void set_rate(unsigned int rate);
 #endif
