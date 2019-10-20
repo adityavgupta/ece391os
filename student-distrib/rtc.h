@@ -18,7 +18,5 @@ void rtc_init(void);
 
 /* Handler for RTC interrupts */
 void rtc_interrupt_handler(void);
-
-#endif /* ASM */
-
-#endif /* _RTC_H */
+void set_rate(unsigned int rate);
+#endif
