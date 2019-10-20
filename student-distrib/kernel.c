@@ -146,8 +146,10 @@ void entry(unsigned long magic, unsigned long addr) {
     printf("PIC initialized\n");
     /* Initialize devices, memory, filesystem, enable device interrupts on the
      * PIC, any other initialization stuff... */
-     rtc_init();
-     printf("rtc initialized\n");
+     // rtc_init();
+     // printf("rtc initialized\n");
+     keyboard_init();
+     printf("keyboard initialized\n");
     /* Enable interrupts */
     /* Do not enable the following until after you have set up your
      * IDT correctly otherwise QEMU will triple fault and simple close
