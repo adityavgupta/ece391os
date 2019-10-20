@@ -6,6 +6,9 @@
 # define NUM_EXCEPTION 32
 # define SYS_CALL_INDEX 0x80
 
+void sys_call_handler(void){
+	printf("System call handler here!\n");
+}
 
 //Description- Random test function
 //INPUTS-None
@@ -24,17 +27,24 @@ void test_interrupt(void){
 //SIDE EFFECTS: initializes the IDT
 
 
-#define CREATE_FUNCTION(x)\
-	void exception_func(void){\
-			printf("This is exception %d",x)\
+	void exception_func(void){
+			printf("This is exception\n");
 	}
 
-//CREATE_FUNCTION(0);
+	void keyboard_test(void){
+			printf("This is keyboard press\n");
+	}
+	#define CREATE_FUNCTION(x)\
+		void exception_func(void){\
+				printf("This is exception %d",x)\
+		}
+
+	//CREATE_FUNCTION(0);
 
 void initialize_idt(void){
 	int init_counter;
 
-	for(init_counter=0;init_counter<NUM_EXCEPTION;init_counter++){
+	for(init_counter=0;init_counter<NUM_EXCEPTION;init_counter++){//Initlizes the first 32 indices to exception values
 
 		idt[init_counter].present=1; // sets present bit to 1 to show it is not empty
 		idt[init_counter].dpl=0; //set dpl to 0 to indicate it has high priority
@@ -45,10 +55,10 @@ void initialize_idt(void){
 		idt[init_counter].reserved3=1;
 		idt[init_counter].reserved4 =0;
 		idt[init_counter].seg_selector=KERNEL_CS; //Sets the segment selector to the Kernel's code segment
-		SET_IDT_ENTRY(idt[init_counter],test_interrupt); //Sets the high and low 16 bit to test_interrupt
+		SET_IDT_ENTRY(idt[init_counter],exception_func); //Sets the high and low 16 bit to test_interrupt
 	}
 
-	for(init_counter=NUM_EXCEPTION;init_counter<NUM_VEC; init_counter++){ //Initlizes the first 32 indices to exception values
+	for(init_counter=NUM_EXCEPTION;init_counter<NUM_VEC; init_counter++){
 
 
 			if(init_counter== SYS_CALL_INDEX){ //If the index is a systems call index continues onto the next interation fo the loop
@@ -64,7 +74,9 @@ void initialize_idt(void){
 			idt[init_counter].reserved3=0;
 			idt[init_counter].reserved4=0;
 			idt[init_counter].seg_selector=KERNEL_CS; //Sets the segment selector to Kernel's code segment
-			SET_IDT_ENTRY(idt[init_counter],test_interrupt); //Sets the high and low 16 bits to test_interrupt
+			if(init_counter==0x28)SET_IDT_ENTRY(idt[init_counter],rtc_interrupt_handler); //set rtc handler
+			else if(init_counter==0x21)SET_IDT_ENTRY(idt[init_counter],keyboard_test);
+			else SET_IDT_ENTRY(idt[init_counter],test_interrupt); //Sets the high and low 16 bits to test_interrupt
 	}
 
 	idt[SYS_CALL_INDEX].present=1; //Sets to present to indicate that is it present
@@ -76,9 +88,9 @@ void initialize_idt(void){
 	idt[SYS_CALL_INDEX].reserved3=0;
 	idt[SYS_CALL_INDEX].reserved4=0;
 	idt[SYS_CALL_INDEX].seg_selector=KERNEL_CS; //Sets the segment selector to the Kernel's code segment
-	SET_IDT_ENTRY(idt[SYS_CALL_INDEX],test_interrupt); //Sets the high and low 16 bits to test_interrupt
+	SET_IDT_ENTRY(idt[SYS_CALL_INDEX],sys_call_handler); //Sets the high and low 16 bits to test_interrupt
 
-	SET_IDT_ENTRY(idt[0x28],rtc_interrupt_handler); //set rtc handler
+
 
 
 
