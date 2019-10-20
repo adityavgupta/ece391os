@@ -179,7 +179,7 @@ void initialize_idt(void){
 	}
 
 	idt[SYS_CALL_INDEX].present=1; //Sets to present to indicate that is it present
-	idt[SYS_CALL_INDEX].dpl=0; //Sets the gate size to 32 bits
+	idt[SYS_CALL_INDEX].dpl=3; //Sets the gate size to 32 bits
 	idt[SYS_CALL_INDEX].reserved0=0; //These bits are set to idicate the field 0s111000000 where S is the size bit
 	idt[SYS_CALL_INDEX].size=1; //Sets the gate size to 32 bits
 	idt[SYS_CALL_INDEX].reserved1=1;
