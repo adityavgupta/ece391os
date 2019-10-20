@@ -108,7 +108,8 @@ void keyboard_init(void){
 //Side Effects- prints a character to the screen depending on the key tht has beeen pressed
 
 void keyboard_interrupt_handler(void){
-    cli();
+    unsigned long flags;
+    cli_and_save(flags);
 		disable_irq(IRQ_NUM); //Disables the IRQ
 		send_eoi(IRQ_NUM); //Sends the EOI signal
 		unsigned char scan_code= inb(0x60); //Writes to the port 0x60 the port used to as the data buffer for the keyboard
@@ -128,7 +129,7 @@ void keyboard_interrupt_handler(void){
 				}
 
 		}
-		sti(); // Allows keyboard interrupts to occur again
+		restore_flags(flags); // Allows keyboard interrupts to occur again
 		enable_irq(IRQ_NUM); //Enables the interrupts to IRQ #1
 
 

@@ -12,14 +12,14 @@ void rtc_init(void){ //assume interrupts already disabled
 }
 
 void rtc_interrupt_handler(void){
-  cli();
-  disable_irq(RTC_IRQ_NUM);//disable same interrupts
-  send_eoi(SLAVE_PIN);
+  unsigned long flags;
+  cli_and_save(flags);
+  // disable_irq(RTC_IRQ_NUM);//disable same interrupts
   send_eoi(RTC_IRQ_NUM);//send eoi to allow more interrupts
   printf("rtc interrupt occurred\n");
   //test_interrupts(); //do some work
   outb(REGISTER_C,RTC_PORT0); //read register C
   inb(RTC_PORT1);//throw contents away, so that rtc interrupts can happen again
-  sti(); //enable interrupts
-  enable_irq(RTC_IRQ_NUM); //reenable same interrupts
+  restore_flags(flags); //enable interrupts
+  // enable_irq(RTC_IRQ_NUM); //reenable same interrupts
 }
