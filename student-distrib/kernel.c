@@ -138,13 +138,16 @@ void entry(unsigned long magic, unsigned long addr) {
         tss.esp0 = 0x800000;
         ltr(KERNEL_TSS);
     }
-
+    clear();
+    init_paging();
+    printf("paging init\n");
     /* Init the PIC */
     i8259_init();
-
+    printf("PIC initialized\n");
     /* Initialize devices, memory, filesystem, enable device interrupts on the
      * PIC, any other initialization stuff... */
      rtc_init();
+     printf("rtc initialized\n");
     /* Enable interrupts */
     /* Do not enable the following until after you have set up your
      * IDT correctly otherwise QEMU will triple fault and simple close
