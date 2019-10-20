@@ -1,7 +1,9 @@
+#define ASM 1
 #include "kb.h"
 #include "rtc.h"
-#include "lib.h"
+#include "linkage.h"
 
+.text
 .globl keyboard_linkage, rtc_linkage
 
 

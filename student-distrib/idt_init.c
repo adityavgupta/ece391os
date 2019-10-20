@@ -4,6 +4,7 @@
 #include "lib.h"
 #include "i8259.h"
 #include "kb.h"
+#include "linkage.h"
 
 # define NUM_EXCEPTION 32
 # define SYS_CALL_INDEX 0x80
@@ -209,8 +210,8 @@ void initialize_idt(void){
 
 
 
-    SET_IDT_ENTRY(idt[0x28], rtc_interrupt_handler);
-    SET_IDT_ENTRY(idt[0x21], keyboard_interrupt_handler);
+    SET_IDT_ENTRY(idt[0x28], rtc_linkage);
+    SET_IDT_ENTRY(idt[0x21], keyboard_linkage);
   	SET_IDT_ENTRY(idt[0x20], irq0_handler);
     SET_IDT_ENTRY(idt[0x22], irq2_handler);
     SET_IDT_ENTRY(idt[0x23], irq3_handler);

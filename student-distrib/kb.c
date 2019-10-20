@@ -97,7 +97,6 @@ unsigned char kbdus[256] =
 void keyboard_init(void){
 
 		enable_irq(1); //enables te IRQ for the keyboard which is mapped to IRQ 1
-		SET_IDT_ENTRY(idt[0x21],keyboard_interrupt_handler); //Sets IRQ #1 to have the keyboard_intterupt_handler 0x21 is the index of IRQ #1
 
 }
 

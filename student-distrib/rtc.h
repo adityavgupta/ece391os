@@ -6,5 +6,7 @@
 #define RTC_IRQ_NUM 8
 #define SLAVE_PIN 2
 
+#ifndef ASM
 void rtc_init(void);
 void rtc_interrupt_handler(void);
+#endif
