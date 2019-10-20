@@ -10,6 +10,7 @@
 #include "tests.h"
 #include "rtc.h"
 #include "kb.h"
+#include "paging.h"
 
 #define RUN_TESTS
 
