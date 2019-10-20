@@ -2,6 +2,7 @@
 #include "x86_desc.h"
 #include "rtc.h"
 #include "lib.h"
+#include "i8259.h"
 
 # define NUM_EXCEPTION 32
 # define SYS_CALL_INDEX 0x80
@@ -121,7 +122,7 @@ EXCEPTION_MAKER(PAGE_FAULT, "Page Fault");
 EXCEPTION_MAKER(MATH_FAULT,"x87 FPU Floating-Point Error(Math Fault)");
 EXCEPTION_MAKER(ALIGNMENT_CHECK,"Alignment Check");
 EXCEPTION_MAKER(MACHINE_CHECK,"Machine Check");
-EXCEPTION_MAKER(SIMD_FLOATING-POINT_EXCEPTION,"SIMD Floating-point exception");
+EXCEPTION_MAKER(SIMD_FLOATING_POINT_EXCEPTION,"SIMD Floating-point exception");
 
 
 //Description: Initializes IDT
