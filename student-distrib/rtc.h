@@ -19,4 +19,6 @@ void rtc_init(void);
 /* Handler for RTC interrupts */
 void rtc_interrupt_handler(void);
 
-#endif
+#endif /* ASM */
+
+#endif /* _RTC_H */

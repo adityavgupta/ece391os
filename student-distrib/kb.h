@@ -11,4 +11,6 @@ void keyboard_init(void);
 /* Handler for keyboard interrupts */
 void keyboard_interrupt_handler(void);
 
-#endif
+#endif /* ASM */
+
+#endif /* _KB_H */

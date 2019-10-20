@@ -9,4 +9,6 @@ extern void keyboard_linkage();
 /* Save registers for rtc handler */
 extern void rtc_linkage();
 
-#endif
+#endif /* ASM */
+
+#endif /* _LINKAGE_H */
