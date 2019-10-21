@@ -16,6 +16,7 @@ void rtc_init(void){ //assume interrupts already disabled
     char prevB = inb(RTC_PORT1); //get previous register B value
     outb(REGISTER_B, RTC_PORT0); //select register B again
     outb(prevB | 0x40, RTC_PORT1); //bitiwse or with 0x40 turns on bit 6 of register B to enable periodic interrupts by rtc
+    enable_irq(SLAVE_PIN);
     enable_irq(RTC_IRQ_NUM); //enable rtc interrupt on PIC
 }
 
