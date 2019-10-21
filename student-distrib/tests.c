@@ -200,6 +200,7 @@ int page_table_test(){
 
   return result;
 }
+
 /* Checkpoint 2 tests */
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
@@ -213,7 +214,7 @@ void launch_tests(){
   TEST_OUTPUT("idt_test2", idt_test_2());
   TEST_OUTPUT("idt_test3", idt_test_3());
 	//page_fault_test1();
-  divide_zero_test();
+  //divide_zero_test();
   TEST_OUTPUT("page_directory_test", page_directory_test());
  	//TEST_OUTPUT("page_table_test", page_table_test());
 }
