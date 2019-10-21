@@ -1,8 +1,10 @@
 #ifndef _PAGING_H
 #define _PAGING_H
 
+/* Get a page directory entry */
 uint32_t get_dir(unsigned int i);
 
+/* Get a page table entry */
 uint32_t get_page(unsigned int i);
 
 /* Initialize the page directory */
@@ -17,4 +19,4 @@ void init_paging(void);
 /* Activate paging */
 void enable_paging(void);
 
-#endif
+#endif /* _PAGING_H */

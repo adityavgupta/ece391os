@@ -6,6 +6,7 @@
 #define _LIB_H
 
 #include "types.h"
+
 void test_interrupts(void);
 int32_t printf(int8_t *format, ...);
 void putc(uint8_t c);

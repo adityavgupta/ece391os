@@ -11,13 +11,21 @@
  *    RETURN VALUE: none
  *    SIDE EFFECTS: Changes register B and register C, and enables RTC interrupts on PIC
  */
-void rtc_init(void){ //assume interrupts already disabled
-    outb(REGISTER_B,RTC_PORT0); //select register B and disable NMI
-    char prevB = inb(RTC_PORT1); //get previous register B value
-    outb(REGISTER_B, RTC_PORT0); //select register B again
-    outb(prevB | 0x40, RTC_PORT1); //bitiwse or with 0x40 turns on bit 6 of register B to enable periodic interrupts by rtc
-    enable_irq(SLAVE_PIN);
-    enable_irq(RTC_IRQ_NUM); //enable rtc interrupt on PIC
+void rtc_init(void){
+    /* Disable non-maskable interrupts and select register B */
+    outb(REGISTER_B, RTC_PORT0);
+
+    /* Store the current register B value */
+    uint8_t prevB = inb(RTC_PORT1);
+
+    /* Select register B again */
+    outb(REGISTER_B, RTC_PORT0);
+
+    /* 0x40 allows periodic RTC interrupts */
+    outb(prevB | 0x40, RTC_PORT1);
+
+    /* Enable RTC PIC interrupts */
+    enable_irq(RTC_IRQ_NUM);
 }
 
 /*
@@ -29,26 +37,52 @@ void rtc_init(void){ //assume interrupts already disabled
  *    SIDE EFFECTS: Throws away RTC input and sends EOI
  */
 void rtc_interrupt_handler(void){
-  unsigned long flags;
+  unsigned long flags; /* Hold the current flags */
+
+  /* Mask interrupt flags */
   cli_and_save(flags);
-  disable_irq(RTC_IRQ_NUM);//disable same interrupts
-  send_eoi(RTC_IRQ_NUM);//send eoi to allow more interrupts
-  //printf("rtc interrupt occurred\n");
-  test_interrupts(); //do some work
-  outb(REGISTER_C,RTC_PORT0); //read register C
-  inb(RTC_PORT1);//throw contents away, so that rtc interrupts can happen again
-  restore_flags(flags); //enable interrupts
-  enable_irq(RTC_IRQ_NUM); //reenable same interrupts
+  /* Turn off PIC interrupts */
+  disable_irq(RTC_IRQ_NUM);
+
+  /* Send EOI signal */
+  send_eoi(RTC_IRQ_NUM);
+
+  test_interrupts();
+
+  /* Read register C */
+  outb(REGISTER_C, RTC_PORT0);
+
+  /* Clear contents of RTC to allow RTC interrupts again */
+  inb(RTC_PORT1);
+
+  /* Re-enable interrupts and restores flags */
+  restore_flags(flags);
+  /* Unmask PIC interrupts*/
+  enable_irq(RTC_IRQ_NUM);
 }
 
 void set_rate(unsigned int rate){
-  if(rate>15||rate<3)return; //invalid rates, do nothing
-  unsigned long flags;
-  rate&=0x0F;//only keep first 4 bits, since rtc rate is bottom 4 bits of register A
-  cli_and_save(flags); //cli and save flags
-  outb(REGISTER_A,RTC_PORT0);
-  char prevA = inb(RTC_PORT1);//get old register A value
-  outb(REGISTER_A,RTC_PORT0);
-  outb((prevA&0xF0)|rate,RTC_PORT1); //write new rate to register A
-  restore_flags(flags);//restore flags
+  unsigned long flags; /* Hold current flag values */
+
+  /* Rate must be valid */
+  if(rate > 15 || rate < 3){
+    return ;
+  }
+
+  /* Get 4 most significant bits */
+  rate &= 0x0F;
+
+  /* Mask interrupts and save flags */
+  cli_and_save(flags);
+  outb(REGISTER_A, RTC_PORT0);
+
+  /* Store old register A value */
+  uint8_t prevA = inb(RTC_PORT1);
+  outb(REGISTER_A, RTC_PORT0);
+
+  /* Give the new rate to register A */
+  outb((prevA & 0xF0)| rate, RTC_PORT1);
+
+  /* Restore the interrupt flags */
+  restore_flags(flags);
 }

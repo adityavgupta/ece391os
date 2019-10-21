@@ -19,7 +19,10 @@ void rtc_init(void);
 
 /* Handler for RTC interrupts */
 void rtc_interrupt_handler(void);
-void set_rate(unsigned int rate);
-#endif
 
-#endif
+/* Set the frequency of the RTC */
+void set_rate(unsigned int rate);
+
+#endif /* ASM */
+
+#endif /* _RTC_H */

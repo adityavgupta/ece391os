@@ -3,6 +3,8 @@
 #ifndef _KB_H
 #define _KB_H
 
+#include "types.h"
+
 #ifndef ASM
 
 /* Enable keyboard interrupts */

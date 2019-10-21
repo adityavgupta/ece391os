@@ -8,7 +8,7 @@
 #define LEFT_SHIFT 42
 #define RIGHT_SHIFT 52
 
-unsigned char shift_pressed=0;
+unsigned char shift_pressed = 0;
 unsigned char kbdus[256] =
 {
     0,  27, '1', '2', '3', '4', '5', '6', '7', '8',	/* 9 */
@@ -91,42 +91,54 @@ unsigned char kbdus[256] =
  *    INPUTS: none
  *    OUTPUTS: none
  *    RETURN VALUE: none
- *    SIDE EFFECTS: Unmasks IRQ for keyboard interrupts on PIC
+ *    SIDE EFFECTS: Unmasks IRQ1 for keyboard interrupts on PIC
  */
 void keyboard_init(void){
-		enable_irq(1); //enables te IRQ for the keyboard which is mapped to IRQ 1
+    /* Enable keyboard IRQ on PIC */
+		enable_irq(IRQ_NUM);
 }
 
 /*
  * keyboard_interrupt_handler
  *    DESCRIPTION: Handler for keyboard interrupts
  *    INPUTS: none
- *    OUTPUTS: none
+ *    OUTPUTS: Character on the screen
  *    RETURN VALUE: none
  *    SIDE EFFECTS: Prints keyboard input to screen, and sends EOI
  */
 void keyboard_interrupt_handler(void){
-    unsigned long flags;
+    unsigned long flags; /* Hold current flags */
+
+    /* Mask interrupts and store flags */
     cli_and_save(flags);
-		disable_irq(IRQ_NUM); //Disables the IRQ
-		send_eoi(IRQ_NUM); //Sends the EOI signal
-		unsigned char scan_code= inb(0x60); //Writes to the port 0x60 the port used to as the data buffer for the keyboard
+    /* Mask IRQ on PIC */
+		disable_irq(IRQ_NUM);
 
-		if(!(scan_code & RECENT_RELEASE)){ // tests if the character is to be printed or not
+    /* Send EOI to PIC to indicate interrupt is serviced */
+		send_eoi(IRQ_NUM);
 
-				putc(kbdus[scan_code]+128*shift_pressed);	//If the shift key is pressed adds 128 to index into capital characters 128 is the for the additonal 128 character when they are captialized
+    /* Read the keyboard data buffer to get the current character */
+		uint8_t scan_code = inb(0x60);
 
-				if(scan_code==(RECENT_RELEASE+LEFT_SHIFT) || scan_code==( RECENT_RELEASE+RIGHT_SHIFT)){ //Checks to see if the shift key has been recently released or not
-
-						shift_pressed=1; //Sets to shift pressed to be pressed 1 is used ot indicate an on state
-
+    /* Test if the character is to be printed or not */
+		if(!(scan_code & RECENT_RELEASE)){
+        /* If the shift key is pressed adds 128 to index into capital characters 128 is the for the additonal 128 character when they are captialized */
+				putc(kbdus[scan_code] + 128 * shift_pressed);
+        /* Checks to see if the shift key has been recently released or not */
+				if(scan_code == (RECENT_RELEASE + LEFT_SHIFT) || scan_code == (RECENT_RELEASE + RIGHT_SHIFT)){
+          /* Sets to shift pressed to be pressed 1 is used ot indicate an on state */
+					shift_pressed = 1;
 				}
 		} else{
-				if(scan_code== LEFT_SHIFT || scan_code== RIGHT_SHIFT ){ // If the key is recntly released gets rid of the shift_pressed flag
-						shift_pressed=0; // 0 is used ot indicate a off state
-				}
-
+      /* If the key is recntly released gets rid of the shift_pressed flag */
+			if(scan_code == LEFT_SHIFT || scan_code == RIGHT_SHIFT ){
+        /* 0 is used ot indicate a off state */
+				shift_pressed = 0;
+			}
 		}
-		restore_flags(flags); // Allows keyboard interrupts to occur again
-		enable_irq(IRQ_NUM); //Enables the interrupts to IRQ #1
+
+    /* Allow interrupts again */
+		restore_flags(flags);
+    /* Unmask the IRQ1 on the PIC */
+		enable_irq(IRQ_NUM);
 }
