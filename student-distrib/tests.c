@@ -97,6 +97,15 @@ int idt_test_3(){
   return result;
 }
 
+//derefencing null pointer, should page fault
+void page_fault_test0(){
+	TEST_HEADER;
+
+  unsigned int address = NULL;
+  printf("Accessing address: %x\n", address);
+  (*(int*)address) = 0x1;
+  TEST_OUTPUT("page_fault_test0", FAIL);
+}
 /* Out of kernel memory range */
 void page_fault_test1(){
   TEST_HEADER;
@@ -199,6 +208,9 @@ int page_table_test(){
   int i;
 
   for(i=0;i<1024;i++){
+		if(i!=((get_page(i))>>12)){
+			return FAIL;
+		}
     if(i==0xB8){
       if((get_page(i)&0x03)!=0x03){
         return FAIL;
@@ -224,6 +236,7 @@ void launch_tests(){
 	// launch your tests here
   TEST_OUTPUT("idt_test2", idt_test_2());
   TEST_OUTPUT("idt_test3", idt_test_3());
+	// page_fault_test0();
 	// page_fault_test1();
 	// page_fault_test2();
 	// page_fault_test3();
@@ -232,5 +245,5 @@ void launch_tests(){
 	page_fault_test6();
   // divide_zero_test();
   TEST_OUTPUT("page_directory_test", page_directory_test());
- 	// TEST_OUTPUT("page_table_test", page_table_test());
+ 	TEST_OUTPUT("page_table_test", page_table_test());
 }
