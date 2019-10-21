@@ -23,7 +23,7 @@ static inline void assertion_failure(){
 /* Checkpoint 1 tests */
 
 /* IDT Test - Example
- * 
+ *
  * Asserts that first 10 IDT entries are not NULL
  * Inputs: None
  * Outputs: PASS/FAIL
@@ -37,7 +37,7 @@ int idt_test(){
 	int i;
 	int result = PASS;
 	for (i = 0; i < 10; ++i){
-		if ((idt[i].offset_15_00 == NULL) && 
+		if ((idt[i].offset_15_00 == NULL) &&
 			(idt[i].offset_31_16 == NULL)){
 			assertion_failure();
 			result = FAIL;
@@ -49,38 +49,38 @@ int idt_test(){
 
 int idt_test_2(){
   TEST_HEADER;
-  
+
   int result=PASS;
   int i;
   for(i=0;i<32;i++){ //32 is used to indicate the number of exceptions that are present in the IDT table
-    if(!(idt[i].reserved0==0 && 
-         idt[i].reserved1==1 && 
-         idt[i].reserved2==1 && 
+    if(!(idt[i].reserved0==0 &&
+         idt[i].reserved1==1 &&
+         idt[i].reserved2==1 &&
          idt[i].reserved3==1 &&
          idt[i].reserved4==0 )){ //This idicates the field 01110000000 if it is not true asserts a failure
       	assertion_failure();
       result=FAIL;
     }
   }
-  
-  for(i=32;i<256;i++){ // 32 is used to indicate the number of exceptions in the idt talbe while 256 is the number of values that are in the table 
-    if(!(idt[i].reserved0==0 && 
-         idt[i].reserved1==1 && 
+
+  for(i=32;i<256;i++){ // 32 is used to indicate the number of exceptions in the idt talbe while 256 is the number of values that are in the table
+    if(!(idt[i].reserved0==0 &&
+         idt[i].reserved1==1 &&
          idt[i].reserved2==1 &&
-         idt[i].reserved3==0 && 
+         idt[i].reserved3==0 &&
          idt[i].reserved4==0)){ //This indicates the field 01100000000 if this is not true asserts a failure
       	assertion_failure();
       	result=FAIL;
     }
   }
-  
+
   return result;
 }
 
 
 int idt_test_3(){
   TEST_HEADER;
-  
+
   int result=PASS;
   int i;
   for(i=0;i<256;i++){ //256 is the number used to indicate the number of entries in the idt table
@@ -89,19 +89,19 @@ int idt_test_3(){
       result=FAIL;
     }
   }
-  
+
   if(!(idt[SYSCALL_NUM].dpl==3 && idt[SYSCALL_NUM].size==1)){ //checks if the priotiy level is set to 3 and the size is set to 1
     assertion_failure();
     result=FAIL;
   }
-  
+
   return result;
 }
 
 // add more tests here
 /* At minimum, your tests should over:
  * Values contained in the IDT array - An example has been provided in tests.
- * Receiving an RTC interrupt 
+ * Receiving an RTC interrupt
  * Interpreting various scancodes in the keyboard handler
  * Values contained in your paging strutures
  * Dereferencing different address ranges with paging turned on
@@ -111,8 +111,8 @@ int idt_test_3(){
 // kernel range
 void page_fault_test1(){
   TEST_HEADER;
-  
-  unsigned int address = 0x3FFFFF;
+
+  unsigned int address = 0x400001;
   printf("Accessing address: %x", address);
   (*(int*)address) = 0x1;
   TEST_OUTPUT("page_fault_test1", FAIL);
@@ -121,7 +121,7 @@ void page_fault_test1(){
 // kernel range
 void page_fault_test2(){
   TEST_HEADER;
-  
+
   unsigned int address = 0x800001;
   printf("Accessing address: %x", address);
   (*(int*)address) = 0x1;
@@ -131,7 +131,7 @@ void page_fault_test2(){
 // video memory range
 void page_fault_test3(){
   TEST_HEADER;
-  
+
   unsigned int address = 0xB7FFF;
   printf("Accessing address: %x", address);
   (*(int*)address) = 0x1;
@@ -141,7 +141,7 @@ void page_fault_test3(){
 // video memory range
 void page_fault_test4(){
   TEST_HEADER;
-  
+
   unsigned int address = 0xC0001;
   printf("Accessing address: %x", address);
   (*(int*)address) = 0x1;
@@ -156,23 +156,23 @@ void divide_zero_test(){
   int i=n1/n2;
   TEST_OUTPUT("divide_zero_test", FAIL);
 }
-/*
+
 int page_directory_test(){
   TEST_HEADER;
-  
+
   int result = PASS;
   int i;
-  
-  if((page_directory[0] & 0x03) == 0x02 || ((page_directory[0])>>12) == 0x0 ){
+
+  if((get_dir(0) & 0x03) == 0x02){
     return FAIL;
   }
-  
-  if(page_directory[1] != ((4096*1024) | 0x03)){
+
+  if((get_dir(1) & 0x03) != 0x03){
     return FAIL;
   }
-  
+
   for(i=2; i<1024; i++){
-    if(page_directory[i] != 0x02){
+    if((get_dir(i) & 0x03) != 0x02){
       result = FAIL;
       break;
     }
@@ -186,16 +186,16 @@ int page_table_test(){
   int i;
   for(i=0;i<1024;i++){
     if(i==0xB8){
-      if((page_table[i]&0x03)!=0x03 || (page_table[i]>>12 != 0xB8)){
+      if((get_page(i)&0x03)!=0x03){
         return FAIL;
       }
     }
-    else if(page_table[i]!=0x02 || ((page_table[i]>>12) != (i*4096))){
+    else if((get_page(i)&0x03)!=0x02){
     	return FAIL;
     }
   }
   return result;
-} */
+}
 /* Checkpoint 2 tests */
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
@@ -208,8 +208,8 @@ void launch_tests(){
 	// launch your tests here
   TEST_OUTPUT("idt_test2", idt_test_2());
   TEST_OUTPUT("idt_test3", idt_test_3());
-  
-  divide_zero_test();
-  //TEST_OUTPUT("page_directory_test", page_directory_test());
- //TEST_OUTPUT("page_table_test", page_table_test());
+	//page_fault_test1();
+  //divide_zero_test();
+  TEST_OUTPUT("page_directory_test", page_directory_test());
+ 	//TEST_OUTPUT("page_table_test", page_table_test());
 }
