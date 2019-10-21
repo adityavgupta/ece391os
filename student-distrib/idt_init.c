@@ -104,6 +104,7 @@ void test_interrupt(void){
 #define EXCEPTION_MAKER(x,msg) \
 	void x(void){ \
     cli(); \
+    clear();\
 		printf("Exception: %s",msg); \
         while(1);\
         sti(); \
