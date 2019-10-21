@@ -12,7 +12,7 @@
 #include "kb.h"
 #include "paging.h"
 
-#define RUN_TESTS
+#define RUN_TESTS 
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
@@ -146,8 +146,8 @@ void entry(unsigned long magic, unsigned long addr) {
   //  printf("PIC initialized\n");
     /* Initialize devices, memory, filesystem, enable device interrupts on the
      * PIC, any other initialization stuff... */
-     rtc_init();
-     set_rate(15);
+     //rtc_init();
+     //set_rate(15);
   //   printf("rtc initialized\n");
      keyboard_init();
   //   printf("keyboard initialized\n");
@@ -159,9 +159,10 @@ void entry(unsigned long magic, unsigned long addr) {
     clear();
     sti();
 
+
 #ifdef RUN_TESTS
     /* Run tests */
-    //launch_tests();
+  launch_tests();
 #endif
     /* Execute the first program ("shell") ... */
 
