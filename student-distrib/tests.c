@@ -47,16 +47,6 @@ int idt_test(){
 	return result;
 }
 
-// add more tests here
-/* At minimum, your tests should over:
- * Values contained in the IDT array - An example has been provided in tests.
- * Receiving an RTC interrupt
- * Interpreting various scancodes in the keyboard handler
- * Values contained in your paging strutures
- * Dereferencing different address ranges with paging turned on
- * Checking bad or garbage input and return values for any function you write
- */
-
 int idt_test_2(){
   TEST_HEADER;
 
@@ -87,7 +77,6 @@ int idt_test_2(){
   return result;
 }
 
-
 int idt_test_3(){
   TEST_HEADER;
 
@@ -108,46 +97,67 @@ int idt_test_3(){
   return result;
 }
 
-// kernel range
+/* Out of kernel memory range */
 void page_fault_test1(){
   TEST_HEADER;
 
   unsigned int address = 0x400001;
-  printf("Accessing address: %x", address);
+  printf("Accessing address: %x\n", address);
   (*(int*)address) = 0x1;
   TEST_OUTPUT("page_fault_test1", FAIL);
 }
 
-// kernel range
+/* Out of kernel memory range */
 void page_fault_test2(){
   TEST_HEADER;
 
   unsigned int address = 0x800001;
-  printf("Accessing address: %x", address);
+  printf("Accessing address: %x\n", address);
   (*(int*)address) = 0x1;
   TEST_OUTPUT("page_fault_test2", FAIL);
 }
 
-// video memory range
+/* Out of video memory range */
 void page_fault_test3(){
   TEST_HEADER;
 
   unsigned int address = 0xB7FFF;
-  printf("Accessing address: %x", address);
+  printf("Accessing address: %x\n", address);
   (*(int*)address) = 0x1;
   TEST_OUTPUT("page_fault_test3", FAIL);
 }
 
-// video memory range
+/* Out of video memory range */
 void page_fault_test4(){
   TEST_HEADER;
 
   unsigned int address = 0xC0001;
-  printf("Accessing address: %x", address);
+  printf("Accessing address: %x\n", address);
   (*(int*)address) = 0x1;
   TEST_OUTPUT("page_fault_test3", FAIL);
 }
-//dividing by zero, should cause divide by zero exception
+
+/* In video memory range */
+void page_fault_test5(){
+  TEST_HEADER;
+
+  unsigned int address = 0xB8001;
+  printf("Accessing address: %x\n", address);
+  (*(int*)address) = 0x1;
+  TEST_OUTPUT("page_fault_test5", PASS);
+}
+
+/* In kernel memory range */
+void page_fault_test6(){
+  TEST_HEADER;
+
+  unsigned int address = 0x400001;
+  printf("Accessing address: %x\n", address);
+  (*(int*)address) = 0x1;
+  TEST_OUTPUT("page_fault_test6", PASS);
+}
+
+/* Dividing by zero, should cause divide by zero exception */
 void divide_zero_test(){
   TEST_HEADER;
 
@@ -178,6 +188,7 @@ int page_directory_test(){
       break;
     }
   }
+
   return result;
 }
 
@@ -213,8 +224,13 @@ void launch_tests(){
 	// launch your tests here
   TEST_OUTPUT("idt_test2", idt_test_2());
   TEST_OUTPUT("idt_test3", idt_test_3());
-	//page_fault_test1();
-  //divide_zero_test();
+	// page_fault_test1();
+	// page_fault_test2();
+	// page_fault_test3();
+	// page_fault_test4();
+	page_fault_test5();
+	page_fault_test6();
+  // divide_zero_test();
   TEST_OUTPUT("page_directory_test", page_directory_test());
- 	//TEST_OUTPUT("page_table_test", page_table_test());
+ 	// TEST_OUTPUT("page_table_test", page_table_test());
 }
