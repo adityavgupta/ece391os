@@ -47,6 +47,16 @@ int idt_test(){
 	return result;
 }
 
+// add more tests here
+/* At minimum, your tests should over:
+ * Values contained in the IDT array - An example has been provided in tests.
+ * Receiving an RTC interrupt
+ * Interpreting various scancodes in the keyboard handler
+ * Values contained in your paging strutures
+ * Dereferencing different address ranges with paging turned on
+ * Checking bad or garbage input and return values for any function you write
+ */
+
 int idt_test_2(){
   TEST_HEADER;
 
@@ -98,16 +108,6 @@ int idt_test_3(){
   return result;
 }
 
-// add more tests here
-/* At minimum, your tests should over:
- * Values contained in the IDT array - An example has been provided in tests.
- * Receiving an RTC interrupt
- * Interpreting various scancodes in the keyboard handler
- * Values contained in your paging strutures
- * Dereferencing different address ranges with paging turned on
- * Checking bad or garbage input and return values for any function you write
- */
-
 // kernel range
 void page_fault_test1(){
   TEST_HEADER;
@@ -150,10 +150,11 @@ void page_fault_test4(){
 //dividing by zero, should cause divide by zero exception
 void divide_zero_test(){
   TEST_HEADER;
+
   printf("Attempting division 69/0 \n");
-  int n1=69;
-  int n2=0;
-  int i=n1/n2;
+  int x = 69;
+  int y = 0;
+  x = x / y;
   TEST_OUTPUT("divide_zero_test", FAIL);
 }
 
@@ -182,8 +183,10 @@ int page_directory_test(){
 
 int page_table_test(){
   TEST_HEADER;
+
   int result=PASS;
   int i;
+
   for(i=0;i<1024;i++){
     if(i==0xB8){
       if((get_page(i)&0x03)!=0x03){
@@ -194,6 +197,7 @@ int page_table_test(){
     	return FAIL;
     }
   }
+
   return result;
 }
 /* Checkpoint 2 tests */
@@ -209,7 +213,7 @@ void launch_tests(){
   TEST_OUTPUT("idt_test2", idt_test_2());
   TEST_OUTPUT("idt_test3", idt_test_3());
 	//page_fault_test1();
-  //divide_zero_test();
+  divide_zero_test();
   TEST_OUTPUT("page_directory_test", page_directory_test());
  	//TEST_OUTPUT("page_table_test", page_table_test());
 }
