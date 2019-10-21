@@ -103,8 +103,10 @@ void test_interrupt(void){
 
 #define EXCEPTION_MAKER(x,msg) \
 	void x(void){ \
+    cli(); \
 		printf("Exception: %s",msg); \
         while(1);\
+        sti(); \
      }
 
 EXCEPTION_MAKER(DIVIDE_ERROR,"Divide Error");
