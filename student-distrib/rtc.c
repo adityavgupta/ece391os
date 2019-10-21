@@ -61,6 +61,14 @@ void rtc_interrupt_handler(void){
   enable_irq(RTC_IRQ_NUM);
 }
 
+/*
+ * set_rate
+ *    DESCRIPTION: Change the RTC rate
+ *    INPUTS: none
+ *    OUTPUTS: none
+ *    RETURN VALUE: none
+ *    SIDE EFFECTS: Changes the frequency the RTC operates at
+ */
 void set_rate(unsigned int rate){
   unsigned long flags; /* Hold current flag values */
 
