@@ -31,14 +31,14 @@ continue:
 	push %ecx;
 	push %edx;
 
-	call initialize_idt
+	call initialize_idt #Initilaize the call to idt to fill the idt table
 	
 	pop %edx
 	pop %ecx
 	pop %eax
 
 	
-	lidt idt_desc_ptr
+	lidt idt_desc_ptr #loads in the address into the register to specify the start of IDT
 
 
 
