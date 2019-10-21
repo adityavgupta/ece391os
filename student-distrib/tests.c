@@ -47,6 +47,15 @@ int idt_test(){
 	return result;
 }
 
+/*
+ * idt_test_2
+ *		ASSERTS: Reserved entries are correct
+ *		INPUTS: None
+ *    OUTPUTS: PASS/FAIL
+ *		SIDE EFFECTS: None
+ *		COVERAGE: IDT entries
+ *		FILES: x86_desc.h
+ */
 int idt_test_2(){
   TEST_HEADER;
 
@@ -77,6 +86,15 @@ int idt_test_2(){
   return result;
 }
 
+/*
+ * idt_test_3
+ *		ASSERTS: dpl and size are correct
+ *		INPUTS: None
+ *    OUTPUTS: None
+ *		SIDE EFFECTS: None
+ *		COVERAGE: IDT entries
+ *		FILES: x86_desc.h
+ */
 int idt_test_3(){
   TEST_HEADER;
 
@@ -97,7 +115,15 @@ int idt_test_3(){
   return result;
 }
 
-//derefencing null pointer, should page fault
+/*
+ * page_fault_test0
+ *		ASSERTS: Dereferencing NULL causes page fault
+ *		INPUTS: None
+ *    OUTPUTS: FAIL or Exception
+ *		SIDE EFFECTS: Exception
+ *		COVERAGE: Paging
+ *		FILES: Paging.c
+ */
 void page_fault_test0(){
 	TEST_HEADER;
 
@@ -106,18 +132,35 @@ void page_fault_test0(){
   (*(int*)address) = 0x1;
   TEST_OUTPUT("page_fault_test0", FAIL);
 }
-/* Out of kernel memory range */
+
+/*
+ * page_fault_test1
+ *		ASSERTS: Page fault for out of bounds memory access
+ *		INPUTS: None
+ *    OUTPUTS: Exception or FAIL
+ *		SIDE EFFECTS: Exception
+ *		COVERAGE: Paging
+ *		FILES: Paging.c
+ */
 void page_fault_test1(){
   TEST_HEADER;
 
-  unsigned int address = 0x400001;
+  unsigned int address = 0x3FFFFF;
   printf("Accessing address: %x\n", address);
   (*(int*)address) = 0x1;
   TEST_OUTPUT("page_fault_test1", FAIL);
 }
 
-/* Out of kernel memory range */
-void page_fault_test2(){
+/*
+ * page_fault_test2
+ *		ASSERTS: Page fault for out of bounds memory access
+ *		INPUTS: None
+ *    OUTPUTS: Exception or FAIL
+ *		SIDE EFFECTS: Exception
+ *		COVERAGE: Paging
+ *		FILES: paging.c
+ */
+ void page_fault_test2(){
   TEST_HEADER;
 
   unsigned int address = 0x800001;
@@ -126,7 +169,15 @@ void page_fault_test2(){
   TEST_OUTPUT("page_fault_test2", FAIL);
 }
 
-/* Out of video memory range */
+/*
+ * page_fault_test3
+ *		ASSERTS: Exception when accessing just outside of video memory page
+ *		INPUTS: None
+ *    OUTPUTS: Exception or FAIL
+ *		SIDE EFFECTS: Exception
+ *		COVERAGE: Paging
+ *		FILES: paging.c
+ */
 void page_fault_test3(){
   TEST_HEADER;
 
@@ -136,7 +187,15 @@ void page_fault_test3(){
   TEST_OUTPUT("page_fault_test3", FAIL);
 }
 
-/* Out of video memory range */
+/*
+ * page_fault_test4
+ *		ASSERTS: Page fault for accessing memory just outside kernel memory
+ *		INPUTS: None
+ *    OUTPUTS: Exception or FAIL
+ *		SIDE EFFECTS: Exception
+ *		COVERAGE: Paging
+ *		FILES: paging.c
+ */
 void page_fault_test4(){
   TEST_HEADER;
 
@@ -146,27 +205,51 @@ void page_fault_test4(){
   TEST_OUTPUT("page_fault_test3", FAIL);
 }
 
-/* In video memory range */
+/*
+ * page_fault_test5
+ *		ASSERTS: Video memory is accessable at beginning address
+ *		INPUTS: None
+ *    OUTPUTS: Exception or PASS
+ *		SIDE EFFECTS:
+ *		COVERAGE:
+ *		FILES:
+ */
 void page_fault_test5(){
   TEST_HEADER;
 
-  unsigned int address = 0xB8001;
+  unsigned int address = 0xB8000;
   printf("Accessing address: %x\n", address);
   (*(int*)address) = 0x1;
   TEST_OUTPUT("page_fault_test5", PASS);
 }
 
-/* In kernel memory range */
+/*
+ * page_fault_test6
+ *		ASSERTS: Kernel memory is accessable at beginning address
+ *		INPUTS: None
+ *    OUTPUTS: PASS or Exception
+ *		SIDE EFFECTS: Exception
+ *		COVERAGE: Paging
+ *		FILES: paging.c
+ */
 void page_fault_test6(){
   TEST_HEADER;
 
-  unsigned int address = 0x400001;
+  unsigned int address = 0x400000;
   printf("Accessing address: %x\n", address);
   (*(int*)address) = 0x1;
   TEST_OUTPUT("page_fault_test6", PASS);
 }
 
-/* Dividing by zero, should cause divide by zero exception */
+/*
+ * divide_zero_test
+ *		ASSERTS: Arithmetic exception for dividing by zero
+ *		INPUTS: None
+ *    OUTPUTS: FAIL or Exception
+ *		SIDE EFFECTS: Exception
+ *		COVERAGE: Exception in IDT
+ *		FILES: x86_desc.h and init_idt.c
+ */
 void divide_zero_test(){
   TEST_HEADER;
 
@@ -177,6 +260,15 @@ void divide_zero_test(){
   TEST_OUTPUT("divide_zero_test", FAIL);
 }
 
+/*
+ * page_directory_test
+ *		ASSERTS: Page directory has tables marked not present
+ *		INPUTS: None
+ *    OUTPUTS: PASS or FAIL
+ *		SIDE EFFECTS: None
+ *		COVERAGE: Paging
+ *		FILES: paging.c
+ */
 int page_directory_test(){
   TEST_HEADER;
 
@@ -201,6 +293,15 @@ int page_directory_test(){
   return result;
 }
 
+/*
+ * page_table_test
+ *		ASSERTS: Page table has not present pages and correct addresses
+ *		INPUTS: None
+ *    OUTPUTS: PASS or FAIL
+ *		SIDE EFFECTS: None
+ *		COVERAGE: Paging
+ *		FILES: paging.c
+ */
 int page_table_test(){
   TEST_HEADER;
 
