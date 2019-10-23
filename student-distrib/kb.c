@@ -6,9 +6,11 @@
 #define IRQ_NUM 1
 #define RECENT_RELEASE 0x80
 #define LEFT_SHIFT 42
-#define RIGHT_SHIFT 52
+#define RIGHT_SHIFT 54
+#define CAPS_LOCK 58
 
 unsigned char shift_pressed = 0;
+unsigned char caps_lock=0;
 unsigned char kbdus[256] =
 {
     0,  27, '1', '2', '3', '4', '5', '6', '7', '8',	/* 9 */
@@ -85,6 +87,8 @@ unsigned char kbdus[256] =
     0,	/* All other keys are undefined */
 };
 
+
+
 /*
  * keyboard_init
  *    DESCRIPTION: Enables keyboard interrupts
@@ -119,21 +123,33 @@ void keyboard_interrupt_handler(void){
 
     /* Read the keyboard data buffer to get the current character */
 		uint8_t scan_code = inb(0x60);
+		
+		//printf("%d\n",scan_code);
 
     /* Test if the character is to be printed or not */
-		if(!(scan_code & RECENT_RELEASE)){
-        /* If the shift key is pressed adds 128 to index into capital characters 128 is the for the additonal 128 character when they are captialized */
-				putc(kbdus[scan_code] + 128 * shift_pressed);
+		if(scan_code < RECENT_RELEASE){
+        /* If the shift key is pressed adds 128 to index into capital characters 128 is the for the additional 128 character when they are capitalized */
+				//putc(kbdus[scan_code]);
         /* Checks to see if the shift key has been recently released or not */
-				if(scan_code == (RECENT_RELEASE + LEFT_SHIFT) || scan_code == (RECENT_RELEASE + RIGHT_SHIFT)){
+				//printf(" %d ",scan_code);
+				if(scan_code == (LEFT_SHIFT) || scan_code == (RIGHT_SHIFT)){
           /* Sets to shift pressed to be pressed 1 is used ot indicate an on state */
 					shift_pressed = 1;
+					//printf(" Shift has been pressed ");
+				} else if(scan_code==CAPS_LOCK){
+					caps_lock=(caps_lock+1)%2;
+					//printf(" %d ",caps_lock);
+				}else if((caps_lock==1) != (shift_pressed==1)){
+					putc(kbdus[scan_code+90]); //90 is the offset required to obtain the capital letters
+				} else{
+					putc(kbdus[scan_code]);
 				}
 		} else{
       /* If the key is recntly released gets rid of the shift_pressed flag */
-			if(scan_code == LEFT_SHIFT || scan_code == RIGHT_SHIFT ){
+			if(scan_code == LEFT_SHIFT+RECENT_RELEASE || scan_code == RIGHT_SHIFT+RECENT_RELEASE ){
         /* 0 is used ot indicate a off state */
 				shift_pressed = 0;
+				//printf(" Shift has been released ");
 			}
 		}
 
