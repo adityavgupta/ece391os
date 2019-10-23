@@ -1,7 +1,9 @@
 #include "lib.h"
 #include "rtc.h"
 #include "i8259.h"
-#include "types.h"
+
+
+asm volatile rtc_interrupt;
 
 /*
  * rtc_init
@@ -47,6 +49,8 @@ void rtc_interrupt_handler(void){
   /* Send EOI signal */
   send_eoi(RTC_IRQ_NUM);
 
+  rtc_interrupt = 1;
+
   test_interrupts();
 
   /* Read register C */
@@ -62,19 +66,90 @@ void rtc_interrupt_handler(void){
 }
 
 /*
- * set_rate
- *    DESCRIPTION: Change the RTC rate
+ * rtc_open
+ *    DESCRIPTION: Initialize RTC frequency
  *    INPUTS: none
  *    OUTPUTS: none
- *    RETURN VALUE: none
+ *    RETURN VALUE: 0 for success
+ *    SIDE EFFECTS: Makes RTC rate 2Hz
+ */
+uint32_t rtc_open(void){
+  unsigned long flags; /* Hold current flag values */
+
+  /* Mask interrupts and save flags */
+  cli_and_save(flags);
+
+  outb(REGISTER_A, RTC_PORT0);
+
+  /* Store old register A value */
+  uint8_t prevA = inb(RTC_PORT1);
+  outb(REGISTER_A, RTC_PORT0);
+
+  /* Give the new rate to register A */
+  outb((prevA & 0xF0)| 15, RTC_PORT1);
+
+  /* Restore the interrupt flags */
+  restore_flags(flags);
+
+  /* Return success */
+  return 0;
+}
+
+/*
+ * rtc_close
+ *    DESCRIPTION:
+ *    INPUTS:
+ *    OUTPUTS:
+ *    RETURN VALUE:
+ *    SIDE EFFECTS:
+ */
+uint32_t rtc_close(){
+  /* Do nothing for now, until virtualization is added */
+  return 0;
+}
+
+/*
+ * rtc_read
+ *    DESCRIPTION:
+ *    INPUTS:
+ *    OUTPUTS:
+ *    RETURN VALUE:
+ *    SIDE EFFECTS:
+ */
+uint32_t rtc_read(){
+  unsigned long flags; /* Hold curent flag values */
+
+  /* Block until an RTC interrupt occurs */
+  while(!rtc_interrupt){
+    /* Block interrupts */
+    cli_and_save(flags);
+
+    /* Reset interrupt counter */
+    rtc_interrupt = 0;
+
+    /* Restore interrupts */
+    restore_flags(flags);
+  }
+
+  /* Return success */
+  return 0;
+}
+
+/*
+ * rtc_write
+ *    DESCRIPTION: Change the RTC rate
+ *    INPUTS: uint32_t rate - the frequency to set
+ *    OUTPUTS: none
+ *    RETURN VALUE: 0 for success, or -1 for failure
  *    SIDE EFFECTS: Changes the frequency the RTC operates at
  */
-void set_rate(unsigned int rate){
+uint32_t rtc_write(uint32_t rate){
   unsigned long flags; /* Hold current flag values */
 
   /* Rate must be valid */
   if(rate > 15 || rate < 3){
-    return ;
+    /* Return failure */
+    return -1;
   }
 
   /* Get 4 most significant bits */
@@ -93,4 +168,7 @@ void set_rate(unsigned int rate){
 
   /* Restore the interrupt flags */
   restore_flags(flags);
+
+  /* Return success */
+  return 0;
 }

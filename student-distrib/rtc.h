@@ -3,6 +3,8 @@
 #ifndef _RTC_H
 #define _RTC_H
 
+#include "types.h"
+
 /* Ports and registers used to initialize the RTC. */
 #define RTC_PORT0 0x70
 #define RTC_PORT1 0x71
@@ -20,8 +22,17 @@ void rtc_init(void);
 /* Handler for RTC interrupts */
 void rtc_interrupt_handler(void);
 
+/* RTC device driver open */
+uint32_t rtc_open(void);
+
+/* RTC device driver close */
+uint32_t rtc_close();
+
+/* RTC device driver read */
+uint32_t rtc_read();
+
 /* Set the frequency of the RTC */
-void set_rate(unsigned int rate);
+uint32_t rtc_write(uint32_t rate);
 
 #endif /* ASM */
 
