@@ -24,6 +24,22 @@ void clear(void) {
     }
 }
 
+void new_line(void){
+		screen_y++;
+		screen_x=0;
+	
+}
+
+void back_space(void){
+	screen_x--;
+	if(screen_x<0){
+			screen_x=0;
+	}
+	*(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = ' ';
+
+	
+}
+
 /* Standard printf().
  * Only supports the following format strings:
  * %%  - print a literal '%' character

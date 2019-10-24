@@ -2,15 +2,26 @@
 #include "x86_desc.h"
 #include "i8259.h"
 #include "lib.h"
+#include "terminal_driver.h"
 
 #define IRQ_NUM 1
 #define RECENT_RELEASE 0x80
 #define LEFT_SHIFT 42
 #define RIGHT_SHIFT 54
 #define CAPS_LOCK 58
+#define NEW_LINE 28
+#define BACK_SPACE 14
+#define CTRL 29
+#define L_CHAR 38
 
+
+
+extern volatile int is_finished;
+extern int buf_index;
+//extern unsigned char buf[128];
 unsigned char shift_pressed = 0;
 unsigned char caps_lock=0;
+unsigned char ctrl_pressed=0;
 unsigned char kbdus[256] =
 {
     0,  27, '1', '2', '3', '4', '5', '6', '7', '8',	/* 9 */
@@ -112,7 +123,13 @@ void keyboard_init(void){
  */
 void keyboard_interrupt_handler(void){
     unsigned long flags; /* Hold current flags */
+	extern unsigned char buf[128];
+	extern volatile int is_finished;
+	extern int buf_index;
+	//extern static int screen_x;
+	//extern static int screen_y;
 
+	extern int str_len_count;
     /* Mask interrupts and store flags */
     cli_and_save(flags);
     /* Mask IRQ on PIC */
@@ -132,7 +149,30 @@ void keyboard_interrupt_handler(void){
 				//putc(kbdus[scan_code]);
         /* Checks to see if the shift key has been recently released or not */
 				//printf(" %d ",scan_code);
-				if(scan_code == (LEFT_SHIFT) || scan_code == (RIGHT_SHIFT)){
+				
+				if(buf_index>=128){
+					is_finished=1;
+					printf("\n");
+					clear_buf();
+				} else if(scan_code==CTRL){
+					
+				}else if(scan_code== BACK_SPACE){ 
+					buf[buf_index]=0;
+					buf_index--;
+					if(buf_index<0){
+							buf_index=0;
+					}
+					
+					back_space();
+				}else if(scan_code==NEW_LINE){
+					//printf("\n");
+					new_line();
+					buf[buf_index]=kbdus[NEW_LINE];
+					buf_index++;
+					is_finished=1;
+					clear_buf();
+				}
+				else if(scan_code == (LEFT_SHIFT) || scan_code == (RIGHT_SHIFT)){
           /* Sets to shift pressed to be pressed 1 is used ot indicate an on state */
 					shift_pressed = 1;
 					//printf(" Shift has been pressed ");
@@ -141,8 +181,12 @@ void keyboard_interrupt_handler(void){
 					//printf(" %d ",caps_lock);
 				}else if((caps_lock==1) != (shift_pressed==1)){
 					putc(kbdus[scan_code+90]); //90 is the offset required to obtain the capital letters
+					buf[buf_index]=kbdus[scan_code+90];
+					buf_index++;
 				} else{
 					putc(kbdus[scan_code]);
+					buf[buf_index]=kbdus[scan_code];
+					buf_index++;
 				}
 		} else{
       /* If the key is recntly released gets rid of the shift_pressed flag */
