@@ -24,10 +24,34 @@ void clear(void) {
     }
 }
 
+void scroll_up(void){
+	int32_t i;
+	for(i=0;i<NUM_ROWS*NUM_COLS-NUM_COLS;i++){
+			*(uint8_t*)(video_mem+(i<<1))= *(uint8_t *)(video_mem+((i+NUM_COLS)<<1));
+	}
+	for(i=NUM_ROWS*NUM_COLS-NUM_COLS;i<NUM_ROWS * NUM_COLS; i++){
+		*(uint8_t*)(video_mem+(i<<1))=' ';
+	}
+}
+
 void new_line(void){
-		screen_y++;
-		screen_x=0;
 	
+		if(screen_y== (NUM_ROWS-1)){
+			scroll_up();
+			screen_x=0;
+			move_cursor(screen_x, screen_y);
+		}else{
+			screen_y++;
+			screen_x=0;
+			move_cursor(screen_x, screen_y);
+		}
+}
+
+void reset_screen(void){
+		screen_y=0;
+		screen_x=0;
+		
+		move_cursor(screen_x,screen_y);
 }
 
 void back_space(void){
@@ -36,8 +60,16 @@ void back_space(void){
 			screen_x=0;
 	}
 	*(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = ' ';
-
+	move_cursor(screen_x, screen_y);
 	
+}
+
+void move_cursor(int screen_x, int screen_y){
+	int pos= screen_y*NUM_COLS+screen_x;
+	outb(0x0F,0x3D4);
+	outb((uint8_t)(pos&0xFF),0x3D5);
+	outb(0x0E,0x3D4);
+	outb((uint8_t)((pos>>8)&0xFF),0x3D5);
 }
 
 /* Standard printf().
@@ -194,6 +226,9 @@ void putc(uint8_t c) {
         screen_x %= NUM_COLS;
         screen_y = (screen_y + (screen_x / NUM_COLS)) % NUM_ROWS;
     }
+	
+	move_cursor(screen_x, screen_y);
+	
 }
 
 /* int8_t* itoa(uint32_t value, int8_t* buf, int32_t radix);

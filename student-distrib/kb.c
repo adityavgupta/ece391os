@@ -152,10 +152,14 @@ void keyboard_interrupt_handler(void){
 				
 				if(buf_index>=128){
 					is_finished=1;
-					printf("\n");
+					new_line();
 					clear_buf();
 				} else if(scan_code==CTRL){
-					
+						ctrl_pressed=1;
+				} else if(scan_code==L_CHAR && ctrl_pressed==1){
+					reset_screen();
+					clear_buf();
+					clear();
 				}else if(scan_code== BACK_SPACE){ 
 					buf[buf_index]=0;
 					buf_index--;
@@ -194,6 +198,9 @@ void keyboard_interrupt_handler(void){
         /* 0 is used ot indicate a off state */
 				shift_pressed = 0;
 				//printf(" Shift has been released ");
+			} else if(scan_code==CTRL+RECENT_RELEASE){
+					ctrl_pressed=0;
+					
 			}
 		}
 
