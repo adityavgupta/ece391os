@@ -73,7 +73,7 @@ void rtc_interrupt_handler(void){
  *    RETURN VALUE: 0 for success
  *    SIDE EFFECTS: Makes RTC rate 2Hz
  */
-uint32_t rtc_open(void){
+uint32_t rtc_open(const uint8_t* filename){
   unsigned long flags; /* Hold current flag values */
 
   /* Mask interrupts and save flags */
@@ -103,7 +103,7 @@ uint32_t rtc_open(void){
  *    RETURN VALUE:
  *    SIDE EFFECTS:
  */
-uint32_t rtc_close(){
+uint32_t rtc_close(int32_t fd){
   /* Do nothing for now, until virtualization is added */
   return 0;
 }
@@ -116,7 +116,7 @@ uint32_t rtc_close(){
  *    RETURN VALUE:
  *    SIDE EFFECTS:
  */
-uint32_t rtc_read(){
+uint32_t rtc_read(int32_t fd, void* buf, int32_t nbytes){
   unsigned long flags; /* Hold curent flag values */
 
   /* Block until an RTC interrupt occurs */
@@ -143,8 +143,10 @@ uint32_t rtc_read(){
  *    RETURN VALUE: 0 for success, or -1 for failure
  *    SIDE EFFECTS: Changes the frequency the RTC operates at
  */
-uint32_t rtc_write(uint32_t rate){
+uint32_t rtc_write(int32_t fd, const void* buf, int32_t nbytes){
   unsigned long flags; /* Hold current flag values */
+
+  int32_t rate = nbytes;
 
   /* Rate must be valid */
   if(rate > 15 || rate < 3){

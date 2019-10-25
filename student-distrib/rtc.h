@@ -23,16 +23,16 @@ void rtc_init(void);
 void rtc_interrupt_handler(void);
 
 /* RTC device driver open */
-uint32_t rtc_open(void);
+uint32_t rtc_open(const uint8_t* filename);
 
 /* RTC device driver close */
-uint32_t rtc_close();
+uint32_t rtc_close(int32_t fd);
 
 /* RTC device driver read */
-uint32_t rtc_read();
+uint32_t rtc_read(int32_t fd, void* buf, int32_t nbytes);
 
 /* Set the frequency of the RTC */
-uint32_t rtc_write(uint32_t rate);
+uint32_t rtc_write(int32_t fd, const void* buf, int32_t nbytes);
 
 #endif /* ASM */
 
