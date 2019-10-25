@@ -11,6 +11,7 @@
 #include "rtc.h"
 #include "kb.h"
 #include "paging.h"
+#include "terminal_driver.h"
 
 #define RUN_TESTS
 
@@ -174,6 +175,14 @@ void entry(unsigned long magic, unsigned long addr) {
 #ifdef RUN_TESTS
     /* Run tests */
   launch_tests();
+  unsigned char string[138];
+  int i=0;
+  for(i=0;i<138;i++){
+	 string[i]='a';
+  }
+  
+  string[137]=0;
+  write(string,sizeof(string));
 #endif
     /* Execute the first program ("shell") ... */
 
