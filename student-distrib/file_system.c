@@ -129,7 +129,7 @@ int32_t file_write(){
 
 int32_t dir_open(const uint8_t* filename){
   dentry_t dentry;
-  dentry_index = 1;
+  dentry_index = 0;
   read_dentry_by_name(filename, &dentry); //doesn't do anything yet...
   return 0;
 }
