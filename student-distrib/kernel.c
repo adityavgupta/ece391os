@@ -177,10 +177,11 @@ void entry(unsigned long magic, unsigned long addr) {
   
   unsigned char string[128];
   open();
-  read(string,2*sizeof(unsigned char));
+  int temp=read(string,128*sizeof(unsigned char));
   //printf("%c",string[0]);
-  puts(string);
-  //write(string,128*sizeof(unsigned char));
+  //puts(string);
+  putc('\n');
+  write(string,temp);
   
   
   
