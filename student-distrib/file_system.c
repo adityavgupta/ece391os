@@ -20,21 +20,21 @@ struct boot_struct{
   dentry_t dentries[63];
 };
 
-static boot_block_t boot_block;
+static boot_block_t* boot_block;
 static uint32_t* fs_start;//addr of file system start
 static uint32_t dentry_index;
 static uint32_t file_offset;
 static uint32_t cur_inode;
 
 void file_system_init(uint32_t* file_sys_start){
-  memcpy(&boot_block, file_sys_start, FOUR_KB);
+  boot_block = (boot_block_t*)file_sys_start;
   fs_start = file_sys_start;
 }
 
 dentry_t* find_dentry(const uint8_t* filename){
   int i;
-  for(i=0;i<boot_block.num_dentries;i++){
-    if(strncmp((const int8_t*)(boot_block.dentries[i].file_name),(const int8_t*)filename,32)==0)return &(boot_block.dentries[i]);
+  for(i=0;i<boot_block->num_dentries;i++){
+    if(strncmp((const int8_t*)(boot_block->dentries[i].file_name),(const int8_t*)filename,32)==0)return &(boot_block->dentries[i]);
   }
   return NULL;
 }
@@ -51,17 +51,15 @@ int32_t read_dentry_by_name(const uint8_t* filename, dentry_t* dentry){
 }
 
 int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry){
-  if(index>=boot_block.num_dentries)return -1; //index is greater than the number of files in directory, return -1 for FAIL
-  dentry_t *file_dentry = &boot_block.dentries[index];
+  if(index>=boot_block->num_dentries)return -1; //index is greater than the number of files in directory, return -1 for FAIL
+  dentry_t *file_dentry = &(boot_block->dentries[index]);
   // set dentry = file_dentry
-  strncpy((int8_t*)dentry, (int8_t*)file_dentry, strlen(file_dentry->file_name)); //copy file name, FIX MAGIC NUM
-  dentry->file_type = file_dentry->file_type;
-  dentry->inode_num = file_dentry->inode_num;
+  memcpy(dentry,file_dentry,sizeof(dentry_t));
   return 0;
 }
 
 int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length){
-  if(inode >= (boot_block.num_dentries-1) ) return -1;
+  if(inode >= (boot_block->num_dentries-1) ) return -1;
   uint32_t* inode_addr = (fs_start)+(FOUR_KB * (inode+1));
   uint32_t file_size;
   memcpy(&file_size,inode_addr,4); //get file size
@@ -75,7 +73,7 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
   uint32_t* num_addr = inode_addr + 4 +(4*(offset/FOUR_KB));
   memcpy(&dblock_num, num_addr,4);
 
-  uint32_t* dblock_addr = fs_start + (boot_block.num_inodes - 1)*FOUR_KB + (dblock_num*FOUR_KB);
+  uint32_t* dblock_addr = fs_start + (boot_block->num_inodes - 1)*FOUR_KB + (dblock_num*FOUR_KB);
   uint32_t copied_length =0;
   while(cur != end){
     uint32_t copyLength = (end - cur) > FOUR_KB?FOUR_KB - (cur % FOUR_KB):(end-cur);
@@ -84,7 +82,7 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
     copied_length+=copyLength;
     num_addr += 4;
     memcpy(&dblock_num, num_addr, 4);
-    dblock_addr = fs_start + (boot_block.num_inodes - 1)*FOUR_KB + (dblock_num*FOUR_KB);
+    dblock_addr = fs_start + (boot_block->num_inodes - 1)*FOUR_KB + (dblock_num*FOUR_KB);
 
   }
 
@@ -137,11 +135,11 @@ int32_t dir_close(){
 
 int32_t dir_read(int32_t fd, void* buf, int32_t nbytes){
   dentry_t dentry;
-  if(dentry_index >= boot_block.num_dentries) return 0;
+  if(dentry_index >= boot_block->num_dentries) return 0;
 	if(-1==read_dentry_by_index(dentry_index, &dentry))return -1;
-  strncpy(buf, dentry.file_name, strlen(dentry.file_name));//write file name to buf
+  strncpy((int8_t*)buf, (const int8_t*)dentry.file_name,32);//write file name to buf
   dentry_index++;
-  return strlen(dentry.file_name);
+  return strlen((const int8_t*)buf);
 }
 
 int32_t dir_write(){

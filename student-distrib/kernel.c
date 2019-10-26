@@ -173,14 +173,15 @@ void entry(unsigned long magic, unsigned long addr) {
     sti();
 
 #ifdef RUN_TESTS
+  clear();
   uint8_t buf[33];
   int32_t cnt;
   uint8_t testFile[]={'.'};
   dir_open((const uint8_t*)testFile);
   while (0 != (cnt = dir_read (5, (void*)buf, 32))) {
     if(cnt==-1)break;
-    buf[cnt]='\n';
     puts((int8_t*)buf);
+    printf("\n");
   }
   dir_close();
     /* Run tests */
