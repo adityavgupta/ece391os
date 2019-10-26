@@ -155,7 +155,8 @@ void entry(unsigned long magic, unsigned long addr) {
 
     /* Initialize RTC */
     rtc_init();
-    // set_rate(15);
+    uint8_t buf[1];
+    rtc_write(0, buf, 15);
 
     /* Initialize keyboard */
     keyboard_init();

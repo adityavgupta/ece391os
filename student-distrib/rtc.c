@@ -51,7 +51,7 @@ void rtc_interrupt_handler(void){
 
   rtc_interrupt = 1;
 
-  test_interrupts();
+  //test_interrupts();
 
   /* Read register C */
   outb(REGISTER_C, RTC_PORT0);
@@ -119,10 +119,12 @@ uint32_t rtc_close(int32_t fd){
 uint32_t rtc_read(int32_t fd, void* buf, int32_t nbytes){
   /* Reset interrupt flag */
   rtc_interrupt = 0;
-
+  printf("Wait for interrupt\n");
   /* Block until an RTC interrupt occurs */
-  while(!rtc_interrupt);
-
+  while(!rtc_interrupt){
+    printf("Waiting");
+  }
+  printf("\nInterrupt occured");
   /* Return success */
   return 0;
 }

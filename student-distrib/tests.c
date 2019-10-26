@@ -407,6 +407,12 @@ void rtc_test(){
 	// }
 }
 
+void rtc_read_test(){
+	clear();
+	uint8_t buf[1];
+	rtc_read(0, buf, 0);
+}
+
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
 /* Checkpoint 5 tests */
@@ -428,5 +434,6 @@ void launch_tests(){
   // divide_zero_test();
   // TEST_OUTPUT("page_directory_test", page_directory_test());
  	// TEST_OUTPUT("page_table_test", page_table_test());
-	rtc_test();
+	// rtc_test();
+	rtc_read_test();
 }
