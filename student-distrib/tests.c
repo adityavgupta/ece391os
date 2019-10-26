@@ -2,6 +2,7 @@
 #include "x86_desc.h"
 #include "lib.h"
 #include "paging.h"
+#include "kb.h"
 
 #define SYSCALL_NUM 0x80
 #define PASS 1
@@ -326,6 +327,57 @@ int page_table_test(){
 }
 
 /* Checkpoint 2 tests */
+
+void buffer_overflow_read(void) {
+  open();
+  unsigned char string[140];
+  
+  int temp = read(string, 140*sizeof(unsigned char));
+  
+  putc('\n');
+  // the write should just print out 128 characters
+  write(string, temp);
+  close();
+  
+  
+}
+
+
+
+void buffer_overflow_write(void) {
+  
+  
+  unsigned char string[160];
+  int i;
+  for(i=0;i<160;i++){
+    string[i]='a';
+  }
+  
+  //string[159]=;
+  open();
+  
+  write(string,160*sizeof(unsigned char));
+    
+  close();
+}
+
+
+
+void fang_lu_test_5(void){
+	
+	open();
+	unsigned char string[128];
+	
+	int temp=read(string,128*sizeof(unsigned char));
+	
+	write(string,temp);
+	close();
+}
+
+
+
+
+
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
 /* Checkpoint 5 tests */
@@ -333,6 +385,7 @@ int page_table_test(){
 
 /* Test suite entry point */
 void launch_tests(){
+	/*
 	TEST_OUTPUT("idt_test", idt_test());
 	// launch your tests here
   TEST_OUTPUT("idt_test2", idt_test_2());
@@ -347,4 +400,7 @@ void launch_tests(){
   // divide_zero_test();
   TEST_OUTPUT("page_directory_test", page_directory_test());
  	TEST_OUTPUT("page_table_test", page_table_test());
+	*/
+	//fang_lu_test_5();
+	buffer_overflow_read();
 }

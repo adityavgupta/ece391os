@@ -198,7 +198,17 @@ void entry(unsigned long magic, unsigned long addr) {
     putc(buf[i]);
   }
     /* Run tests */
-  //launch_tests();
+  launch_tests();
+  
+
+  
+  
+  
+  //puts(string);
+  
+  
+  
+  //write(string,sizeof(string));
 #endif
     /* Execute the first program ("shell") ... */
 
