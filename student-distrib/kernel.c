@@ -175,13 +175,7 @@ void entry(unsigned long magic, unsigned long addr) {
     /* Run tests */
   launch_tests();
   
-  unsigned char string[128];
-  open();
-  int temp=read(string,128*sizeof(unsigned char));
-  //printf("%c",string[0]);
-  //puts(string);
-  putc('\n');
-  write(string,temp);
+
   
   
   

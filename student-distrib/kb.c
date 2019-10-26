@@ -284,11 +284,6 @@ void keyboard_interrupt_handler(void){
         /* Checks to see if the shift key has been recently released or not */
 				//printf(" %d ",scan_code);
 				
-				if(buf_index>=128){
-					fuck_me=1;
-					clear_buf();
-				}
-				
 				if(scan_code==CTRL){
 						ctrl_pressed=1;
 				} else if(scan_code==L_CHAR && ctrl_pressed==1){
@@ -345,6 +340,11 @@ void keyboard_interrupt_handler(void){
 					ctrl_pressed=0;
 					
 			}
+		}
+		
+		if(buf_index>=128){
+					fuck_me=1;
+					clear_buf();
 		}
 
     /* Allow interrupts again */
