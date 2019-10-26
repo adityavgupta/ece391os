@@ -175,14 +175,19 @@ void entry(unsigned long magic, unsigned long addr) {
 #ifdef RUN_TESTS
     /* Run tests */
   launch_tests();
-  unsigned char string[138];
+  unsigned char string[180];
   int i=0;
-  for(i=0;i<138;i++){
-	 string[i]='a';
+  for(i=0;i<180;i++){
+	 string[i]='a'; 
   }
+  string[179]=0;
+  open();
+  write(string,180*sizeof(unsigned char));
+  //puts(string);
   
-  string[137]=0;
-  write(string,sizeof(string));
+  
+  
+  //write(string,sizeof(string));
 #endif
     /* Execute the first program ("shell") ... */
 

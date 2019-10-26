@@ -54,13 +54,21 @@ void reset_screen(void){
 		move_cursor(screen_x,screen_y);
 }
 
-void back_space(void){
+int back_space(void){
+	int return_value=0;
 	screen_x--;
 	if(screen_x<0){
 			screen_x=0;
+			return_value=-1;
 	}
 	*(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = ' ';
 	move_cursor(screen_x, screen_y);
+	return return_value;
+	
+}
+
+int far_right(void){
+		return screen_x>=79;
 	
 }
 

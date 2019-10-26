@@ -17,8 +17,15 @@
 
 
 extern volatile int is_finished;
-extern int buf_index;
 //extern unsigned char buf[128];
+
+unsigned long flags; /* Hold current flags */
+extern volatile unsigned char buf[128];
+extern volatile unsigned char prev_buf[128];
+extern volatile int is_finished;
+extern volatile int prev_index;
+extern volatile int buf_index;
+
 unsigned char shift_pressed = 0;
 unsigned char caps_lock=0;
 unsigned char ctrl_pressed=0;
@@ -98,6 +105,31 @@ unsigned char kbdus[256] =
     0,	/* All other keys are undefined */
 };
 
+int read(unsigned char* copy_buf,int nbytes){
+	
+
+	
+		is_finished=0;
+		
+		if(copy_buf==NULL){
+			return 0;
+		}
+		
+		while(is_finished==0){
+		}
+		
+		
+		if(nbytes< prev_index*(int)sizeof(unsigned char)){
+				memcpy((void*)copy_buf,(void*)prev_buf,nbytes);
+				return nbytes;	
+		} else{
+				memcpy((void*)copy_buf,(void*)prev_buf,prev_index*sizeof(unsigned char));
+				return prev_index*sizeof(unsigned char);
+		}
+		
+		
+}
+
 
 
 /*
@@ -111,6 +143,7 @@ unsigned char kbdus[256] =
 void keyboard_init(void){
     /* Enable keyboard IRQ on PIC */
 		enable_irq(IRQ_NUM);
+		buf[0]='\n';
 }
 
 /*
@@ -121,15 +154,22 @@ void keyboard_init(void){
  *    RETURN VALUE: none
  *    SIDE EFFECTS: Prints keyboard input to screen, and sends EOI
  */
+/*
+int should_stop(void){
+	
+		printf(" %d ",buf_index); 
+		if(buf[buf_index]=='\n' || buf_index==128){
+				return 1;
+		} else{
+				//printf("no\n");
+				return 0;
+		}
+}*/
+ 
 void keyboard_interrupt_handler(void){
-    unsigned long flags; /* Hold current flags */
-	extern unsigned char buf[128];
-	extern volatile int is_finished;
-	extern int buf_index;
 	//extern static int screen_x;
 	//extern static int screen_y;
 
-	extern int str_len_count;
     /* Mask interrupts and store flags */
     cli_and_save(flags);
     /* Mask IRQ on PIC */
@@ -140,6 +180,12 @@ void keyboard_interrupt_handler(void){
 
     /* Read the keyboard data buffer to get the current character */
 		uint8_t scan_code = inb(0x60);
+		
+		if((scan_code>=90 && scan_code<=128)||(scan_code>=(90+128))){
+			return;	
+		}
+		
+		
 		
 		//printf("%d\n",scan_code);
 
@@ -152,22 +198,26 @@ void keyboard_interrupt_handler(void){
 				
 				if(buf_index>=128){
 					is_finished=1;
-					new_line();
 					clear_buf();
-				} else if(scan_code==CTRL){
+				}
+				
+				if(scan_code==CTRL){
 						ctrl_pressed=1;
 				} else if(scan_code==L_CHAR && ctrl_pressed==1){
 					reset_screen();
 					clear_buf();
 					clear();
 				}else if(scan_code== BACK_SPACE){ 
+					
+					int temp=back_space();
+					
+					if(temp==0){
 					buf[buf_index]=0;
 					buf_index--;
 					if(buf_index<0){
 							buf_index=0;
 					}
-					
-					back_space();
+					}
 				}else if(scan_code==NEW_LINE){
 					//printf("\n");
 					new_line();
@@ -191,6 +241,9 @@ void keyboard_interrupt_handler(void){
 					putc(kbdus[scan_code]);
 					buf[buf_index]=kbdus[scan_code];
 					buf_index++;
+					if(far_right()){
+							new_line();
+					}
 				}
 		} else{
       /* If the key is recntly released gets rid of the shift_pressed flag */

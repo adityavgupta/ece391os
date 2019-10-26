@@ -10,6 +10,10 @@
 /* Enable keyboard interrupts */
 void keyboard_init(void);
 
+int should_stop(void);
+ 
+int read(unsigned char* copy_buf,int nbytes);
+ 
 /* Handler for keyboard interrupts */
 void keyboard_interrupt_handler(void);
 
