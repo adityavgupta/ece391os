@@ -13,6 +13,13 @@ void keyboard_init(void);
 int should_stop(void);
  
 int read(unsigned char* copy_buf,int nbytes);
+
+
+void open(void);
+int write(unsigned char* copy_buf,int nbytes);
+
+void clear_buf(void);
+
  
 /* Handler for keyboard interrupts */
 void keyboard_interrupt_handler(void);

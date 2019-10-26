@@ -2,7 +2,6 @@
 #include "x86_desc.h"
 #include "i8259.h"
 #include "lib.h"
-#include "terminal_driver.h"
 
 #define IRQ_NUM 1
 #define RECENT_RELEASE 0x80
@@ -19,13 +18,18 @@
 //extern unsigned char buf[128];
 int flag=0;
 unsigned long flags; /* Hold current flags */
-extern volatile unsigned char buf[128];
-extern volatile unsigned char prev_buf[128];
-extern volatile int is_finished;
-extern volatile int prev_index;
-extern volatile int buf_index;
+
 static volatile int fuck_me=0;
-extern int flag_1;
+//extern int flag_1;
+
+volatile unsigned char buf[128]={0}; // Buffer of size that is 128;
+volatile unsigned char prev_buf[128];
+volatile int is_finished=0;
+int volatile buf_index=0;
+int volatile prev_index=0;
+int flag_1=0;
+
+int str_len_count;
 
 unsigned char shift_pressed = 0;
 unsigned char caps_lock=0;
@@ -106,6 +110,83 @@ unsigned char kbdus[256] =
     0,	/* All other keys are undefined */
 };
 
+
+void clear_buf(void){
+		int buf_counter; 
+		
+		for(buf_counter=0; buf_counter<=128;buf_counter++){
+				prev_buf[buf_counter]=buf[buf_counter];
+				buf[buf_counter]=0;
+		}
+		prev_index=buf_index;
+		str_len_count=0;
+		buf_index=0;
+		//is_finished=0;
+}
+
+void open(void){
+		str_len_count=0;
+		buf_index=0;
+		is_finished=0;
+}
+
+
+void keyboard_helper(uint8_t scan_code){
+
+			
+				if(buf_index>=128){
+					//is_finished=1;
+					clear_buf();
+				}
+				if(scan_code=='\n'){
+					//printf("\n");
+					new_line();
+					buf[buf_index]=scan_code;
+					buf_index++;
+					clear_buf();
+				}
+				 else{
+					 
+
+				
+					putc(scan_code);
+					buf[buf_index]=scan_code;
+					buf_index++;
+					if(x_is_zero()){
+						new_line();
+
+					}
+				}
+
+
+}
+
+int write(unsigned char* copy_buf,int nbytes){
+	
+	int strlength=nbytes/sizeof(unsigned char);
+	
+	int i=0;
+	for(i=0;i<strlength;i++){
+		keyboard_helper(copy_buf[i]);
+	}
+	
+	
+	return -1;
+	
+}
+
+void close(void){
+		int i;
+		for(i=0;i<128;i++){
+			buf[i]=0; // Buffer of size that is 128;
+		}
+		is_finished=0;
+		buf_index=0;
+	
+}
+
+
+
 int read(unsigned char* copy_buf,int nbytes){
 		
 		//extern volatile int is_finished;
@@ -121,7 +202,9 @@ int read(unsigned char* copy_buf,int nbytes){
 
 		}
 		
-		prev_buf[0];
+		//printf("%c",prev_buf[0]);
+		
+		//printf("%d %d %d",nbytes,prev_index,buf_index);
 		
 		if(nbytes< prev_index*sizeof(unsigned char)){
 				memcpy(copy_buf,prev_buf,nbytes);

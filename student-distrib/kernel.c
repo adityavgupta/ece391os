@@ -11,7 +11,6 @@
 #include "rtc.h"
 #include "kb.h"
 #include "paging.h"
-#include "terminal_driver.h"
 
 #define RUN_TESTS
 
@@ -178,8 +177,9 @@ void entry(unsigned long magic, unsigned long addr) {
   
   unsigned char string[128];
   open();
-  read(string,128*sizeof(unsigned char));
-  printf("%s",string);
+  read(string,2*sizeof(unsigned char));
+  //printf("%c",string[0]);
+  puts(string);
   //write(string,128*sizeof(unsigned char));
   
   
