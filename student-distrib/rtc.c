@@ -3,7 +3,7 @@
 #include "i8259.h"
 
 /* Interrupt flag */
-asm volatile rtc_interrupt;
+volatile uint32_t rtc_interrupt;
 
 /*
  * rtc_init
