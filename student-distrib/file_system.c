@@ -59,21 +59,27 @@ int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry){
 }
 
 int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length){
-  if(inode >= (boot_block->num_dentries-1) ) return -1;
-  uint32_t* inode_addr = (fs_start)+(FOUR_KB * (inode+1));
+  // uint8_t* inode_addr = (uint8_t*)fs_start + FOUR_KB + (FOUR_KB * (inode));
+  // uint8_t dblock_num;
+  // uint8_t* num_addr = inode_addr + 4;
+  // memcpy(&dblock_num, num_addr, 4);
+  // uint8_t* dblock_addr = (uint8_t*)fs_start + FOUR_KB + (boot_block->num_inodes)*FOUR_KB + (dblock_num*FOUR_KB);
+  // memcpy(buf, dblock_addr, 20);
+
+  if(inode >= (boot_block->num_inodes) ) return -1;
+  uint8_t* inode_addr = (uint8_t*)fs_start+(FOUR_KB * (inode+1));
   uint32_t file_size;
   memcpy(&file_size,inode_addr,4); //get file size
 
   if(offset > file_size)
     return -1; //offset is outside of file range
 
-  uint32_t end=(offset+length)>file_size?file_size:offset+length;
+  uint32_t end = (offset+length)>file_size?file_size:offset+length;
   uint32_t dblock_num;
   uint32_t cur = offset;
-  uint32_t* num_addr = inode_addr + 4 +(4*(offset/FOUR_KB));
-  memcpy(&dblock_num, num_addr,4);
-
-  uint32_t* dblock_addr = fs_start + (boot_block->num_inodes - 1)*FOUR_KB + (dblock_num*FOUR_KB);
+  uint8_t* num_addr = inode_addr + 4 + (4*(offset/FOUR_KB));
+  memcpy(&dblock_num, num_addr, 4);
+  uint8_t* dblock_addr = (uint8_t*)fs_start + (boot_block->num_inodes + 1)*FOUR_KB + (dblock_num*FOUR_KB);
   uint32_t copied_length =0;
   while(cur != end){
     uint32_t copyLength = (end - cur) > FOUR_KB?FOUR_KB - (cur % FOUR_KB):(end-cur);
@@ -82,8 +88,8 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
     copied_length+=copyLength;
     num_addr += 4;
     memcpy(&dblock_num, num_addr, 4);
-    dblock_addr = fs_start + (boot_block->num_inodes - 1)*FOUR_KB + (dblock_num*FOUR_KB);
-
+    //printf("dblock_num: %d\n", dblock_num);
+    dblock_addr = (uint8_t*)fs_start + (boot_block->num_inodes + 1)*FOUR_KB + (dblock_num*FOUR_KB);
   }
 
   if((offset+length) > file_size){
@@ -95,7 +101,7 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 
 int32_t file_open(const uint8_t* filename){
   dentry_t file_dentry;
-  read_dentry_by_name(filename,&file_dentry);
+  read_dentry_by_name(filename, &file_dentry);
   file_offset = 0;
   cur_inode = file_dentry.inode_num;
   return 0;
