@@ -11,6 +11,7 @@
 #include "rtc.h"
 #include "kb.h"
 #include "paging.h"
+#include "file_system.h"
 
 #define RUN_TESTS
 
@@ -55,6 +56,7 @@ void entry(unsigned long magic, unsigned long addr) {
         int mod_count = 0;
         int i;
         module_t* mod = (module_t*)mbi->mods_addr;
+        file_system_init((uint32_t*)mod->mod_start);
         while (mod_count < mbi->mods_count) {
             printf("Module %d loaded at address: 0x%#x\n", mod_count, (unsigned int)mod->mod_start);
             printf("Module %d ends at address: 0x%#x\n", mod_count, (unsigned int)mod->mod_end);
@@ -170,10 +172,19 @@ void entry(unsigned long magic, unsigned long addr) {
     /* Turn on interrupts */
     sti();
 
-
 #ifdef RUN_TESTS
+  uint8_t buf[33];
+  int32_t cnt;
+  uint8_t testFile[]={'.'};
+  dir_open((const uint8_t*)testFile);
+  while (0 != (cnt = dir_read (5, (void*)buf, 32))) {
+    if(cnt==-1)break;
+    buf[cnt]='\n';
+    puts((int8_t*)buf);
+  }
+  dir_close();
     /* Run tests */
-  launch_tests();
+  //launch_tests();
 #endif
     /* Execute the first program ("shell") ... */
 
