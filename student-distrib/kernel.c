@@ -175,14 +175,15 @@ void entry(unsigned long magic, unsigned long addr) {
 #ifdef RUN_TESTS
     /* Run tests */
   launch_tests();
-  unsigned char string[180];
-  int i=0;
-  for(i=0;i<180;i++){
-	 string[i]='a'; 
-  }
-  string[179]=0;
+  
+
+  unsigned char string[]="asdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasd";
+
+
   open();
-  write(string,180*sizeof(unsigned char));
+
+  write(string,241*sizeof(unsigned char));
+  
   //puts(string);
   
   

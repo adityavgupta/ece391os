@@ -54,6 +54,10 @@ void reset_screen(void){
 		move_cursor(screen_x,screen_y);
 }
 
+int x_is_zero(void){
+		return screen_x==0;
+}
+
 int back_space(void){
 	int return_value=0;
 	screen_x--;

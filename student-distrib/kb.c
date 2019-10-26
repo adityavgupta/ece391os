@@ -18,13 +18,14 @@
 
 extern volatile int is_finished;
 //extern unsigned char buf[128];
-
+int flag=0;
 unsigned long flags; /* Hold current flags */
 extern volatile unsigned char buf[128];
 extern volatile unsigned char prev_buf[128];
 extern volatile int is_finished;
 extern volatile int prev_index;
 extern volatile int buf_index;
+extern int flag_1;
 
 unsigned char shift_pressed = 0;
 unsigned char caps_lock=0;
@@ -241,8 +242,9 @@ void keyboard_interrupt_handler(void){
 					putc(kbdus[scan_code]);
 					buf[buf_index]=kbdus[scan_code];
 					buf_index++;
-					if(far_right()){
-							new_line();
+					if(x_is_zero()){
+						new_line();
+
 					}
 				}
 		} else{

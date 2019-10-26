@@ -9,6 +9,7 @@ volatile unsigned char prev_buf[128];
 volatile int is_finished;
 int volatile buf_index;
 int volatile prev_index;
+int flag_1=0;
 
 int str_len_count;
 void clear_buf(void){
@@ -34,8 +35,9 @@ void open(void){
 
 void keyboard_helper(uint8_t scan_code){
 
+			
 				if(buf_index>=128){
-					is_finished=1;
+					//is_finished=1;
 					clear_buf();
 				}
 				if(scan_code=='\n'){
@@ -46,11 +48,15 @@ void keyboard_helper(uint8_t scan_code){
 					clear_buf();
 				}
 				 else{
+					 
+
+				
 					putc(scan_code);
 					buf[buf_index]=scan_code;
 					buf_index++;
-					if(far_right()){
-							new_line();
+					if(x_is_zero()){
+						new_line();
+
 					}
 				}
 
@@ -59,12 +65,13 @@ void keyboard_helper(uint8_t scan_code){
 
 int write(unsigned char* copy_buf,int nbytes){
 	
-	int strlength=strlen((char*)copy_buf);
+	int strlength=nbytes/sizeof(unsigned char);
 	
 	int i=0;
 	for(i=0;i<strlength;i++){
 		keyboard_helper(copy_buf[i]);
 	}
+	
 	
 	return -1;
 	
