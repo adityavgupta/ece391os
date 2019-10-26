@@ -2,7 +2,7 @@
 #include "rtc.h"
 #include "i8259.h"
 
-
+/* Interrupt flag */
 asm volatile rtc_interrupt;
 
 /*
@@ -117,19 +117,11 @@ uint32_t rtc_close(int32_t fd){
  *    SIDE EFFECTS:
  */
 uint32_t rtc_read(int32_t fd, void* buf, int32_t nbytes){
-  unsigned long flags; /* Hold curent flag values */
+  /* Reset interrupt flag */
+  rtc_interrupt = 0;
 
   /* Block until an RTC interrupt occurs */
-  while(!rtc_interrupt){
-    /* Block interrupts */
-    cli_and_save(flags);
-
-    /* Reset interrupt counter */
-    rtc_interrupt = 0;
-
-    /* Restore interrupts */
-    restore_flags(flags);
-  }
+  while(!rtc_interrupt);
 
   /* Return success */
   return 0;
