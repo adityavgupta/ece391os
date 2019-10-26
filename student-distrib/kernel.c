@@ -176,13 +176,13 @@ void entry(unsigned long magic, unsigned long addr) {
     /* Run tests */
   launch_tests();
   
-
-  unsigned char string[]="asdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasd";
-
-
+  unsigned char string[128];
   open();
-
-  write(string,241*sizeof(unsigned char));
+  read(string,128*sizeof(unsigned char));
+  printf("%s",string);
+  //write(string,128*sizeof(unsigned char));
+  
+  
   
   //puts(string);
   

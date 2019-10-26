@@ -6,7 +6,7 @@
 //extern unsigned char buf[128];
 volatile unsigned char buf[128]={0}; // Buffer of size that is 128;
 volatile unsigned char prev_buf[128];
-volatile int is_finished;
+volatile int is_finished=0;
 int volatile buf_index;
 int volatile prev_index;
 int flag_1=0;

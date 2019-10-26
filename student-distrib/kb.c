@@ -16,7 +16,6 @@
 
 
 
-extern volatile int is_finished;
 //extern unsigned char buf[128];
 int flag=0;
 unsigned long flags; /* Hold current flags */
@@ -25,6 +24,7 @@ extern volatile unsigned char prev_buf[128];
 extern volatile int is_finished;
 extern volatile int prev_index;
 extern volatile int buf_index;
+static volatile int fuck_me=0;
 extern int flag_1;
 
 unsigned char shift_pressed = 0;
@@ -107,24 +107,27 @@ unsigned char kbdus[256] =
 };
 
 int read(unsigned char* copy_buf,int nbytes){
-	
+		
+		//extern volatile int is_finished;
 
 	
-		is_finished=0;
+		//is_finished=0;
 		
 		if(copy_buf==NULL){
 			return 0;
 		}
 		
-		while(is_finished==0){
+		while(fuck_me==0){
+
 		}
 		
+		prev_buf[0];
 		
-		if(nbytes< prev_index*(int)sizeof(unsigned char)){
-				memcpy((void*)copy_buf,(void*)prev_buf,nbytes);
+		if(nbytes< prev_index*sizeof(unsigned char)){
+				memcpy(copy_buf,prev_buf,nbytes);
 				return nbytes;	
 		} else{
-				memcpy((void*)copy_buf,(void*)prev_buf,prev_index*sizeof(unsigned char));
+				memcpy(copy_buf,prev_buf,prev_index*sizeof(unsigned char));
 				return prev_index*sizeof(unsigned char);
 		}
 		
@@ -170,6 +173,7 @@ int should_stop(void){
 void keyboard_interrupt_handler(void){
 	//extern static int screen_x;
 	//extern static int screen_y;
+	extern volatile int is_finished;
 
     /* Mask interrupts and store flags */
     cli_and_save(flags);
@@ -198,7 +202,7 @@ void keyboard_interrupt_handler(void){
 				//printf(" %d ",scan_code);
 				
 				if(buf_index>=128){
-					is_finished=1;
+					fuck_me=1;
 					clear_buf();
 				}
 				
@@ -224,7 +228,8 @@ void keyboard_interrupt_handler(void){
 					new_line();
 					buf[buf_index]=kbdus[NEW_LINE];
 					buf_index++;
-					is_finished=1;
+					fuck_me=1;
+					//printf("\n%d\n",is_finished);
 					clear_buf();
 				}
 				else if(scan_code == (LEFT_SHIFT) || scan_code == (RIGHT_SHIFT)){
