@@ -34,6 +34,9 @@ uint32_t rtc_read(int32_t fd, void* buf, int32_t nbytes);
 /* Set the frequency of the RTC */
 uint32_t rtc_write(int32_t fd, const void* buf, int32_t nbytes);
 
+/* get rtc rate needed for desired frequency*/
+int32_t get_rate(int32_t freq)
+
 #endif /* ASM */
 
 #endif /* _RTC_H */

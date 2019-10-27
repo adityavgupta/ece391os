@@ -67,6 +67,25 @@ void rtc_interrupt_handler(void){
   enable_irq(RTC_IRQ_NUM);
 }
 
+
+/*
+ * get_rate
+ *    DESCRIPTION: get rtc rate for the desired frequency
+ *    INPUTS:
+        freq: desired frequency
+ *    OUTPUTS: none
+ *    RETURN VALUE: rate to set rtc to get the desired frequency
+ *    SIDE EFFECTS: None
+ */
+int32_t get_rate(int32_t freq){
+  int32_t rate=0;
+  while(freq>1){
+      freq/=2;
+      rate++;
+  }
+  return 15-rate;
+}
+
 /*
  * rtc_open
  *    DESCRIPTION: Initialize RTC frequency
@@ -78,6 +97,8 @@ void rtc_interrupt_handler(void){
 uint32_t rtc_open(const uint8_t* filename){
   unsigned long flags; /* Hold current flag values */
 
+  int32_t rate = get_rate(2); //get the rate needed to set frequency to 2 Hz
+
   /* Mask interrupts and save flags */
   cli_and_save(flags);
 
@@ -88,7 +109,7 @@ uint32_t rtc_open(const uint8_t* filename){
   outb(REGISTER_A, RTC_PORT0);
 
   /* Give the new rate to register A */
-  outb((prevA & 0xF0)| 15, RTC_PORT1);
+  outb((prevA & 0xF0)|rate , RTC_PORT1);
 
   /* Restore the interrupt flags */
   restore_flags(flags);
@@ -130,7 +151,6 @@ uint32_t rtc_read(int32_t fd, void* buf, int32_t nbytes){
   /* Return success */
   return 0;
 }
-
 /*
  * rtc_write
  *    DESCRIPTION: Change the RTC rate
@@ -142,7 +162,7 @@ uint32_t rtc_read(int32_t fd, void* buf, int32_t nbytes){
 uint32_t rtc_write(int32_t fd, const void* buf, int32_t nbytes){
   unsigned long flags; /* Hold current flag values */
 
-  int32_t rate = nbytes;
+  int32_t rate = get_rate(nbytes);
 
   /* Rate must be valid */
   if(rate > 15 || rate < 3){
