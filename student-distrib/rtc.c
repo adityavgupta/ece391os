@@ -52,8 +52,8 @@ void rtc_interrupt_handler(void){
   rtc_interrupt = 1;
 
   //test_interrupts();
-  // uint8_t c = 'f';
-  // putc(c);
+  uint8_t c = 'f';
+  putc(c);
 
   /* Read register C */
   outb(REGISTER_C, RTC_PORT0);
@@ -70,19 +70,24 @@ void rtc_interrupt_handler(void){
 
 /*
  * get_rate
- *    DESCRIPTION: get rtc rate for the desired frequency
+ *    DESCRIPTION: Get rtc rate for the desired frequency
  *    INPUTS: int32_t freq - desired frequency
  *    OUTPUTS: none
  *    RETURN VALUE: rate to set rtc to get the desired frequency
  *    SIDE EFFECTS: None
  */
 int32_t get_rate(int32_t freq){
-  int32_t rate=0;
-  while(freq>1){
-      freq/=2;
+  /* Rate of the RTC */
+  int32_t rate = 0;
+
+  /* Get log base 2 of the frequency */
+  while(freq > 1){
+      freq /= 2;
       rate++;
   }
-  return 15-rate;
+
+  /* Rate begins at 15, so must subtract */
+  return (15 - rate);
 }
 
 /*
@@ -96,7 +101,8 @@ int32_t get_rate(int32_t freq){
 uint32_t rtc_open(const uint8_t* filename){
   unsigned long flags; /* Hold current flag values */
 
-  int32_t rate = get_rate(2); //get the rate needed to set frequency to 2 Hz
+  /* Get the rate needed to set frequency to 2 Hz */
+  int32_t rate = get_rate(2);
 
   /* Mask interrupts and save flags */
   cli_and_save(flags);
