@@ -175,31 +175,32 @@ void entry(unsigned long magic, unsigned long addr) {
 #ifdef RUN_TESTS
   //clear();
   reset_screen();
-  uint8_t buf[33];
-  int32_t cnt;
-  uint8_t testFile[]={'.'};
-  dir_open((const uint8_t*)testFile);
-  while (0 != (cnt = dir_read (5, (void*)buf, 32))) {
-    if(cnt==-1)break;
-    puts((int8_t*)buf);
-    printf("\n");
-  }
-  dir_close();
+  // uint8_t buf[33];
+  // int32_t cnt;
+  // uint8_t testFile[]={'.'};
+  // dir_open((const uint8_t*)testFile);
+  // while (0 != (cnt = dir_read (5, (void*)buf, 32))) {
+  //   if(cnt==-1)break;
+  //   puts((int8_t*)buf);
+  //   printf("\n");
+  // }
+  // dir_close();
 
   // int8_t buf[10000];
-  // uint8_t name[] = "testprint";
+  // uint8_t name[] = "frame1.txt";
   // uint32_t size;
   // int i;
   // file_open(name);
   // if((size = file_read(69, buf, 10000)) == -1){
   //   printf("Error\n");
   // }
+  // file_close(name);
   // buf[10000] = '\0';
   // for(i=0; i<size; i++){
   //   putc(buf[i]);
   // }
     /* Run tests */
-  //launch_tests();
+  launch_tests();
 
 
 

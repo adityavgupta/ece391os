@@ -3,6 +3,7 @@
 #include "lib.h"
 #include "paging.h"
 #include "kb.h"
+#include "file_system.h"
 
 #define SYSCALL_NUM 0x80
 #define PASS 1
@@ -331,52 +332,79 @@ int page_table_test(){
 void buffer_overflow_read(void) {
   open();
   unsigned char string[140];
-  
+
   int temp = read(string, 140*sizeof(unsigned char));
-  
+
   putc('\n');
   // the write should just print out 128 characters
   write(string, temp);
   close();
-  
-  
+
+
 }
 
 
 
 void buffer_overflow_write(void) {
-  
-  
+
+
   unsigned char string[160];
   int i;
   for(i=0;i<160;i++){
     string[i]='a';
   }
-  
+
   //string[159]=;
   open();
-  
+
   write(string,160*sizeof(unsigned char));
-    
+
   close();
 }
 
 
 
 void fang_lu_test_5(void){
-	
+
 	open();
 	unsigned char string[128];
-	
+
 	int temp=read(string,128*sizeof(unsigned char));
-	
+
 	write(string,temp);
 	close();
 }
 
 
+void read_file_test(){
+	int8_t buf[10000];
+  uint8_t name[] = "cat";
+  volatile uint32_t size;
+  int i;
+  file_open(name);
+  if((size = file_read(69, buf, 10000)) == -1){
+    printf("Error\n");
+  }
+  file_close(name);
+  buf[10000] = '\0';
+  for(i=0; i<size; i++){
+    putc(buf[i]);
+  }
+	//puts(buf);
+}
 
-
+void dir_read_test(){
+	uint8_t buf[33];
+  int32_t cnt;
+  uint8_t testFile[]={'.'};
+  dir_open((const uint8_t*)testFile);
+  while (0 != (cnt = dir_read (5, (void*)buf, 32))) {
+    if(cnt==-1)break;
+    puts((int8_t*)buf);
+    printf("\n");
+  }
+  dir_close();
+}
 
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
@@ -402,5 +430,7 @@ void launch_tests(){
  	TEST_OUTPUT("page_table_test", page_table_test());
 	*/
 	//fang_lu_test_5();
-	buffer_overflow_read();
+	//buffer_overflow_read();
+	read_file_test();
+	//dir_read_test();
 }

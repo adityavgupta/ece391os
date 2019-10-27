@@ -27,6 +27,7 @@ static uint32_t file_offset;
 static uint32_t cur_inode;
 
 void file_system_init(uint32_t* file_sys_start){
+  printf("%x\n", file_sys_start);
   boot_block = (boot_block_t*)file_sys_start;
   fs_start = file_sys_start;
 }
