@@ -413,6 +413,8 @@ void rtc_read_test(){
 	clear();
 	uint8_t buf[1];
 	rtc_read(0, buf, 0);
+}
+
 void buffer_overflow_read(void) {
   open();
   unsigned char string[140];
