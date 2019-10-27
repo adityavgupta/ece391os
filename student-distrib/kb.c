@@ -38,7 +38,7 @@ static volatile int line_buffer_flag=ZERO; // Flag whether or not the line buffe
 volatile unsigned char buf[BUFF_LENGTH]={ZERO}; // Buffer of size that is 128;
 volatile unsigned char prev_buf[BUFF_LENGTH]; //Stores the elements prevous stored in the buffer for the read function
 
-static nt volatile buf_index=ZERO; //Index of the current element in the buffer
+static int volatile buf_index=ZERO; //Index of the current element in the buffer
 static int volatile prev_index=ZERO; //Previous index to indicates where in length
 int flag_1=ZERO; //These two variables are redundant will remove later
 
