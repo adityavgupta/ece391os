@@ -38,8 +38,8 @@ static volatile int fuck_me=ZERO; // Flag whether or not the line buffer can be 
 volatile unsigned char buf[BUFF_LENGTH]={ZERO}; // Buffer of size that is 128;
 volatile unsigned char prev_buf[BUFF_LENGTH]; //Stores the elements prevous stored in the buffer for the read function
 
-int volatile buf_index=ZERO; //Index of the current element in the buffer
-int volatile prev_index=ZERO; //Previous index to indicates where in length
+static int volatile buf_index=ZERO; //Index of the current element in the buffer
+static int volatile prev_index=ZERO; //Previous index to indicates where in length
 int flag_1=ZERO; //These two variables are redundant will remove later
 
 int str_len_count;
@@ -178,9 +178,9 @@ void keyboard_helper(uint8_t scan_code){
            putc(scan_code); //Print sthe character to the screen
            buf[buf_index]=scan_code; //Puts the value into the buffer
            buf_index++;
-           if(x_is_zero()){ //Puts to new line if at end of the line
+           /*if(x_is_zero()){ //Puts to new line if at end of the line
              new_line();
-           }
+           }*/
 				}
 }
 
@@ -401,6 +401,9 @@ void keyboard_interrupt_handler(void){
 					buf[buf_index]=kbdus[scan_code];
 					buf_index++;
 
+					// if(x_is_zero()){ //If at the end sets the new line
+					// 	new_line();
+					// }
 
 			}
 			else if(caps_no_shift() && in_char_range(scan_code)){ //
@@ -408,17 +411,30 @@ void keyboard_interrupt_handler(void){
 					buf[buf_index]=kbdus[scan_code+CAP_OFFSET];
 					buf_index++;
 
+					// if(x_is_zero()){ //if at the end of the line sets the new line
+					// 	new_line();
+          //
+					// }
 			}
 			else if((shift_pressed==ONE)){
 					putc(kbdus[scan_code+CAP_OFFSET]); //90 is the offset required to obtain the capital letters
 					buf[buf_index]=kbdus[scan_code+CAP_OFFSET];
 					buf_index++;
+
+					// if(x_is_zero()){ //if at the end of the line sets the new line
+					// 	new_line();
+          //
+					// }
 			}
 
       else{
         putc(kbdus[scan_code]); //Print sht escan code to the screen
 				buf[buf_index]=kbdus[scan_code];
 				buf_index++;
+
+        // if(x_is_zero()){ //If at the end sets the new line
+				// 		new_line();
+				// }
 
 			}
 
