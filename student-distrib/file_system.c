@@ -2,24 +2,6 @@
 #include "lib.h"
 
 #define FOUR_KB 4096
-#define NAME_LENGTH
-
-/* Directory entry struct */
-struct dentry_struct{
-  uint8_t file_name[NAME_LENGTH];
-  uint32_t file_type;
-  uint32_t inode_num;
-  uint32_t reserved24[6];
-};
-
-/* Boot block struct */
-struct boot_struct{
-  uint32_t num_dentries;
-  uint32_t num_inodes;
-  uint32_t num_dblocks;
-  uint32_t reserved52[13];
-  dentry_t dentries[63];
-};
 
 static boot_block_t* boot_block;
 static uint32_t* fs_start;
