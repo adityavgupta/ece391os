@@ -5,6 +5,9 @@
 /* Interrupt flag */
 volatile uint32_t rtc_interrupt;
 
+/* Flag to allow prints for test cases */
+uint32_t rtc_test_flag = 0;
+
 /*
  * rtc_init
  *    DESCRIPTION: Initializes RTC
@@ -52,8 +55,10 @@ void rtc_interrupt_handler(void){
   rtc_interrupt = 1;
 
   //test_interrupts();
-  uint8_t c = 'f';
-  putc(c);
+  if(rtc_test_flag){
+    uint8_t c = 'f';
+    putc(c);
+  }
 
   /* Read register C */
   outb(REGISTER_C, RTC_PORT0);

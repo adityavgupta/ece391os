@@ -331,6 +331,7 @@ int page_table_test(){
 /* Checkpoint 2 tests */
 
 void rtc_test(){
+	rtc_test_flag = 1;
 	uint8_t buf[1];
 	uint32_t count = 0;
   clear();
@@ -340,48 +341,48 @@ void rtc_test(){
 	while(count < 1000000000){
 		count++;
 	}
-	// clear();
-  // reset_screen();
-	// rtc_write(0, buf, 4);
-	// count = 0;
-	// while(count < 1000){
-	// 	count++;
-	// }
-	// clear();
-  // reset_screen();
-	// rtc_write(0, buf, 8);
-	// count = 0;
-	// while(count < 1000000000){
-	// 	count++;
-	// }
-	// clear();
-  // reset_screen();
-	// rtc_write(0, buf, 16);
-	// count = 0;
-	// while(count < 1000000000){
-	// 	count++;
-	// }
-	// clear();
-  // reset_screen();
-	// rtc_write(0, buf, 32);
-	// count = 0;
-	// while(count < 1000000000){
-	// 	count++;
-	// }
-	// clear();
-  // reset_screen();
-	// rtc_write(0, buf, 64);
-	// count = 0;
-	// while(count < 1000000000){
-	// 	count++;
-	// }
-	// clear();
-  // reset_screen();
-	// rtc_write(0, buf, 128);
-	// count = 0;
-	// while(count < 1000000000){
-	// 	count++;
-	// }
+	clear();
+  reset_screen();
+	rtc_write(0, buf, 4);
+	count = 0;
+	while(count < 1000){
+		count++;
+	}
+	clear();
+  reset_screen();
+	rtc_write(0, buf, 8);
+	count = 0;
+	while(count < 1000000000){
+		count++;
+	}
+	clear();
+  reset_screen();
+	rtc_write(0, buf, 16);
+	count = 0;
+	while(count < 1000000000){
+		count++;
+	}
+	clear();
+  reset_screen();
+	rtc_write(0, buf, 32);
+	count = 0;
+	while(count < 1000000000){
+		count++;
+	}
+	clear();
+  reset_screen();
+	rtc_write(0, buf, 64);
+	count = 0;
+	while(count < 1000000000){
+		count++;
+	}
+	clear();
+  reset_screen();
+	rtc_write(0, buf, 128);
+	count = 0;
+	while(count < 1000000000){
+		count++;
+	}
   clear();
 	reset_screen();
 	rtc_write(0, buf, 256);
@@ -389,40 +390,46 @@ void rtc_test(){
 	while(count < 1000000000){
 		count++;
 	}
-	// clear();
-  // reset_screen();
-	// rtc_write(0, buf, 512);
-	// count = 0;
-	// while(count < 1000000000){
-	// 	count++;
-	// }
-	// clear();
-  // reset_screen();
-	// rtc_write(0, buf, 1024);
-	// count = 0;
-	// while(count < 1000000000){
-	// 	count++;
-	// }
-	// clear();
-  // reset_screen();
-	// rtc_write(0, buf, 2048);
-	// count = 0;
-	// while(count < 1000000000){
-	// 	count++;
-	// }
-	// clear();
-  // reset_screen();
-	// rtc_write(0, buf, 4096);
-	// count = 0;
-	// while(count < 1000000000){
-	// 	count++;
-	// }
+	clear();
+  reset_screen();
+	rtc_write(0, buf, 512);
+	count = 0;
+	while(count < 1000000000){
+		count++;
+	}
+	clear();
+  reset_screen();
+	rtc_write(0, buf, 1024);
+	count = 0;
+	while(count < 1000000000){
+		count++;
+	}
+	clear();
+  reset_screen();
+	rtc_write(0, buf, 2048);
+	count = 0;
+	while(count < 1000000000){
+		count++;
+	}
+	clear();
+  reset_screen();
+	rtc_write(0, buf, 4096);
 }
-
 
 void rtc_read_test(){
 	uint8_t buf[1];
 	rtc_read(0, buf, 0);
+}
+
+void rtc_open_test(){
+	rtc_test_flag = 1;
+	uint32_t count = 0;
+	while(count < 100000000){
+		count++;
+	}
+	printf("\nrtc_open called\n");
+	uint8_t n[] = "hello";
+	rtc_open(n);
 }
 
 /*
@@ -434,22 +441,22 @@ void rtc_read_test(){
 */
 void write_ret_val(void){
   open();
-   unsigned char string[128]; 
+   unsigned char string[128];
   int i;
   for(i=0;i<128;i++){
   	string[i]='a';
   }
-  
+
   int ret_val= write(string,12*sizeof(unsigned char));
-  
+
   if(ret_val==12*sizeof(unsigned char)){
-  	TEST_OUTPUT("write_ret_val",PASS);  
+  	TEST_OUTPUT("write_ret_val",PASS);
   } else{
     TEST_OUTPUT("write_ret_val",FAIL);
   }
 	  close();
 }
-    
+
 
 /* read_ret _val
  * Description- Test the return value fr the read function
@@ -461,17 +468,17 @@ void write_ret_val(void){
 void read_ret_val(void){
   open();
    unsigned char string[128];
-  
+
   int ret_val= read(string,sizeof(unsigned char));
-  
+
   //printf("%d\n",ret_val);
-  
+
   if(ret_val==sizeof(unsigned char)){
-  	TEST_OUTPUT("read_ret_val",PASS);  
+  	TEST_OUTPUT("read_ret_val",PASS);
   } else{
     TEST_OUTPUT("read_ret_val",FAIL);
   }
-    
+
   close();
 }
 
@@ -484,18 +491,18 @@ void read_ret_val(void){
  */
 void write_null(void){
   	open();
-  	unsigned char* string=NULL;  
-  	
+  	unsigned char* string=NULL;
+
   int ret_val=write(string,sizeof(unsigned char));
-  
-  
+
+
   //printf("%d",ret_val);
   if(ret_val==-1){
-  	TEST_OUTPUT("write_null",PASS);  
+  	TEST_OUTPUT("write_null",PASS);
   } else{
     TEST_OUTPUT("write_null",FAIL);
   }
-  
+
     close();
 }
 
@@ -508,16 +515,16 @@ void write_null(void){
  */
 void read_null(void){
   open();
-  
+
   unsigned char string[128];
   int ret_val=read(string,sizeof(unsigned char));
   //printf("%d",ret_val);
   if(ret_val==0){
-  	TEST_OUTPUT("read_null",PASS);  
+  	TEST_OUTPUT("read_null",PASS);
   } else{
     TEST_OUTPUT("read_null",FAIL);
   }
-  
+
   close();
 }
 
@@ -596,7 +603,7 @@ void buffer_overflow_write(void) {
 }
 
 /* press_enter_test
- * Description- Test the read and write buffer for the case that 
+ * Description- Test the read and write buffer for the case that
  * Inputs- None
  * Outputs- None
  * Return Value- None
@@ -704,12 +711,43 @@ void launch_tests(){
   // divide_zero_test();
   // TEST_OUTPUT("page_directory_test", page_directory_test());
   // TEST_OUTPUT("page_table_test", page_table_test());
+
+	/* Checkpoint 2 tests */
 	//fang_lu_test_5();
 	//buffer_write();
 	// file_index_test(0);
 	// file_index_test(1);
-  //uint8_t name[] = "cat";
+  //uint8_t name[] = "frame0.txt";
 	//read_file_test(name);
+	//uint8_t name[] = "frame1.txt";
+	//read_file_test(name);
+	//uint8_t name[] = "verylargetextwithverylongname.txt";
+	//read_file_test(name);
+	//uint8_t name[] = "cat";
+	//read_file_test(name);
+	//uint8_t name[] = "fish";
+	//read_file_test(name);
+	//uint8_t name[] = "counter";
+	//read_file_test(name);
+	//uint8_t name[] = "grep";
+	//read_file_test(name);
+	//uint8_t name[] = "hello";
+	//read_file_test(name);
+	//uint8_t name[] = "ls";
+	//read_file_test(name);
+	//uint8_t name[] = "pingpong";
+	//read_file_test(name);
+	//uint8_t name[] = "shell";
+	//read_file_test(name);
+	//uint8_t name[] = "sigtest";
+	//read_file_test(name);
+	//uint8_t name[] = "syserr";
+	//read_file_test(name);
+	//uint8_t name[] = "testprint";
+	//read_file_test(name);
+	//rtc_test();
+	// rtc_read_test();
+	rtc_open_test();
 	//fread_fail_test();
 	//dread_fail_test();
 }
