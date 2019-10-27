@@ -11,6 +11,7 @@
 #include "rtc.h"
 #include "kb.h"
 #include "paging.h"
+#include "file_system.h"
 
 #define RUN_TESTS
 
@@ -55,6 +56,7 @@ void entry(unsigned long magic, unsigned long addr) {
         int mod_count = 0;
         int i;
         module_t* mod = (module_t*)mbi->mods_addr;
+        file_system_init((uint32_t*)mod->mod_start);
         while (mod_count < mbi->mods_count) {
             printf("Module %d loaded at address: 0x%#x\n", mod_count, (unsigned int)mod->mod_start);
             printf("Module %d ends at address: 0x%#x\n", mod_count, (unsigned int)mod->mod_end);
@@ -154,8 +156,7 @@ void entry(unsigned long magic, unsigned long addr) {
     enable_irq(2);
 
     /* Initialize RTC */
-    // rtc_init();
-    // set_rate(15);
+    rtc_init();
 
     /* Initialize keyboard */
     keyboard_init();
@@ -170,8 +171,8 @@ void entry(unsigned long magic, unsigned long addr) {
     /* Turn on interrupts */
     sti();
 
-
 #ifdef RUN_TESTS
+  reset_screen();
     /* Run tests */
   launch_tests();
 #endif
