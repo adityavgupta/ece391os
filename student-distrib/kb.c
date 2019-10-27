@@ -112,8 +112,8 @@ unsigned char kbdus[256] =
 
 
 void clear_buf(void){
-		int buf_counter; 
-		
+		int buf_counter;
+
 		for(buf_counter=0; buf_counter<=128;buf_counter++){
 				prev_buf[buf_counter]=buf[buf_counter];
 				buf[buf_counter]=0;
@@ -133,7 +133,7 @@ void open(void){
 
 void keyboard_helper(uint8_t scan_code){
 
-			
+
 				if(buf_index>=128){
 					//is_finished=1;
 					clear_buf();
@@ -146,9 +146,9 @@ void keyboard_helper(uint8_t scan_code){
 					clear_buf();
 				}
 				 else{
-					 
 
-				
+
+
 					putc(scan_code);
 					buf[buf_index]=scan_code;
 					buf_index++;
@@ -162,17 +162,17 @@ void keyboard_helper(uint8_t scan_code){
 }
 
 int write(unsigned char* copy_buf,int nbytes){
-	
+
 	int strlength=nbytes/sizeof(unsigned char);
-	
+
 	int i=0;
 	for(i=0;i<strlength;i++){
 		keyboard_helper(copy_buf[i]);
 	}
-	
-	
+
+
 	return -1;
-	
+
 }
 
 void close(void){
@@ -182,39 +182,39 @@ void close(void){
 		}
 		is_finished=0;
 		buf_index=0;
-	
+
 }
 
 
 
 int read(unsigned char* copy_buf,int nbytes){
-		
+
 		//extern volatile int is_finished;
 
-	
+
 		//is_finished=0;
-		
+
 		if(copy_buf==NULL){
 			return 0;
 		}
-		
+
 		while(fuck_me==0){
 
 		}
-		
+
 		//printf("%c",prev_buf[0]);
-		
+
 		//printf("%d %d %d",nbytes,prev_index,buf_index);
-		
+
 		if(nbytes< prev_index*sizeof(unsigned char)){
-				memcpy(copy_buf,prev_buf,nbytes);
-				return nbytes;	
+				memcpy((void*)copy_buf,(const void*) prev_buf,nbytes);
+				return nbytes;
 		} else{
-				memcpy(copy_buf,prev_buf,prev_index*sizeof(unsigned char));
+				memcpy((void*) copy_buf,(const void*) prev_buf,prev_index*sizeof(unsigned char));
 				return prev_index*sizeof(unsigned char);
 		}
-		
-		
+
+
 }
 
 
@@ -243,8 +243,8 @@ void keyboard_init(void){
  */
 /*
 int should_stop(void){
-	
-		printf(" %d ",buf_index); 
+
+		printf(" %d ",buf_index);
 		if(buf[buf_index]=='\n' || buf_index==128){
 				return 1;
 		} else{
@@ -252,7 +252,7 @@ int should_stop(void){
 				return 0;
 		}
 }*/
- 
+
 void keyboard_interrupt_handler(void){
 	//extern static int screen_x;
 	//extern static int screen_y;
@@ -268,13 +268,13 @@ void keyboard_interrupt_handler(void){
 
     /* Read the keyboard data buffer to get the current character */
 		uint8_t scan_code = inb(0x60);
-		
+
 		if((scan_code>=90 && scan_code<=128)||(scan_code>=(90+128))){
-			return;	
+			return;
 		}
-		
-		
-		
+
+
+
 		//printf("%d\n",scan_code);
 
     /* Test if the character is to be printed or not */
@@ -283,17 +283,17 @@ void keyboard_interrupt_handler(void){
 				//putc(kbdus[scan_code]);
         /* Checks to see if the shift key has been recently released or not */
 				//printf(" %d ",scan_code);
-				
+
 				if(scan_code==CTRL){
 						ctrl_pressed=1;
 				} else if(scan_code==L_CHAR && ctrl_pressed==1){
 					reset_screen();
 					clear_buf();
 					clear();
-				}else if(scan_code== BACK_SPACE){ 
-					
+				}else if(scan_code== BACK_SPACE){
+
 					int temp=back_space();
-					
+
 					if(temp==0){
 					buf[buf_index]=0;
 					buf_index--;
@@ -338,10 +338,10 @@ void keyboard_interrupt_handler(void){
 				//printf(" Shift has been released ");
 			} else if(scan_code==CTRL+RECENT_RELEASE){
 					ctrl_pressed=0;
-					
+
 			}
 		}
-		
+
 		if(buf_index>=128){
 					fuck_me=1;
 					clear_buf();
