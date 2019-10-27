@@ -330,7 +330,16 @@ int page_table_test(){
 
 /* Checkpoint 2 tests */
 
-void rtc_test(){
+/*
+ * rtc_write_test
+ *		ASSERTS: RTC write changes the frequency
+ *		INPUTS: None
+ *    OUTPUTS: RTC clock
+ *		SIDE EFFECTS: None
+ *		COVERAGE: RTC Driver
+ *		FILES: rtc.c
+ */
+void rtc_write_test(){
 	rtc_test_flag = 1;
 	uint8_t buf[1];
 	uint32_t count = 0;
@@ -416,11 +425,29 @@ void rtc_test(){
 	rtc_write(0, buf, 4096);
 }
 
+/*
+ * rtc_read_test
+ *		ASSERTS: RTC read waits for rtc interrupt
+ *		INPUTS: None
+ *    OUTPUTS: When RTC waiting stops
+ *		SIDE EFFECTS: None
+ *		COVERAGE: RTC Drivers
+ *		FILES: rtc.c
+ */
 void rtc_read_test(){
 	uint8_t buf[1];
 	rtc_read(0, buf, 0);
 }
 
+/*
+ * rtc_open_test
+ *		ASSERTS: RTC open sets the frequency to 2Hz
+ *		INPUTS: None
+ *    OUTPUTS: Default RTC speed and 2Hz RTC speed
+ *		SIDE EFFECTS: None
+ *		COVERAGE: RTC Driver
+ *		FILES: rtc.c
+ */
 void rtc_open_test(){
 	rtc_test_flag = 1;
 	uint32_t count = 0;
@@ -745,7 +772,7 @@ void launch_tests(){
 	//read_file_test(name);
 	//uint8_t name[] = "testprint";
 	//read_file_test(name);
-	//rtc_test();
+	//rtc_write_test();
 	// rtc_read_test();
 	rtc_open_test();
 	//fread_fail_test();
