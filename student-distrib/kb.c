@@ -152,10 +152,10 @@ void keyboard_helper(uint8_t scan_code){
 					putc(scan_code);
 					buf[buf_index]=scan_code;
 					buf_index++;
-					if(x_is_zero()){
-						new_line();
-
-					}
+					// if(x_is_zero()){
+					// 	new_line();
+          //
+					// }
 				}
 
 
@@ -325,10 +325,10 @@ void keyboard_interrupt_handler(void){
 					putc(kbdus[scan_code]);
 					buf[buf_index]=kbdus[scan_code];
 					buf_index++;
-					if(x_is_zero()){
-						new_line();
-
-					}
+					// if(x_is_zero()){
+					// 	new_line();
+          //
+					// }
 				}
 		} else{
       /* If the key is recntly released gets rid of the shift_pressed flag */

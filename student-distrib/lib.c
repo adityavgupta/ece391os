@@ -6,7 +6,7 @@
 #define VIDEO       0xB8000
 #define NUM_COLS    80
 #define NUM_ROWS    25
-#define ATTRIB      0x7
+#define ATTRIB      0x2
 
 static int screen_x;
 static int screen_y;
@@ -26,16 +26,17 @@ void clear(void) {
 
 void scroll_up(void){
 	int32_t i;
-	for(i=0;i<NUM_ROWS*NUM_COLS-NUM_COLS;i++){
+	for(i=0; i<NUM_ROWS*NUM_COLS-NUM_COLS; i++){
 			*(uint8_t*)(video_mem+(i<<1))= *(uint8_t *)(video_mem+((i+NUM_COLS)<<1));
+      *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
 	}
-	for(i=NUM_ROWS*NUM_COLS-NUM_COLS;i<NUM_ROWS * NUM_COLS; i++){
+	for(i=NUM_ROWS*NUM_COLS-NUM_COLS; i<NUM_ROWS * NUM_COLS; i++){
 		*(uint8_t*)(video_mem+(i<<1))=' ';
+    *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
 	}
 }
 
 void new_line(void){
-	
 		if(screen_y== (NUM_ROWS-1)){
 			scroll_up();
 			screen_x=0;
@@ -50,7 +51,7 @@ void new_line(void){
 void reset_screen(void){
 		screen_y=0;
 		screen_x=0;
-		
+
 		move_cursor(screen_x,screen_y);
 }
 
@@ -68,12 +69,12 @@ int back_space(void){
 	*(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = ' ';
 	move_cursor(screen_x, screen_y);
 	return return_value;
-	
+
 }
 
 int far_right(void){
 		return screen_x>=79;
-	
+
 }
 
 void move_cursor(int screen_x, int screen_y){
@@ -235,12 +236,15 @@ void putc(uint8_t c) {
         *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = c;
         *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
         screen_x++;
+        if(screen_x == NUM_COLS){
+          new_line();
+        }
         screen_x %= NUM_COLS;
         screen_y = (screen_y + (screen_x / NUM_COLS)) % NUM_ROWS;
     }
-	
+
 	move_cursor(screen_x, screen_y);
-	
+
 }
 
 /* int8_t* itoa(uint32_t value, int8_t* buf, int32_t radix);

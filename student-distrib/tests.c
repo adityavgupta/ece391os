@@ -331,11 +331,11 @@ int page_table_test(){
 /* Checkpoint 2 tests */
 
 void rtc_test(){
-	TEST_HEADER;
+	//TEST_HEADER;
 
 	uint8_t buf[1];
 	uint32_t count = 0;
-	clear();
+	reset_screen();
 	rtc_write(0, buf, 14);
 	count = 0;
 	while(count < 1000000000){
@@ -377,7 +377,7 @@ void rtc_test(){
 	// while(count < 1000){
 	// 	count++;
 	// }
-	clear();
+	reset_screen();
 	rtc_write(0, buf, 7);
 	count = 0;
 	while(count < 1000){
@@ -410,7 +410,6 @@ void rtc_test(){
 }
 
 void rtc_read_test(){
-	clear();
 	uint8_t buf[1];
 	rtc_read(0, buf, 0);
 }
@@ -464,7 +463,7 @@ void fang_lu_test_5(void){
 
 void read_file_test(){
 	int8_t buf[10000];
-  uint8_t name[] = "cat";
+  uint8_t name[] = "hello";
   volatile uint32_t size;
   int i;
   file_open(name);
@@ -500,8 +499,7 @@ void dir_read_test(){
 /* Test suite entry point */
 void launch_tests(){
 	// TEST_OUTPUT("idt_test", idt_test());
-	/*
-	TEST_OUTPUT("idt_test", idt_test());
+	//TEST_OUTPUT("idt_test", idt_test());
 	// launch your tests here
   // TEST_OUTPUT("idt_test2", idt_test_2());
   // TEST_OUTPUT("idt_test3", idt_test_3());
@@ -515,11 +513,10 @@ void launch_tests(){
   // divide_zero_test();
   // TEST_OUTPUT("page_directory_test", page_directory_test());
  	// TEST_OUTPUT("page_table_test", page_table_test());
-	// rtc_test();
-	rtc_read_test();
-  TEST_OUTPUT("page_directory_test", page_directory_test());
- 	TEST_OUTPUT("page_table_test", page_table_test());
-	*/
+ 	// rtc_test();
+	//rtc_read_test();
+  //TEST_OUTPUT("page_directory_test", page_directory_test());
+ 	//TEST_OUTPUT("page_table_test", page_table_test());
 	//fang_lu_test_5();
 	//buffer_overflow_read();
 	read_file_test();

@@ -52,6 +52,8 @@ void rtc_interrupt_handler(void){
   rtc_interrupt = 1;
 
   //test_interrupts();
+  // uint8_t c = 'f';
+  // putc(c);
 
   /* Read register C */
   outb(REGISTER_C, RTC_PORT0);

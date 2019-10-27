@@ -157,8 +157,8 @@ void entry(unsigned long magic, unsigned long addr) {
 
     /* Initialize RTC */
     rtc_init();
-    uint8_t buf[1];
-    rtc_write(0, buf, 15);
+    uint8_t n[] = "hello";
+    rtc_open(n);
 
     /* Initialize keyboard */
     keyboard_init();
