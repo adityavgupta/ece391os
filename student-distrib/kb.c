@@ -32,13 +32,13 @@
 int flag=ZERO; // this is longer needed
 unsigned long flags; /* Hold current flags */
 
-static volatile int fuck_me=ZERO; // Flag whether or not the line buffer can be written to the screen or not
+static volatile int line_buffer_flag=ZERO; // Flag whether or not the line buffer can be written to the screen or not
 //extern int flag_1;
 
 volatile unsigned char buf[BUFF_LENGTH]={ZERO}; // Buffer of size that is 128;
 volatile unsigned char prev_buf[BUFF_LENGTH]; //Stores the elements prevous stored in the buffer for the read function
 
-static int volatile buf_index=ZERO; //Index of the current element in the buffer
+static nt volatile buf_index=ZERO; //Index of the current element in the buffer
 static int volatile prev_index=ZERO; //Previous index to indicates where in length
 int flag_1=ZERO; //These two variables are redundant will remove later
 
@@ -178,9 +178,9 @@ void keyboard_helper(uint8_t scan_code){
            putc(scan_code); //Print sthe character to the screen
            buf[buf_index]=scan_code; //Puts the value into the buffer
            buf_index++;
-           /*if(x_is_zero()){ //Puts to new line if at end of the line
+           if(x_is_zero()){ //Puts to new line if at end of the line
              new_line();
-           }*/
+           }
 				}
 }
 
@@ -233,11 +233,11 @@ void close(void){
  * */
 int read(unsigned char* copy_buf,int nbytes){
 
-		fuck_me=ZERO; //Sets the flag for determining whether the flag is finished
+		line_buffer_flag=ZERO; //Sets the flag for determining whether the flag is finished
 		if(copy_buf==NULL){ //If a null pointer was placed retruns 0 bytes
 			return ZERO;
 		}
-		while(fuck_me==ZERO){ //spins until the line has finsied being typed by the keyboard handler
+		while(line_buffer_flag==ZERO){ //spins until the line has finsied being typed by the keyboard handler
 
 		}
 
@@ -271,18 +271,6 @@ void keyboard_init(void){
 		//buf[0]='\n';
 }
 
-
-/*
-int should_stop(void){
-
-		printf(" %d ",buf_index);
-		if(buf[buf_index]=='\n' || buf_index==128){
-				return 1;
-		} else{
-				//printf("no\n");
-				return 0;
-		}
-}*/
 
 /* Some helper funstions for keyboard_interrupt_handler*/
 
@@ -321,6 +309,181 @@ int caps_no_shift (void) {
 int in_char_range (uint8_t scan_code) {
   return ((scan_code>= Q_CHAR && scan_code<=P_CHAR)||(scan_code>=A_CHAR && scan_code<=L_CHAR)||(scan_code>=Z_CHAR &&scan_code<=M_CHAR));
 }
+
+/*
+ * ctrl_l_exec
+ *    DESCRIPTION: Executes when ctrl+l is pressed
+ *    INPUTS: none
+ *    OUTPUTS: none
+ *    RETURN VALUE: none
+ *    SIDE EFFECTS: cleares the screen
+ */
+void ctrl_l_exec (void) {
+  reset_screen(); //resets the screen and clears the buffer and the screen
+  clear_buf();
+  clear();
+}
+
+/*
+ * backspace_exec
+ *    DESCRIPTION: Executes when backspace is pressed
+ *    INPUTS: none
+ *    OUTPUTS: none
+ *    RETURN VALUE: none
+ *    SIDE EFFECTS: deletes the character previously typed
+ */
+void backspace_exec (void) {
+  int temp=back_space(); //tests to see if the back_space has reached the beginning of the line or not
+  if(temp==ZERO){ //deletes the buffer variable during the back space if it is allowed
+    buf[buf_index]=ZERO;
+    buf_index--;
+
+    if(buf_index<ZERO){
+        buf_index=ZERO;
+    }
+  }
+}
+
+/*
+ * new_line_exec
+ *    DESCRIPTION: Executes when enter is pressed
+ *    INPUTS: none
+ *    OUTPUTS: none
+ *    RETURN VALUE: none
+ *    SIDE EFFECTS: change to new line on hitting enter
+ */
+void new_line_exec () {
+  new_line(); //Goes to new line scrolls if necessary
+  buf[buf_index]=kbdus[NEW_LINE]; //Places the new line in the buffer
+  buf_index++;
+  line_buffer_flag=ONE;  //Sets the flag to one to let the read stop spinning
+  clear_buf(); //Clears the buffer
+}
+
+/*
+ * caps_and_shift_exec
+ *    DESCRIPTION: Executes when caps and shift are pressed together
+ *    INPUTS: uint32_t scan_code - scan_code of the key pressed
+ *    OUTPUTS: none
+ *    RETURN VALUE: none
+ *    SIDE EFFECTS: prints the matching characters of the scan_code when caps and shift are pressed
+ */
+void caps_and_shift_exec (uint8_t scan_code) {
+  putc(kbdus[scan_code]);
+  buf[buf_index]=kbdus[scan_code];
+  buf_index++;
+}
+
+/*
+ * caps_no_shift_exec
+ *    DESCRIPTION: Executes when caps is pressed and no shift
+ *    INPUTS: uint32_t scan_code - scan_code of the key pressed
+ *    OUTPUTS: none
+ *    RETURN VALUE: none
+ *    SIDE EFFECTS: prints the matching characters of the scan_code when caps is pressed and no shift
+ */
+void caps_no_shift_exec (uint8_t scan_code) {
+  putc(kbdus[scan_code+CAP_OFFSET]); //90 is the offset required to obtain the capital letters
+  buf[buf_index]=kbdus[scan_code+CAP_OFFSET];
+  buf_index++;
+}
+
+/*
+ * shift_exec
+ *    DESCRIPTION: Executes when shift is pressed
+ *    INPUTS: uint32_t scan_code - scan_code of the key pressed
+ *    OUTPUTS: none
+ *    RETURN VALUE: none
+ *    SIDE EFFECTS: prints the matching characters of the scan_code when shift is pressed
+ */
+void shift_exec (uint8_t scan_code) {
+  putc(kbdus[scan_code+CAP_OFFSET]); //90 is the offset required to obtain the capital letters
+  buf[buf_index]=kbdus[scan_code+CAP_OFFSET];
+  buf_index++;
+}
+
+/*
+ * print_scancode
+ *    DESCRIPTION: prints the scan_code
+ *    INPUTS: uint32_t scan_code - scan_code of the key pressed
+ *    OUTPUTS: none
+ *    RETURN VALUE: none
+ *    SIDE EFFECTS: prints the matching characters of the scan_code
+ */
+void print_scancode (uint8_t scan_code) {
+  putc(kbdus[scan_code]); //Prints this scan code to the screen
+  buf[buf_index]=kbdus[scan_code];
+  buf_index++;
+}
+
+/*
+ * recent_release_exec
+ *    DESCRIPTION: Executes when scan_code < RECENT_RELEASE. Handles the different scan_codes
+ *    INPUTS: uint32_t scan_code - scan_code of the key pressed
+ *    OUTPUTS: none
+ *    RETURN VALUE: none
+ *    SIDE EFFECTS:
+ */
+void recent_release_exec (uint8_t scan_code) {
+  if(scan_code==CTRL){ //If the CTRL button is pressed
+    ctrl_pressed=ONE;
+  }
+  // ctrl+l
+  else if(ctrl_l(scan_code)) {
+    ctrl_l_exec ();
+  }
+  else if(scan_code== BACK_SPACE){
+    backspace_exec ();
+  }
+  else if(scan_code==NEW_LINE){
+    new_line_exec ();
+  }
+  else if(scan_code == (LEFT_SHIFT) || scan_code == (RIGHT_SHIFT)){
+    /* Sets shift_pressed to 1. Used ot indicate an on state */
+    shift_pressed = ONE;
+  }
+  else if(scan_code==CAPS_LOCK){
+    // Mod 2 is so the values of capslock flip between 0 or 1
+    caps_lock=(caps_lock+ONE)%2;
+  }
+  // caps and shift are pressed and it is a letter
+  else if(caps_and_shift() && in_char_range(scan_code)){
+      caps_and_shift_exec (scan_code);
+  }
+  // caps on, shift off and it is a letter
+  else if(caps_no_shift() && in_char_range(scan_code)){
+      caps_no_shift_exec (scan_code);
+  }
+
+  else if((shift_pressed==ONE)){
+      shift_exec (scan_code);
+  }
+  else{
+    print_scancode (scan_code);
+  }
+}
+
+/*
+ * after_release_exec
+ *    DESCRIPTION: Executes when scan_code >= RECENT_RELEASE.
+ *    INPUTS: uint32_t scan_code - scan_code of the key pressed
+ *    OUTPUTS: none
+ *    RETURN VALUE: none
+ *    SIDE EFFECTS: Resets the flags for ctrl and shift to zero.
+ */
+void after_release_exec (uint8_t scan_code) {
+  /* If the key is recntly released gets rid of the shift_pressed flag */
+  if(scan_code == LEFT_SHIFT+RECENT_RELEASE || scan_code == RIGHT_SHIFT+RECENT_RELEASE ){
+
+    /* 0 is used ot indicate a off state */
+    shift_pressed = ZERO;
+  }
+  else if(scan_code==CTRL+RECENT_RELEASE){
+      ctrl_pressed=ZERO;
+  }
+}
+
+
 /*
  * keyboard_interrupt_handler
  *    DESCRIPTION: Handler for keyboard interrupts
@@ -330,8 +493,6 @@ int in_char_range (uint8_t scan_code) {
  *    SIDE EFFECTS: Prints keyboard input to screen, and sends EOI
  */
 void keyboard_interrupt_handler(void){
-	//extern static int screen_x;
-	//extern static int screen_y;
 
     /* Mask interrupts and store flags */
     cli_and_save(flags); //Masks the falgs and disable the interrupts
@@ -349,116 +510,18 @@ void keyboard_interrupt_handler(void){
 			return;
 		}
 
-
-		//printf("%d %d",caps_lock,shift_pressed);
-		//printf("%d\n",scan_code);
-
     /* Test if the character is to be printed or not */
 		if(scan_code < RECENT_RELEASE){//Tests to see whether the key is being presed versus being released
-
-      if(scan_code==CTRL){ //If the CTRL button is pressed
-        ctrl_pressed=ONE;
-      }
-
-      else if(ctrl_l(scan_code)) {
-        reset_screen(); //resets the screen and clears the buffer and the screen
-        clear_buf();
-        clear();
-      }
-
-      else if(scan_code== BACK_SPACE){
-
-        int temp=back_space(); //tests to see if the back_space has reached the beginning of the line or not
-        if(temp==ZERO){ //deletes the buffer variable during the back space if it is allowed
-          buf[buf_index]=ZERO;
-					buf_index--;
-
-          if(buf_index<ZERO){
-							buf_index=ZERO;
-					}
-				}
-			}
-      else if(scan_code==NEW_LINE){
-					new_line(); //Goes to new line scrolls if necessary
-					buf[buf_index]=kbdus[NEW_LINE]; //Places the new line in the buffer
-					buf_index++;
-					fuck_me=ONE;  //Sets the flag to one to let the read stop spinning
-					clear_buf(); //Clears the buffer
-			}
-      else if(scan_code == (LEFT_SHIFT) || scan_code == (RIGHT_SHIFT)){
-        /* Sets to shift pressed to be pressed 1 is used ot indicate an on state */
-				shift_pressed = ONE; //Sets to one in teh event hat shift is pressed
-				//printf(" Shift has been pressed ");
-			}
-
-      else if(scan_code==CAPS_LOCK){ //Flips between one and 0 for when capslock is pressed
-					caps_lock=(caps_lock+ONE)%2; // the two is mode is so the values are between 0 or 1
-					//printf(" %d ",caps_lock);
-			}
-
-      else if(caps_and_shift() && in_char_range(scan_code)){
-					putc(kbdus[scan_code]); //Print sht escan code to the screen
-					buf[buf_index]=kbdus[scan_code];
-					buf_index++;
-
-					// if(x_is_zero()){ //If at the end sets the new line
-					// 	new_line();
-					// }
-
-			}
-			else if(caps_no_shift() && in_char_range(scan_code)){ //
-					putc(kbdus[scan_code+CAP_OFFSET]); //90 is the offset required to obtain the capital letters
-					buf[buf_index]=kbdus[scan_code+CAP_OFFSET];
-					buf_index++;
-
-					// if(x_is_zero()){ //if at the end of the line sets the new line
-					// 	new_line();
-          //
-					// }
-			}
-			else if((shift_pressed==ONE)){
-					putc(kbdus[scan_code+CAP_OFFSET]); //90 is the offset required to obtain the capital letters
-					buf[buf_index]=kbdus[scan_code+CAP_OFFSET];
-					buf_index++;
-
-					// if(x_is_zero()){ //if at the end of the line sets the new line
-					// 	new_line();
-          //
-					// }
-			}
-
-      else{
-        putc(kbdus[scan_code]); //Print sht escan code to the screen
-				buf[buf_index]=kbdus[scan_code];
-				buf_index++;
-
-        // if(x_is_zero()){ //If at the end sets the new line
-				// 		new_line();
-				// }
-
-			}
-
+      recent_release_exec (scan_code);
 		}
-
     else{
-      /* If the key is recntly released gets rid of the shift_pressed flag */
-			if(scan_code == LEFT_SHIFT+RECENT_RELEASE || scan_code == RIGHT_SHIFT+RECENT_RELEASE ){
-
-        /* 0 is used ot indicate a off state */
-        shift_pressed = ZERO;
-				//printf(" Shift has been released ");
-			}
-
-      else if(scan_code==CTRL+RECENT_RELEASE){
-					ctrl_pressed=ZERO;
-			}
+      after_release_exec (scan_code);
 		}
 
 		if(buf_index>=BUFF_LENGTH){
-					fuck_me=ONE; //Sets the flag for the event the buf_index is great than the buffer length
+					line_buffer_flag=ONE; //Sets the flag for the event the buf_index is great than the buffer length
 					clear_buf(); // Clears the buffer
 		}
-
     /* Allow interrupts again */
 		restore_flags(flags);
     /* Unmask the IRQ1 on the PIC */
