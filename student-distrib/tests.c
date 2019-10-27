@@ -329,6 +329,90 @@ int page_table_test(){
 
 /* Checkpoint 2 tests */
 
+void rtc_test(){
+	//TEST_HEADER;
+
+	uint8_t buf[1];
+	uint32_t count = 0;
+	reset_screen();
+	rtc_write(0, buf, 14);
+	count = 0;
+	while(count < 1000000000){
+		count++;
+	}
+	// clear();
+	// rtc_write(0, buf, 13);
+	// count = 0;
+	// while(count < 1000){
+	// 	count++;
+	// }
+	// clear();
+	// rtc_write(0, buf, 12);
+	// count = 0;
+	// while(count < 1000){
+	// 	count++;
+	// }
+	// clear();
+	// rtc_write(0, buf, 11);
+	// count = 0;
+	// while(count < 1000){
+	// 	count++;
+	// }
+	// clear();
+	// rtc_write(0, buf, 10);
+	// count = 0;
+	// while(count < 1000){
+	// 	count++;
+	// }
+	// clear();
+	// rtc_write(0, buf, 9);
+	// count = 0;
+	// while(count < 1000){
+	// 	count++;
+	// }
+	// clear();
+	// rtc_write(0, buf, 8);
+	// count = 0;
+	// while(count < 1000){
+	// 	count++;
+	// }
+	reset_screen();
+	rtc_write(0, buf, 7);
+	count = 0;
+	while(count < 1000){
+		count++;
+	}
+	// clear();
+	// rtc_write(0, buf, 6);
+	// count = 0;
+	// while(count < 1000){
+	// 	count++;
+	// }
+	// clear();
+	// rtc_write(0, buf, 5);
+	// count = 0;
+	// while(count < 1000){
+	// 	count++;
+	// }
+	// clear();
+	// rtc_write(0, buf, 4);
+	// count = 0;
+	// while(count < 1000){
+	// 	count++;
+	// }
+	// clear();
+	// rtc_write(0, buf, 3);
+	// count = 0;
+	// while(count < 1000){
+	// 	count++;
+	// }
+}
+
+void rtc_read_test(){
+	uint8_t buf[1];
+	rtc_read(0, buf, 0);
+}
+
 void buffer_write(void){
 	open();
 	unsigned char string[]="I love Srijan";
