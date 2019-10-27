@@ -71,8 +71,7 @@ void rtc_interrupt_handler(void){
 /*
  * get_rate
  *    DESCRIPTION: get rtc rate for the desired frequency
- *    INPUTS:
-        freq: desired frequency
+ *    INPUTS: int32_t freq - desired frequency
  *    OUTPUTS: none
  *    RETURN VALUE: rate to set rtc to get the desired frequency
  *    SIDE EFFECTS: None
