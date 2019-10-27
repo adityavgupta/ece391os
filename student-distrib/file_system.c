@@ -18,7 +18,10 @@ static uint32_t cur_inode = -1;
  *    SIDE EFFECTS: Adds a boot_block_t pointer to the start of the file system
  */
 void file_system_init(uint32_t* file_sys_start){
+  /* Create a boot block pointer to access boot block values */
   boot_block = (boot_block_t*)file_sys_start;
+
+  /* Store starting address of the file system */
   fs_start = file_sys_start;
 }
 
@@ -31,12 +34,18 @@ void file_system_init(uint32_t* file_sys_start){
  *    SIDE EFFECTS: none
  */
 dentry_t* find_dentry(const uint8_t* filename){
-  int i;
+  int i; /* Loop variable */
+
+  /* Go through all dentries */
   for(i = 0; i < boot_block->num_dentries; i++){
+    /* Check if dentry matches the filename */
     if(strncmp((const int8_t*)(boot_block->dentries[i].file_name), (const int8_t*)filename, NAME_LENGTH) == 0){
+      /* Return address of the dentry */
       return &(boot_block->dentries[i]);
     }
   }
+
+  /* Dentry not found */
   return NULL;
 }
 
@@ -50,16 +59,20 @@ dentry_t* find_dentry(const uint8_t* filename){
  *    SIDE EFFECTS: none
  */
 int32_t read_dentry_by_name(const uint8_t* filename, dentry_t* dentry){
+  /* Get a pointer to the correct dentry */
   dentry_t *file_dentry = find_dentry(filename);
+
+  /* Check if filename was valid */
   if(file_dentry == NULL){
     return -1;
   }
 
-  // set dentry = file_dentry
-  strncpy((int8_t*)dentry, (int8_t*)file_dentry, NAME_LENGTH); //copy file name, FIX MAGIC NUM
+  /* Copy the file name, file type, and inode number to the given dentry */
+  strncpy((int8_t*)dentry, (int8_t*)file_dentry, NAME_LENGTH);
   dentry->file_type = file_dentry->file_type;
   dentry->inode_num = file_dentry->inode_num;
 
+  /* Return success */
   return 0;
 }
 
@@ -73,14 +86,21 @@ int32_t read_dentry_by_name(const uint8_t* filename, dentry_t* dentry){
  *    SIDE EFFECTS: none
  */
 int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry){
+  /* Check if index is greater than the number of files in directory */
   if(index >= boot_block->num_dentries){
-    //index is greater than the number of files in directory, return -1 for FAIL
+    /* Return failure */
     return -1;
   }
-  dentry_t* file_dentry = &(boot_block->dentries[index]);
-  // set dentry = file_dentry
-  memcpy(dentry, file_dentry, sizeof(dentry_t));
 
+  /* Pointer to the dentry at the given index */
+  dentry_t* file_dentry = &(boot_block->dentries[index]);
+
+  /* Copy the file name, file type, and inode number to the given dentry */
+  strncpy((int8_t*)dentry, (int8_t*)file_dentry, NAME_LENGTH);
+  dentry->file_type = file_dentry->file_type;
+  dentry->inode_num = file_dentry->inode_num;
+
+  /* Return success */
   return 0;
 }
 
@@ -96,42 +116,70 @@ int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry){
  *    SIDE EFFECTS: none
  */
 int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length){
+  /* Check for a valid inode */
   if(inode >= (boot_block->num_inodes)){
+    /* Return failure */
     return -1;
   }
+
+  /* Address of given inode */
   uint8_t* inode_addr = (uint8_t*)fs_start+(FOUR_KB * (inode+1));
+  
+  /* Size of file */
   uint32_t file_size;
-  memcpy(&file_size,inode_addr,4); //get file size
 
+  /* Get the size of the file */
+  memcpy(&file_size, inode_addr, 4);
+
+  /* Check for a valid offset */
   if(offset > file_size){
-    //offset is outside of file range
+    /* Return failure */
     return -1;
   }
 
-  uint32_t end = (offset+length)>file_size?file_size:offset+length;
-  uint32_t dblock_num;
-  uint32_t cur = offset;
-  uint8_t* num_addr = inode_addr + 4 + (4*(offset/FOUR_KB));
-  memcpy(&dblock_num, num_addr, 4);
-  uint8_t* dblock_addr = (uint8_t*)fs_start + (boot_block->num_inodes + 1)*FOUR_KB + (dblock_num*FOUR_KB);
-  uint32_t copied_length =0;
+  /* Ending point in the file  */
+  uint32_t end = (offset + length) > file_size ? file_size : offset + length;
 
+  /* Current data block number */
+  uint32_t dblock_num;
+
+  /* Current point in the file */
+  uint32_t cur = offset;
+
+  /* Get the current dblock number */
+  uint8_t* num_addr = inode_addr + 4 + (4 * (offset / FOUR_KB));
+  memcpy(&dblock_num, num_addr, 4);
+
+  /* Address of the dblock */
+  uint8_t* dblock_addr = (uint8_t*)fs_start + (boot_block->num_inodes + 1)*FOUR_KB + (dblock_num*FOUR_KB);
+
+  /* Total amount of data copied */
+  uint32_t copied_length = 0;
+
+  /* Loop until the end point is reached */
   while(cur != end){
-    uint32_t copyLength = (end - cur) > FOUR_KB?FOUR_KB - (cur % FOUR_KB):(end-cur);
-    memcpy(buf+copied_length, dblock_addr+ (cur % FOUR_KB), copyLength);
+    /* Amount copied per iteration: either the of the dblock or the set end point */
+    uint32_t copyLength = (end - cur) > FOUR_KB ? FOUR_KB - (cur % FOUR_KB) : (end - cur);
+
+    /* Copy to the buffer */
+    memcpy(buf + copied_length, dblock_addr + (cur % FOUR_KB), copyLength);
+
+    /* Update current point in the file */
     cur += copyLength;
-    copied_length+=copyLength;
+
+    /* Update amount copied */
+    copied_length += copyLength;
+
+    /* Get next dblock number */
     num_addr += 4;
     memcpy(&dblock_num, num_addr, 4);
-    //printf("dblock_num: %d\n", dblock_num);
+
+    /* Get the address of the next dblock */
     dblock_addr = (uint8_t*)fs_start + (boot_block->num_inodes + 1)*FOUR_KB + (dblock_num*FOUR_KB);
   }
 
-  if((offset+length) > file_size){
-    length -= (offset+length) - file_size;
-  }
-
-  return length;
+  /* Number of byte read */
+  return copied_length;
 }
 
 /*
@@ -139,14 +187,24 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
  *    DESCRIPTION: Opens a file and stores the file info
  *    INPUTS: const uint8_t* filename - the file to open
  *    OUTPUTS: none
- *    RETURN VALUE: 0 for success
+ *    RETURN VALUE: 0 for success, -1 for failure
  *    SIDE EFFECTS: Initializes the file offset to 0 and stores the current inode number
  */
 int32_t file_open(const uint8_t* filename){
+  /* Dentry struct to copy to */
   dentry_t file_dentry;
-  read_dentry_by_name(filename, &file_dentry);
+
+  /* Read dentry, and check for valid file name */
+  if(read_dentry_by_name(filename, &file_dentry) == -1){
+    /* Return failure */
+    return -1;
+  }
+
+  /* Initialize the file offset, and set the current inode number */
   file_offset = 0;
   cur_inode = file_dentry.inode_num;
+
+  /* Return success */
   return 0;
 }
 
@@ -159,8 +217,11 @@ int32_t file_open(const uint8_t* filename){
  *    SIDE EFFECTS: Sets the current inode number to -1 and offset to 0
  */
 int32_t file_close(void){
+  /* Update offset and inode number to indicate no file is open */
   cur_inode = -1;
   file_offset = 0;
+
+  /* Return success */
   return 0;
 }
 
@@ -175,14 +236,24 @@ int32_t file_close(void){
  *    SIDE EFFECTS: Updates the current file offset
  */
 int32_t file_read(int32_t fd, void* buf, uint32_t num_bytes){
+  /* Check if a file is open */
   if(cur_inode == -1){
     return -1;
   }
-  int read_ret = 0;
+
+  /* Number of bytes read */
+  int read_ret;
+
+  /* Read data, and check if file reading worked */
   if((read_ret = read_data(cur_inode, file_offset, (uint8_t*)buf, num_bytes)) == -1){
+    /* Return failure */
     return -1;
   }
+
+  /* Update point in file */
   file_offset += num_bytes;
+
+  /* Number of bytes read */
 	return read_ret;
 }
 
@@ -208,9 +279,16 @@ int32_t file_write(void){
  *    SIDE EFFECTS: Sets the current index of the dentry to 0
  */
 int32_t dir_open(const uint8_t* filename){
+  /* Dentry struct to copy to */
   dentry_t dentry;
+
+  /* Initial index into directory is 0 */
   dentry_index = 0;
+
+  /* Read the directory */
   read_dentry_by_name(filename, &dentry);
+
+  /* Return success */
   return 0;
 }
 
@@ -241,20 +319,33 @@ int32_t dir_close(void){
  *    SIDE EFFECTS: Increments the dentry index to the next file
  */
 int32_t dir_read(int32_t fd, void* buf, int32_t nbytes){
+  /* Dentry struct to copy to */
   dentry_t dentry;
 
+  /* Check for a valid index */
   if(dentry_index == -1){
+    /* Return failure */
     return -1;
   }
+
+  /* Check if directory is done reading */
   if(dentry_index >= boot_block->num_dentries){
+    /* Return success */
     return 0;
   }
+
+  /* Read dentry at the index, and check if read worked */
 	if(-1 == read_dentry_by_index(dentry_index, &dentry)){
     return -1;
   }
-  //write file name to buf
+
+  /* Copy the file name to the buffer */
   strncpy((int8_t*)buf, (const int8_t*)dentry.file_name, NAME_LENGTH);
+
+  /* Go to the next entry */
   dentry_index++;
+
+  /* Number of bytes wirtten is length of file name */
   return NAME_LENGTH;
 }
 
