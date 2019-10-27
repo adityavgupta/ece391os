@@ -6,7 +6,17 @@
 #define VIDEO       0xB8000
 #define NUM_COLS    80
 #define NUM_ROWS    25
-#define ATTRIB      0x2
+#define ATTRIB      0x7
+
+/* Some helpful constants for the terminal driver*/
+#define START_SC_X  0
+#define START_SC_Y  0
+#define COL_END     79
+#define PORT_3D4		0x3D4
+#define PORT_3D5    0x3D5
+#define ZERO				0
+#define MINUS_ONE   -1
+#define L_SHIFT     1
 
 static int screen_x;
 static int screen_y;
@@ -24,65 +34,101 @@ void clear(void) {
     }
 }
 
+/* scroll_up
+ * Inputs: void
+ * Outputs: none
+ * Effects: scrolls up the screen by one row when end of screen is reached
+ * */
 void scroll_up(void){
 	int32_t i;
-	for(i=0; i<NUM_ROWS*NUM_COLS-NUM_COLS; i++){
-			*(uint8_t*)(video_mem+(i<<1))= *(uint8_t *)(video_mem+((i+NUM_COLS)<<1));
-      *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
+	for(i=0;i<NUM_ROWS*NUM_COLS-NUM_COLS;i++){
+			*(uint8_t*)(video_mem+(i << L_SHIFT))= *(uint8_t *)(video_mem+((i+NUM_COLS)<<1));
 	}
-	for(i=NUM_ROWS*NUM_COLS-NUM_COLS; i<NUM_ROWS * NUM_COLS; i++){
-		*(uint8_t*)(video_mem+(i<<1))=' ';
-    *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
+	for(i=NUM_ROWS*NUM_COLS-NUM_COLS;i<NUM_ROWS * NUM_COLS; i++){
+		*(uint8_t*)(video_mem+(i << L_SHIFT))=' '; /* put empty space character in the index*/
 	}
 }
 
+/* new_line
+ * Inputs: void
+ * Outputs: none
+ * Effects: goes to newline (at end of screen, end of line, enter is pressed)
+ * */
 void new_line(void){
+
+  	/* if at the last row */
 		if(screen_y== (NUM_ROWS-1)){
 			scroll_up();
-			screen_x=0;
+			screen_x= START_SC_X; /* set start of column (screen_x) to 0*/
 			move_cursor(screen_x, screen_y);
-		}else{
+		}
+  	else{
 			screen_y++;
-			screen_x=0;
+			screen_x=START_SC_X;
 			move_cursor(screen_x, screen_y);
 		}
 }
 
+/* reset_screen
+ * Input: None
+ * Output: None
+ * Effects: moves cursor to top left (start) of screen
+ * */
 void reset_screen(void){
-		screen_y=0;
-		screen_x=0;
+		screen_y = START_SC_Y; /* set start of rows (screen_y) to 0*/
+		screen_x = START_SC_X; /* set start of column (screen_x) to 0*/
 
-		move_cursor(screen_x,screen_y);
+		move_cursor(screen_x,screen_y); /*move cursor to start of screen*/
 }
 
+/* x_is_zero
+ * Input: none
+ * Output: int num
+ * Effects: Checks if screen_x is 0, return 1 if true, 0 otherwise
+ * */
 int x_is_zero(void){
-		return screen_x==0;
+		return screen_x==START_SC_X;
 }
 
+/* back_space
+ * Input: none
+ * Output: int return_value, used as a flag later on
+ * Effects: backspace functionality
+ * */
 int back_space(void){
-	int return_value=0;
-	screen_x--;
-	if(screen_x<0){
-			screen_x=0;
-			return_value=-1;
+	int return_value=ZERO;
+	screen_x--; /*decrement column value to get new column value*/
+	if(screen_x<START_SC_X){
+			screen_x = START_SC_X; /* if screen_x is negative set it 0*/
+			return_value = MINUS_ONE; /* set return value ot be used later*/
 	}
-	*(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = ' ';
-	move_cursor(screen_x, screen_y);
+	*(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << L_SHIFT)) = ' '; /*put empty space character in the index*/
+	move_cursor(screen_x, screen_y); /*update cursor position*/
 	return return_value;
 
 }
 
+/* far_right
+ * Input: none
+ * Output: int, 1 if scrren_x is at the end of col
+ * Just a helper, not necessary anymore
+ * */
 int far_right(void){
-		return screen_x>=79;
-
+		return screen_x >= COL_END;
 }
 
+/* move_cursor
+ * input: int screen_x : x position
+ * 				int screen_y : y position
+ * output: none
+ * Effects: updates the location of the text-mode cursor
+ * */
 void move_cursor(int screen_x, int screen_y){
-	int pos= screen_y*NUM_COLS+screen_x;
-	outb(0x0F,0x3D4);
-	outb((uint8_t)(pos&0xFF),0x3D5);
-	outb(0x0E,0x3D4);
-	outb((uint8_t)((pos>>8)&0xFF),0x3D5);
+	int pos= screen_y*NUM_COLS+screen_x;     /*position on the screen*/
+	outb(0x0F,PORT_3D4); 								     /*write 0x0F to port 0x3D4*/
+	outb((uint8_t)(pos&0xFF),PORT_3D5);      /*write the low 8 bits (1 byte) of the position to port 0x3D5*/
+	outb(0x0E,PORT_3D4); 								     /*write 0x0E to port 0x3D4*/
+	outb((uint8_t)((pos>>8)&0xFF),PORT_3D5); /*write the high 8 bits to port 0x3D5*/
 }
 
 /* Standard printf().
