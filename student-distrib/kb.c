@@ -401,9 +401,6 @@ void keyboard_interrupt_handler(void){
 					buf[buf_index]=kbdus[scan_code];
 					buf_index++;
 
-					if(x_is_zero()){ //If at the end sets the new line
-						new_line();
-					}
 
 			}
 			else if(caps_no_shift() && in_char_range(scan_code)){ //
@@ -411,30 +408,17 @@ void keyboard_interrupt_handler(void){
 					buf[buf_index]=kbdus[scan_code+CAP_OFFSET];
 					buf_index++;
 
-					if(x_is_zero()){ //if at the end of the line sets the new line
-						new_line();
-
-					}
 			}
 			else if((shift_pressed==ONE)){
 					putc(kbdus[scan_code+CAP_OFFSET]); //90 is the offset required to obtain the capital letters
 					buf[buf_index]=kbdus[scan_code+CAP_OFFSET];
 					buf_index++;
-
-					// if(x_is_zero()){ //if at the end of the line sets the new line
-					// 	new_line();
-          //
-					// }
 			}
 
       else{
         putc(kbdus[scan_code]); //Print sht escan code to the screen
 				buf[buf_index]=kbdus[scan_code];
 				buf_index++;
-
-        // if(x_is_zero()){ //If at the end sets the new line
-				// 		new_line();
-				// }
 
 			}
 
