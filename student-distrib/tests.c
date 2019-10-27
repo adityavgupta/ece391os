@@ -2,6 +2,7 @@
 #include "x86_desc.h"
 #include "lib.h"
 #include "paging.h"
+#include "rtc.h"
 #include "kb.h"
 #include "file_system.h"
 
@@ -329,6 +330,89 @@ int page_table_test(){
 
 /* Checkpoint 2 tests */
 
+void rtc_test(){
+	TEST_HEADER;
+
+	uint8_t buf[1];
+	uint32_t count = 0;
+	clear();
+	rtc_write(0, buf, 14);
+	count = 0;
+	while(count < 1000000000){
+		count++;
+	}
+	// clear();
+	// rtc_write(0, buf, 13);
+	// count = 0;
+	// while(count < 1000){
+	// 	count++;
+	// }
+	// clear();
+	// rtc_write(0, buf, 12);
+	// count = 0;
+	// while(count < 1000){
+	// 	count++;
+	// }
+	// clear();
+	// rtc_write(0, buf, 11);
+	// count = 0;
+	// while(count < 1000){
+	// 	count++;
+	// }
+	// clear();
+	// rtc_write(0, buf, 10);
+	// count = 0;
+	// while(count < 1000){
+	// 	count++;
+	// }
+	// clear();
+	// rtc_write(0, buf, 9);
+	// count = 0;
+	// while(count < 1000){
+	// 	count++;
+	// }
+	// clear();
+	// rtc_write(0, buf, 8);
+	// count = 0;
+	// while(count < 1000){
+	// 	count++;
+	// }
+	clear();
+	rtc_write(0, buf, 7);
+	count = 0;
+	while(count < 1000){
+		count++;
+	}
+	// clear();
+	// rtc_write(0, buf, 6);
+	// count = 0;
+	// while(count < 1000){
+	// 	count++;
+	// }
+	// clear();
+	// rtc_write(0, buf, 5);
+	// count = 0;
+	// while(count < 1000){
+	// 	count++;
+	// }
+	// clear();
+	// rtc_write(0, buf, 4);
+	// count = 0;
+	// while(count < 1000){
+	// 	count++;
+	// }
+	// clear();
+	// rtc_write(0, buf, 3);
+	// count = 0;
+	// while(count < 1000){
+	// 	count++;
+	// }
+}
+
+void rtc_read_test(){
+	clear();
+	uint8_t buf[1];
+	rtc_read(0, buf, 0);
 void buffer_overflow_read(void) {
   open();
   unsigned char string[140];
@@ -413,19 +497,24 @@ void dir_read_test(){
 
 /* Test suite entry point */
 void launch_tests(){
+	// TEST_OUTPUT("idt_test", idt_test());
 	/*
 	TEST_OUTPUT("idt_test", idt_test());
 	// launch your tests here
-  TEST_OUTPUT("idt_test2", idt_test_2());
-  TEST_OUTPUT("idt_test3", idt_test_3());
+  // TEST_OUTPUT("idt_test2", idt_test_2());
+  // TEST_OUTPUT("idt_test3", idt_test_3());
 	// page_fault_test0();
 	// page_fault_test1();
 	// page_fault_test2();
 	// page_fault_test3();
 	// page_fault_test4();
-	page_fault_test5();
-	page_fault_test6();
+	// page_fault_test5();
+	// page_fault_test6();
   // divide_zero_test();
+  // TEST_OUTPUT("page_directory_test", page_directory_test());
+ 	// TEST_OUTPUT("page_table_test", page_table_test());
+	// rtc_test();
+	rtc_read_test();
   TEST_OUTPUT("page_directory_test", page_directory_test());
  	TEST_OUTPUT("page_table_test", page_table_test());
 	*/
