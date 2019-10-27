@@ -15,6 +15,12 @@ int8_t *itoa(uint32_t value, int8_t* buf, int32_t radix);
 int8_t *strrev(int8_t* s);
 uint32_t strlen(const int8_t* s);
 void clear(void);
+void new_line(void);
+int back_space(void);
+int far_right(void);
+void reset_screen(void);
+void move_cursor(int screen_x, int screen_y);
+int x_is_zero(void);
 
 void* memset(void* s, int32_t c, uint32_t n);
 void* memset_word(void* s, int32_t c, uint32_t n);
