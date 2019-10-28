@@ -13,3 +13,9 @@ Checkpoint 1:
 
 
 -> Error in init_idt: When exceptions were called, the while(1) loop wasn’t running. Interrupts could still be typed to the screen even though the while loop should have been running. Included cli to mask interrupts, which stopped allowed the while(1) loop to run continuously.(1 hrs)
+
+Checkpoint 2:
+Terminal driver:
+-> Error in mapping caps lock and shift keys. Fixed by carefully listing out test cases and putting them into the handler (2hrs).
+
+-> text-mode cursor not placing correctly. Fixed by recalculating scrren_x, screen_y and rechecking some vga ports (30 min).
