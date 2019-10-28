@@ -740,10 +740,10 @@ void launch_tests(){
   // TEST_OUTPUT("page_table_test", page_table_test());
 
 	/* Checkpoint 2 tests */
-	//fang_lu_test_5();
 	//buffer_write();
 	// file_index_test(0);
 	// file_index_test(1);
+	// dir_read_test();
   //uint8_t name[] = "frame0.txt";
 	//read_file_test(name);
 	//uint8_t name[] = "frame1.txt";
@@ -774,7 +774,7 @@ void launch_tests(){
 	//read_file_test(name);
 	//rtc_write_test();
 	// rtc_read_test();
-	rtc_open_test();
+	//rtc_open_test();
 	//fread_fail_test();
 	//dread_fail_test();
 }
