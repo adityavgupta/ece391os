@@ -2,20 +2,28 @@
 Checkpoint 1:
 -> Error in paging: grub was rebooting indefinitely. Fixed it by changing cr4 to have the PSE (page size enable) enabled and adding a  page directory entry for the kernel address.(2 hrs)
 
-
 -> Error in PIC_init: RTC interrupts weren’t running even though enable had been called on the correct IR pins. In i8259.c, the masks weren’t being set properly. We were using logical NOT instead of bitwise NOT, which caused the masks to not be set properly. (30 min)
-
 
 -> Error in send_eoi: The PIC wasn’t ending the interrupt correctly, causing the PIC to fail in sending consecutive interrupts. In send_eoi, we needed to OR EOI with irq_num instead of just EOI since the PIC is in specific EOI mode. (1 hr)
 
-
 -> Error in linkage.S: Page faults occurred after typing in multiple characters. We needed to do assembly linkage for keyboard interrupt handler. Without the linkage, registers containing addresses were clobbered and accessed unallocated memory. (5 hrs)
-
 
 -> Error in init_idt: When exceptions were called, the while(1) loop wasn’t running. Interrupts could still be typed to the screen even though the while loop should have been running. Included cli to mask interrupts, which stopped allowed the while(1) loop to run continuously.(1 hrs)
 
 Checkpoint 2:
 Terminal driver:
--> Error in mapping caps lock and shift keys. Fixed by carefully listing out test cases and putting them into the handler (2hrs).
+-> Error in mapping characters with different cases of caps and shift. Fixed by carefully listing out test cases and putting them into the handler (2hrs).
 
 -> text-mode cursor not placing correctly. Fixed by recalculating scrren_x, screen_y and rechecking some vga ports (30 min).
+
+-> Not going all the way to the end on the line only printing 79 characters. This turned out to be an off by one error and a misunderstanding of how putc worked (2-3 hours).
+
+
+-> Buffer was taking more than 128 characters. This was another off by one error (15 min).
+
+-> Global variables not changing. Had to change to be static in order to get this to work also moved the terminal driver into keyboard. This error happened multiple times (2-3 hours).
+
+File system:
+-> Reading wrong data blocks when trying to read file data. Turned out to be an issue with pointer arithmetic, we were offsetting the starting data block address by four times more than needed. (1 hour)
+
+-> Directory read displays unreadable characters. Needed to null terminate the string properly by strncpy all 32 characters from the file name. (1-2 hours)
