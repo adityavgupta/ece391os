@@ -178,9 +178,6 @@ void keyboard_helper(uint8_t scan_code){
            putc(scan_code); //Print sthe character to the screen
            buf[buf_index]=scan_code; //Puts the value into the buffer
            buf_index++;
-           if(x_is_zero()){ //Puts to new line if at end of the line
-             new_line();
-           }
 				}
 }
 
