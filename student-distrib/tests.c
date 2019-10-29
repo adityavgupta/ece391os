@@ -759,7 +759,7 @@ void launch_tests(){
 	//read_file_test(name);
 	//uint8_t name[] = "testprint";
 	//read_file_test(name);
-	rtc_write_test();
+	//rtc_write_test();
 	// rtc_read_test();
 	//rtc_open_test();
 	//fread_fail_test();
