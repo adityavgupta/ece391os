@@ -341,88 +341,75 @@ int page_table_test(){
  */
 void rtc_write_test(){
 	rtc_test_flag = 1;
-	uint8_t buf[1];
+	int32_t buf = 2;
 	uint32_t count = 0;
   clear();
 	reset_screen();
-	rtc_write(0, buf, 2);
+	if(rtc_write(0, &buf, 4) == -1){
+		printf("Invalid frequency\n");
+	}
 	count = 0;
 	while(count < 1000000000){
 		count++;
 	}
 	clear();
   reset_screen();
-	rtc_write(0, buf, 4);
-	count = 0;
-	while(count < 1000){
-		count++;
-	}
-	clear();
-  reset_screen();
-	rtc_write(0, buf, 8);
+	buf = 8;
+	rtc_write(0, &buf, 4);
 	count = 0;
 	while(count < 1000000000){
 		count++;
 	}
 	clear();
   reset_screen();
-	rtc_write(0, buf, 16);
+	buf = 64;
+	if(rtc_write(0, &buf, 4) == -1){
+		printf("Invalid frequency\n");
+	}
 	count = 0;
 	while(count < 1000000000){
 		count++;
 	}
 	clear();
   reset_screen();
-	rtc_write(0, buf, 32);
+	if(rtc_write(0, NULL, 4) == -1){
+		printf("Invalid frequency\n");
+	}
 	count = 0;
 	while(count < 1000000000){
 		count++;
 	}
 	clear();
   reset_screen();
-	rtc_write(0, buf, 64);
+	buf = 52;
+	if(rtc_write(0, &buf, 4) == -1){
+		printf("Invalid frequency\n");
+	}
 	count = 0;
 	while(count < 1000000000){
 		count++;
 	}
 	clear();
   reset_screen();
-	rtc_write(0, buf, 128);
-	count = 0;
-	while(count < 1000000000){
-		count++;
+	buf = -1;
+	if(rtc_write(0, &buf, 4) == -1){
+		printf("Invalid frequency\n");
 	}
-  clear();
-	reset_screen();
-	rtc_write(0, buf, 256);
-	count = 0;
-	while(count < 1000000000){
-		count++;
-	}
-	clear();
-  reset_screen();
-	rtc_write(0, buf, 512);
 	count = 0;
 	while(count < 1000000000){
 		count++;
 	}
 	clear();
   reset_screen();
-	rtc_write(0, buf, 1024);
+	buf = 2048;
+	if(rtc_write(0, &buf, 4) == -1){
+		printf("Invalid frequency\n");
+	}
 	count = 0;
 	while(count < 1000000000){
 		count++;
 	}
-	clear();
-  reset_screen();
-	rtc_write(0, buf, 2048);
-	count = 0;
-	while(count < 1000000000){
-		count++;
-	}
-	clear();
-  reset_screen();
-	rtc_write(0, buf, 4096);
+	rtc_test_flag = 0;
 }
 
 /*
@@ -772,7 +759,7 @@ void launch_tests(){
 	//read_file_test(name);
 	//uint8_t name[] = "testprint";
 	//read_file_test(name);
-	//rtc_write_test();
+	rtc_write_test();
 	// rtc_read_test();
 	//rtc_open_test();
 	//fread_fail_test();
