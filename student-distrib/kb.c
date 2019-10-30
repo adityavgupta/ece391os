@@ -29,25 +29,29 @@
 #define BUFF_LENGTH 128
 
 //extern unsigned char buf[128];
-int flag=ZERO; // this is longer needed
+int flag = ZERO; // this is longer needed
 unsigned long flags; /* Hold current flags */
 
-static volatile int line_buffer_flag=ZERO; // Flag whether or not the line buffer can be written to the screen or not
-//extern int flag_1;
+// Flag whether or not the line buffer can be written to the screen or not
+static volatile int line_buffer_flag = ZERO;
 
-volatile unsigned char buf[BUFF_LENGTH]={ZERO}; // Buffer of size that is 128;
+volatile unsigned char buf[BUFF_LENGTH] = {ZERO}; // Buffer of size that is 128;
 volatile unsigned char prev_buf[BUFF_LENGTH]; //Stores the elements prevous stored in the buffer for the read function
 
-static int volatile buf_index=ZERO; //Index of the current element in the buffer
-static int volatile prev_index=ZERO; //Previous index to indicates where in length
-int flag_1=ZERO; //These two variables are redundant will remove later
+static int volatile buf_index = ZERO; //Index of the current element in the buffer
+static int volatile prev_index = ZERO; //Previous index to indicates where in length
+
+int flag_1 = ZERO; //These two variables are redundant will remove later
 
 int str_len_count;
 
-unsigned char shift_pressed = ZERO; //Flags to indacte if shift, ctrl or caps lock is pressed
-unsigned char caps_lock=ZERO;
-unsigned char ctrl_pressed=ZERO;
-unsigned char kbdus[256] = // Table to map the scan_code not actualy 256 character in length
+//Flags to indacte if shift, ctrl or caps lock is pressed
+unsigned char shift_pressed = ZERO;
+unsigned char caps_lock = ZERO;
+unsigned char ctrl_pressed= ZERO;
+
+// Table to map the scan_code not actualy 256 character in length
+unsigned char kbdus[256] =
 {
     0,  27, '1', '2', '3', '4', '5', '6', '7', '8',	/* 9 */
   '9', '0', '-', '=', '\b',	/* Backspace */
@@ -129,125 +133,129 @@ unsigned char kbdus[256] = // Table to map the scan_code not actualy 256 charact
  * Outputs- None
  * Return VAlue- None
  * Side Effects- Clears the buf array
- * */
+ */
 void clear_buf(void){
 		int buf_counter;  //counter to loop through the array
 
-		for(buf_counter=0; buf_counter<=BUFF_LENGTH;buf_counter++){ //Loops from 0 to one to clear the buffer while also cpying the array
-				prev_buf[buf_counter]=buf[buf_counter];
-				buf[buf_counter]=ZERO;
+    //Loops from 0 to one to clear the buffer while also cpying the array
+		for(buf_counter = 0; buf_counter <= BUFF_LENGTH; buf_counter++){
+				prev_buf[buf_counter] = buf[buf_counter];
+				buf[buf_counter] = ZERO;
 		}
-		prev_index=buf_index; //Sotres the index of the previous buffer
-		str_len_count=ZERO; //This is redudant will need to remove later
-		buf_index=ZERO; //Sets the index back to 0
+		prev_index = buf_index; //Sotres the index of the previous buffer
+		str_len_count = ZERO; //This is redudant will need to remove later
+		buf_index = ZERO; //Sets the index back to 0
 }
 
-/* open
- * Description- Function to be called to open teh terminal driver
- * Inputs- None
- * Outputs-None
- * Return Value-None
- * Side Efects- Initilizes osme of the gloabal variables to 0
- * */
-
-void open(void){
-		str_len_count=ZERO; // intilalizes the buf _index to 0, str_len_count is redudant and may need to be removed
-		buf_index=ZERO;
+/*
+ * terminal_open
+ *    DESCRIPTION: Function to be called to open teh terminal driver
+ *    INPUTS: None
+ *    OUTPUTS: None
+ *    Return Value: None
+ *    SIDE EFFECTS: Initilizes osme of the gloabal variables to 0
+ */
+void open(){
+		str_len_count = ZERO; // intilalizes the buf _index to 0, str_len_count is redudant and may need to be removed
+		buf_index = ZERO;
 }
 
-/* keyboard_helper
- * Description- Helper function to print variables onto the screen
- * Inputs- scan code- variable to indicates the ascii to be printed
- * Output- None
- * Return Value- None
- * Side effects- Prints value onto the screen
- * */
+/*
+ * keyboard_helper
+ *    DESCRIPTION: Helper function to print variables onto the screen
+ *    INPUTS: uint8_t scan code - variable to indicates the ascii to be printed
+ *    OUTPUTS: Prints value onto the screen
+ *    RETURN VALUE: None
+ *    SIDE EFFECTS: None
+ */
 void keyboard_helper(uint8_t scan_code){
+  /* If the buf_index is greater than the length of the buffer it will clear the buffer */
+	if(buf_index >= BUFF_LENGTH){
+		clear_buf();
+	}
 
-				if(buf_index>=BUFF_LENGTH){ /*If the buf_index is greater than the length of the buffer it will clear the buffer*/
-					clear_buf();
-				}
-				if(scan_code=='\n'){ //If the new line character is present will move on to the next line while clearing the buffer
-					//printf("\n");
-					new_line();
-					buf[buf_index]=scan_code;
-					buf_index++;
-					clear_buf();
-				}
-				 else{
-           putc(scan_code); //Print sthe character to the screen
-           buf[buf_index]=scan_code; //Puts the value into the buffer
-           buf_index++;
-				}
+  /* If the new line character is present will move on to the next line while clearing the buffer */
+	if(scan_code == '\n'){
+		new_line();
+		buf[buf_index] = scan_code;
+		buf_index++;
+		clear_buf();
+	} else{
+    putc(scan_code); //Print sthe character to the screen
+    buf[buf_index] = scan_code; //Puts the value into the buffer
+    buf_index++;
+	}
 }
 
-/* write
- * Description- writes characters to the screen based on array that is passed in
- * Inputs- copy_buf- Array to write to the screen
- *		  nbytes- The Number of bytes to write to the screen
- * Outputs- None
- * Return Value- Returns 1 for sucess or the number of bytes written
- * Side Effects- Character from copy_buf will be written the screen
- * */
-int write(unsigned char* copy_buf,int nbytes){
-
-	if(copy_buf==NULL){ // If a null pointer is passed in return -1 to indicate failure
-			return -1;
+/*
+ * terminal_write
+ *    DESCRIPTION: Writes characters to the screen based on array that is passed in
+ *    INPUTS: void* buf - Array to write to the screen
+ *		        int32_t nbytes - The Number of bytes to write to the screen
+ *    OUTPUTS: Character from copy_buf
+ *    RETURN VALUE: -1 for failure, number of bytes written
+ *    SIDE EFFECTS: None
+ */
+int write(uint8_t* copy_buf, int32_t nbytes){
+  /* Check for an invalid buffer */
+	if(copy_buf == NULL){
+    /* Return failure */
+		return -1;
 	}
-	int strlength=nbytes/sizeof(unsigned char); // caluclatues the string length based on the number of bytes and the size of the unisigned char
 
-	int i;
-	for(i=0;i<strlength;i++){ //Using the keyboard_helper function to print to the screen
+	int i; /* Loop variable */
+
+  /* Using the keyboard_helper function to print to the screen */
+	for(i = 0; i < nbytes; i++){
 		keyboard_helper(copy_buf[i]);
 	}
 
-	return nbytes; //returns the number of bytes
-
+  /* Number of bytes copied */
+	return nbytes;
 }
 
-/* close
- * Description- closes the terminal driver
- * Inputs- None
- * Outputs- None
- * Return Value- None
- * Side Effects- None
- * */
-void close(void){
+/*
+ * terminal_close
+ *    DESCRIPTION: Closes the terminal driver
+ *    INPUTS: int32_t fd - file to close
+ *    OUTPUTS: None
+ *    RETURN VALUE: None
+ *    SIDE EFFECTS: None
+ */
+void close(){
 		int i;
-		for(i=0;i<BUFF_LENGTH;i++){ //intilizes the buffer back to 0
-			buf[i]=ZERO; // Buffer of size that is 128;
+		for(i = 0;i < BUFF_LENGTH;i++){ //intilizes the buffer back to 0
+			buf[i] = ZERO; // Buffer of size that is 128;
 		}
-		buf_index=ZERO; //Initilzies the index into the back to 0
+		buf_index = ZERO; //Initilzies the index into the back to 0
 }
 
-/* read
- * Description-Reads character from the buffer into the array
- * Inputs- copy_buf- Array to read into
- *		  nbytes- number of bytes to read into teh array
- * Outputs- None
- * Return Value- Number ofbytes able to be read
- * Side-Effects
- * */
-int read(unsigned char* copy_buf,int nbytes){
-
-		line_buffer_flag=ZERO; //Sets the flag for determining whether the flag is finished
-		if(copy_buf==NULL){ //If a null pointer was placed retruns 0 bytes
+/*
+ * terminal_read
+ *    DESCRIPTION: Reads character from the buffer into the array
+ *    INPUTS: void* buf- Array to read into
+ *		        int32_t nbytes- number of bytes to read into teh array
+ *    OUTPUTS: None
+ *    RETURN VALUE: Number ofbytes able to be read
+ *    SIDE EFFECTS: None
+ */
+int read(uint8_t* copy_buf, int32_t nbytes){
+		line_buffer_flag = ZERO; //Sets the flag for determining whether the flag is finished
+		if(copy_buf == NULL){ //If a null pointer was placed retruns 0 bytes
 			return ZERO;
 		}
-		while(line_buffer_flag==ZERO){ //spins until the line has finsied being typed by the keyboard handler
+    //spins until the line has finsied being typed by the keyboard handler
+		while(line_buffer_flag == ZERO){
 
 		}
 
-		//printf("%c",prev_buf[0]);
-
-		//printf("%d %d %d",nbytes,prev_index,buf_index);
-
-		if(nbytes< prev_index*sizeof(unsigned char)){ //Determines whether to print the number of bytes desired or the number of bytes typed
-				memcpy(copy_buf,(void*)prev_buf,nbytes);
+    //Determines whether to print the number of bytes desired or the number of bytes typed
+		if(nbytes < prev_index){
+				memcpy(copy_buf, (void*)prev_buf, nbytes);
 				return nbytes;
 		} else{
-				memcpy(copy_buf,(void*)prev_buf,prev_index*sizeof(unsigned char));
-				return prev_index*sizeof(unsigned char);
+				memcpy(copy_buf, (void*)prev_buf, prev_index);
+				return prev_index;
 		}
 
 }
@@ -255,7 +263,8 @@ int read(unsigned char* copy_buf,int nbytes){
 
 
 
-/* keyboard_init
+/*
+ * keyboard_init
  *    DESCRIPTION: Enables keyboard interrupts
  *    INPUTS: none
  *    OUTPUTS: none
@@ -264,8 +273,7 @@ int read(unsigned char* copy_buf,int nbytes){
  */
 void keyboard_init(void){
     /* Enable keyboard IRQ on PIC */
-		enable_irq(IRQ_NUM); //eneables the itreuppts on the keyboard
-		//buf[0]='\n';
+		enable_irq(IRQ_NUM);
 }
 
 
@@ -277,7 +285,7 @@ void keyboard_init(void){
  * effect: checks is ctrl+l has been pressed
  */
 int ctrl_l (uint8_t scan_code) {
-  return (scan_code==L_CHAR && ctrl_pressed==ONE);
+  return (scan_code == L_CHAR && ctrl_pressed == ONE);
 }
 
 /* caps_and_shift
@@ -286,7 +294,7 @@ int ctrl_l (uint8_t scan_code) {
  * output: 1 or 0
  */
 int caps_and_shift (void) {
-  return ((caps_lock==ONE)&&(shift_pressed==ONE));
+  return ((caps_lock == ONE) && (shift_pressed == ONE));
 }
 
 /* caps_no_shift
@@ -295,7 +303,7 @@ int caps_and_shift (void) {
  * output: 1 or 0
  */
 int caps_no_shift (void) {
-  return ((caps_lock==ONE) && (shift_pressed!=ONE));
+  return ((caps_lock == ONE) && (shift_pressed != ONE));
 }
 
 /* in_char_range
@@ -304,7 +312,7 @@ int caps_no_shift (void) {
  * effects: checks if scan code is in between q to p (16-25), a to l (30-38), z to m (44-50)
  */
 int in_char_range (uint8_t scan_code) {
-  return ((scan_code>= Q_CHAR && scan_code<=P_CHAR)||(scan_code>=A_CHAR && scan_code<=L_CHAR)||(scan_code>=Z_CHAR &&scan_code<=M_CHAR));
+  return ((scan_code >= Q_CHAR && scan_code <= P_CHAR) || (scan_code >= A_CHAR && scan_code <= L_CHAR) || (scan_code >= Z_CHAR && scan_code <= M_CHAR));
 }
 
 /*
@@ -330,13 +338,13 @@ void ctrl_l_exec (void) {
  *    SIDE EFFECTS: deletes the character previously typed
  */
 void backspace_exec (void) {
-  int temp=back_space(); //tests to see if the back_space has reached the beginning of the line or not
-  if(temp==ZERO){ //deletes the buffer variable during the back space if it is allowed
-    buf[buf_index]=ZERO;
+  int temp = back_space(); //tests to see if the back_space has reached the beginning of the line or not
+  if(temp == ZERO){ //deletes the buffer variable during the back space if it is allowed
+    buf[buf_index] = ZERO;
     buf_index--;
 
-    if(buf_index<ZERO){
-        buf_index=ZERO;
+    if(buf_index < ZERO){
+        buf_index = ZERO;
     }
   }
 }
@@ -351,9 +359,9 @@ void backspace_exec (void) {
  */
 void new_line_exec () {
   new_line(); //Goes to new line scrolls if necessary
-  buf[buf_index]=kbdus[NEW_LINE]; //Places the new line in the buffer
+  buf[buf_index] = kbdus[NEW_LINE]; //Places the new line in the buffer
   buf_index++;
-  line_buffer_flag=ONE;  //Sets the flag to one to let the read stop spinning
+  line_buffer_flag = ONE;  //Sets the flag to one to let the read stop spinning
   clear_buf(); //Clears the buffer
 }
 
@@ -361,13 +369,13 @@ void new_line_exec () {
  * caps_and_shift_exec
  *    DESCRIPTION: Executes when caps and shift are pressed together
  *    INPUTS: uint32_t scan_code - scan_code of the key pressed
- *    OUTPUTS: none
+ *    OUTPUTS: Prints the matching characters of the scan_code when caps and shift are pressed
  *    RETURN VALUE: none
- *    SIDE EFFECTS: prints the matching characters of the scan_code when caps and shift are pressed
+ *    SIDE EFFECTS: none
  */
 void caps_and_shift_exec (uint8_t scan_code) {
   putc(kbdus[scan_code]);
-  buf[buf_index]=kbdus[scan_code];
+  buf[buf_index] = kbdus[scan_code];
   buf_index++;
 }
 
@@ -380,8 +388,8 @@ void caps_and_shift_exec (uint8_t scan_code) {
  *    SIDE EFFECTS: prints the matching characters of the scan_code when caps is pressed and no shift
  */
 void caps_no_shift_exec (uint8_t scan_code) {
-  putc(kbdus[scan_code+CAP_OFFSET]); //90 is the offset required to obtain the capital letters
-  buf[buf_index]=kbdus[scan_code+CAP_OFFSET];
+  putc(kbdus[scan_code + CAP_OFFSET]); //90 is the offset required to obtain the capital letters
+  buf[buf_index] = kbdus[scan_code + CAP_OFFSET];
   buf_index++;
 }
 
@@ -394,8 +402,8 @@ void caps_no_shift_exec (uint8_t scan_code) {
  *    SIDE EFFECTS: prints the matching characters of the scan_code when shift is pressed
  */
 void shift_exec (uint8_t scan_code) {
-  putc(kbdus[scan_code+CAP_OFFSET]); //90 is the offset required to obtain the capital letters
-  buf[buf_index]=kbdus[scan_code+CAP_OFFSET];
+  putc(kbdus[scan_code + CAP_OFFSET]); //90 is the offset required to obtain the capital letters
+  buf[buf_index] = kbdus[scan_code + CAP_OFFSET];
   buf_index++;
 }
 
@@ -409,7 +417,7 @@ void shift_exec (uint8_t scan_code) {
  */
 void print_scancode (uint8_t scan_code) {
   putc(kbdus[scan_code]); //Prints this scan code to the screen
-  buf[buf_index]=kbdus[scan_code];
+  buf[buf_index] = kbdus[scan_code];
   buf_index++;
 }
 
@@ -419,41 +427,41 @@ void print_scancode (uint8_t scan_code) {
  *    INPUTS: uint32_t scan_code - scan_code of the key pressed
  *    OUTPUTS: none
  *    RETURN VALUE: none
- *    SIDE EFFECTS:
+ *    SIDE EFFECTS: none
  */
 void recent_release_exec (uint8_t scan_code) {
-  if(scan_code==CTRL){ //If the CTRL button is pressed
-    ctrl_pressed=ONE;
+  if(scan_code == CTRL){ //If the CTRL button is pressed
+    ctrl_pressed = ONE;
   }
   // ctrl+l
   else if(ctrl_l(scan_code)) {
     ctrl_l_exec ();
   }
-  else if(scan_code== BACK_SPACE){
+  else if(scan_code == BACK_SPACE){
     backspace_exec ();
   }
-  else if(scan_code==NEW_LINE){
+  else if(scan_code == NEW_LINE){
     new_line_exec ();
   }
   else if(scan_code == (LEFT_SHIFT) || scan_code == (RIGHT_SHIFT)){
     /* Sets shift_pressed to 1. Used ot indicate an on state */
     shift_pressed = ONE;
   }
-  else if(scan_code==CAPS_LOCK){
+  else if(scan_code == CAPS_LOCK){
     // Mod 2 is so the values of capslock flip between 0 or 1
-    caps_lock=(caps_lock+ONE)%2;
+    caps_lock = (caps_lock + ONE) % 2;
   }
   // caps and shift are pressed and it is a letter
   else if(caps_and_shift() && in_char_range(scan_code)){
-      caps_and_shift_exec (scan_code);
+    caps_and_shift_exec (scan_code);
   }
   // caps on, shift off and it is a letter
   else if(caps_no_shift() && in_char_range(scan_code)){
-      caps_no_shift_exec (scan_code);
+    caps_no_shift_exec (scan_code);
   }
 
-  else if((shift_pressed==ONE)){
-      shift_exec (scan_code);
+  else if((shift_pressed == ONE)){
+    shift_exec (scan_code);
   }
   else{
     print_scancode (scan_code);
@@ -470,13 +478,12 @@ void recent_release_exec (uint8_t scan_code) {
  */
 void after_release_exec (uint8_t scan_code) {
   /* If the key is recntly released gets rid of the shift_pressed flag */
-  if(scan_code == LEFT_SHIFT+RECENT_RELEASE || scan_code == RIGHT_SHIFT+RECENT_RELEASE ){
-
+  if(scan_code == LEFT_SHIFT + RECENT_RELEASE || scan_code == RIGHT_SHIFT + RECENT_RELEASE ){
     /* 0 is used ot indicate a off state */
     shift_pressed = ZERO;
   }
-  else if(scan_code==CTRL+RECENT_RELEASE){
-      ctrl_pressed=ZERO;
+  else if(scan_code == CTRL + RECENT_RELEASE){
+    ctrl_pressed = ZERO;
   }
 }
 
@@ -492,8 +499,7 @@ void after_release_exec (uint8_t scan_code) {
 void keyboard_interrupt_handler(void){
 
     /* Mask interrupts and store flags */
-    cli_and_save(flags); //Masks the falgs and disable the interrupts
-
+    cli_and_save(flags);
     /* Mask IRQ on PIC */
 		disable_irq(IRQ_NUM);
 
@@ -503,21 +509,22 @@ void keyboard_interrupt_handler(void){
     /* Read the keyboard data buffer to get the current character */
 		uint8_t scan_code = inb(0x60);
 
-		if((scan_code>=CAP_OFFSET && scan_code<=UP_BOUND)||(scan_code>=(CAP_OFFSET+UP_BOUND))){
+		if((scan_code >= CAP_OFFSET && scan_code <= UP_BOUND) || (scan_code >= (CAP_OFFSET + UP_BOUND))){
 			return;
 		}
 
-    /* Test if the character is to be printed or not */
-		if(scan_code < RECENT_RELEASE){//Tests to see whether the key is being presed versus being released
+    /* Tests to see whether the key is being presed versus being released */
+		if(scan_code < RECENT_RELEASE){
       recent_release_exec (scan_code);
 		}
     else{
       after_release_exec (scan_code);
 		}
 
-		if(buf_index>=BUFF_LENGTH){
-					line_buffer_flag=ONE; //Sets the flag for the event the buf_index is great than the buffer length
-					clear_buf(); // Clears the buffer
+		if(buf_index >= BUFF_LENGTH){
+      /* Sets the flag for the event the buf_index is great than the buffer length */
+			line_buffer_flag = ONE;
+			clear_buf();
 		}
     /* Allow interrupts again */
 		restore_flags(flags);

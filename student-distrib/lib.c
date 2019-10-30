@@ -41,11 +41,11 @@ void clear(void) {
  * */
 void scroll_up(void){
 	int32_t i;
-	for(i=0;i<NUM_ROWS*NUM_COLS-NUM_COLS;i++){
+	for(i = 0; i < NUM_ROWS*NUM_COLS-NUM_COLS; i++){
 			*(uint8_t*)(video_mem+(i << L_SHIFT))= *(uint8_t *)(video_mem+((i+NUM_COLS)<<1));
 	}
-	for(i=NUM_ROWS*NUM_COLS-NUM_COLS;i<NUM_ROWS * NUM_COLS; i++){
-		*(uint8_t*)(video_mem+(i << L_SHIFT))=' '; /* put empty space character in the index*/
+	for(i = NUM_ROWS*NUM_COLS-NUM_COLS; i<  NUM_ROWS*NUM_COLS; i++){
+		*(uint8_t*)(video_mem+(i << L_SHIFT)) = ' '; /* put empty space character in the index */
 	}
 }
 
@@ -55,16 +55,15 @@ void scroll_up(void){
  * Effects: goes to newline (at end of screen, end of line, enter is pressed)
  * */
 void new_line(void){
-
   	/* if at the last row */
-		if(screen_y== (NUM_ROWS-1)){
+		if(screen_y == (NUM_ROWS - 1)){
 			scroll_up();
-			screen_x= START_SC_X; /* set start of column (screen_x) to 0*/
+			screen_x = START_SC_X; /* set start of column (screen_x) to 0*/
 			move_cursor(screen_x, screen_y);
 		}
   	else{
 			screen_y++;
-			screen_x=START_SC_X;
+			screen_x = START_SC_X;
 			move_cursor(screen_x, screen_y);
 		}
 }
@@ -79,15 +78,6 @@ void reset_screen(void){
 		screen_x = START_SC_X; /* set start of column (screen_x) to 0*/
 
 		move_cursor(screen_x,screen_y); /*move cursor to start of screen*/
-}
-
-/* x_is_zero
- * Input: none
- * Output: int num
- * Effects: Checks if screen_x is 0, return 1 if true, 0 otherwise
- * */
-int x_is_zero(void){
-		return screen_x==START_SC_X;
 }
 
 /* back_space
@@ -124,7 +114,7 @@ int far_right(void){
  * Effects: updates the location of the text-mode cursor
  * */
 void move_cursor(int screen_x, int screen_y){
-	int pos= screen_y*NUM_COLS+screen_x;     /*position on the screen*/
+	int pos = screen_y*NUM_COLS+screen_x;     /*position on the screen*/
 	outb(0x0F,PORT_3D4); 								     /*write 0x0F to port 0x3D4*/
 	outb((uint8_t)(pos&0xFF),PORT_3D5);      /*write the low 8 bits (1 byte) of the position to port 0x3D5*/
 	outb(0x0E,PORT_3D4); 								     /*write 0x0E to port 0x3D4*/
@@ -276,8 +266,7 @@ int32_t puts(int8_t* s) {
  *  Function: Output a character to the console */
 void putc(uint8_t c) {
     if(c == '\n' || c == '\r') {
-        screen_y++;
-        screen_x = 0;
+        new_line();
     } else {
         *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = c;
         *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
@@ -285,12 +274,10 @@ void putc(uint8_t c) {
         if(screen_x == NUM_COLS){
           new_line();
         }
-        screen_x %= NUM_COLS;
         screen_y = (screen_y + (screen_x / NUM_COLS)) % NUM_ROWS;
     }
 
 	move_cursor(screen_x, screen_y);
-
 }
 
 /* int8_t* itoa(uint32_t value, int8_t* buf, int32_t radix);
