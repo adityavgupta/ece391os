@@ -181,11 +181,17 @@ uint32_t rtc_read(int32_t fd, void* buf, int32_t nbytes){
  *    SIDE EFFECTS: Changes the frequency the RTC operates at
  */
 uint32_t rtc_write(int32_t fd, const void* buf, int32_t nbytes){
+  unsigned long flags; /* Hold current flag values */
   int32_t freq; /* Frequency from the buffer */
   int32_t rate; /* Rate from frequency */
 
+  /* Mask interrupts and save flags */
+  cli_and_save(flags);
+
   /* Check for valid inputs */
   if(nbytes != 4 || (int32_t*)buf == NULL){
+    /* Restore the interrupt flags */
+    restore_flags(flags);
     /* Return failure */
     return -1;
   }
@@ -195,12 +201,16 @@ uint32_t rtc_write(int32_t fd, const void* buf, int32_t nbytes){
 
   /* Check if frequency is valid */
   if(freq < 0 || freq > 1024){
+    /* Restore the interrupt flags */
+    restore_flags(flags);
     /* Return failure */
     return -1;
   }
 
   /* Check if frequency is a power of 2 */
   if(-1 == (rate = get_rate(freq))){
+    /* Restore the interrupt flags */
+    restore_flags(flags);
     /* Return failure */
     return -1;
   }
@@ -216,6 +226,9 @@ uint32_t rtc_write(int32_t fd, const void* buf, int32_t nbytes){
 
   /* Give the new rate to register A */
   outb((prevA & 0xF0)| rate, RTC_PORT1);
+
+  /* Restore the interrupt flags */
+  restore_flags(flags);
 
   /* Return success */
   return 0;
