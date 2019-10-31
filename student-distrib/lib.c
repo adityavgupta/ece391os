@@ -9,13 +9,9 @@
 #define ATTRIB      0x7
 
 /* Some helpful constants for the terminal driver*/
-#define START_SC_X  0
-#define START_SC_Y  0
 #define COL_END     79
 #define PORT_3D4		0x3D4
 #define PORT_3D5    0x3D5
-#define ZERO				0
-#define MINUS_ONE   -1
 #define L_SHIFT     1
 
 static int screen_x;
@@ -58,12 +54,12 @@ void new_line(void){
   	/* if at the last row */
 		if(screen_y == (NUM_ROWS - 1)){
 			scroll_up();
-			screen_x = START_SC_X; /* set start of column (screen_x) to 0*/
+			screen_x = 0; /* set start of column (screen_x) to 0*/
 			move_cursor(screen_x, screen_y);
 		}
   	else{
 			screen_y++;
-			screen_x = START_SC_X;
+			screen_x = 0;
 			move_cursor(screen_x, screen_y);
 		}
 }
@@ -74,10 +70,10 @@ void new_line(void){
  * Effects: moves cursor to top left (start) of screen
  * */
 void reset_screen(void){
-		screen_y = START_SC_Y; /* set start of rows (screen_y) to 0*/
-		screen_x = START_SC_X; /* set start of column (screen_x) to 0*/
+		screen_y = 0; /* set start of rows (screen_y) to 0*/
+		screen_x = 0; /* set start of column (screen_x) to 0*/
 
-		move_cursor(screen_x,screen_y); /*move cursor to start of screen*/
+		move_cursor(screen_x,screen_y); /* move cursor to start of screen */
 }
 
 /* back_space
@@ -85,17 +81,20 @@ void reset_screen(void){
  * Output: int return_value, used as a flag later on
  * Effects: backspace functionality
  * */
-int back_space(void){
-	int return_value=ZERO;
-	screen_x--; /*decrement column value to get new column value*/
-	if(screen_x<START_SC_X){
-			screen_x = START_SC_X; /* if screen_x is negative set it 0*/
-			return_value = MINUS_ONE; /* set return value ot be used later*/
+int32_t back_space(void){
+	int32_t return_value = 0;
+	screen_x--; /* decrement column value to get new column value */
+	if(screen_x < 0){
+			screen_x = NUM_COLS - 1; /* Set to previous line */
+      screen_y--; /* Move up */
+			return_value = -1; /* set return value to be used later */
 	}
-	*(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << L_SHIFT)) = ' '; /*put empty space character in the index*/
-	move_cursor(screen_x, screen_y); /*update cursor position*/
-	return return_value;
+  /* Put empty space character in the index */
+	*(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << L_SHIFT)) = ' ';
 
+	move_cursor(screen_x, screen_y); /* update cursor position */
+
+	return return_value;
 }
 
 /* far_right
@@ -103,7 +102,7 @@ int back_space(void){
  * Output: int, 1 if scrren_x is at the end of col
  * Just a helper, not necessary anymore
  * */
-int far_right(void){
+int32_t far_right(void){
 		return screen_x >= COL_END;
 }
 
@@ -114,11 +113,11 @@ int far_right(void){
  * Effects: updates the location of the text-mode cursor
  * */
 void move_cursor(int screen_x, int screen_y){
-	int pos = screen_y*NUM_COLS+screen_x;     /*position on the screen*/
-	outb(0x0F,PORT_3D4); 								     /*write 0x0F to port 0x3D4*/
-	outb((uint8_t)(pos&0xFF),PORT_3D5);      /*write the low 8 bits (1 byte) of the position to port 0x3D5*/
-	outb(0x0E,PORT_3D4); 								     /*write 0x0E to port 0x3D4*/
-	outb((uint8_t)((pos>>8)&0xFF),PORT_3D5); /*write the high 8 bits to port 0x3D5*/
+	int pos = screen_y*NUM_COLS + screen_x;   /*position on the screen*/
+	outb(0x0F, PORT_3D4); 								    /*write 0x0F to port 0x3D4*/
+	outb((uint8_t)(pos&0xFF), PORT_3D5);      /*write the low 8 bits (1 byte) of the position to port 0x3D5*/
+	outb(0x0E, PORT_3D4); 								    /*write 0x0E to port 0x3D4*/
+	outb((uint8_t)((pos>>8)&0xFF), PORT_3D5); /*write the high 8 bits to port 0x3D5*/
 }
 
 /* Standard printf().

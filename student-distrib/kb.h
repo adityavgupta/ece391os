@@ -10,52 +10,35 @@
 /* Enable keyboard interrupts */
 void keyboard_init(void);
 
-// This is a redudnant fuctnion may need to remove
-int should_stop(void);
-
 // Read the buffer inot the copy_buf array
-int read(uint8_t* copy_buf, int32_t nbytes);
+int32_t terminal_read(uint8_t* buf, int32_t nbytes);
 
 // Writes to the string buffer
-int write(uint8_t* copy_buf, int32_t nbytes);
+int32_t terminal_write(uint8_t* buf, int32_t nbytes);
 
 // Open funciton te=o initnilize the driver
-void open();
+void terminal_open();
 
 // Closes the terminal driver
-void close();
+void terminal_close();
 
 // CLears the buffer
 void clear_buf(void);
 
 // ctrl+L check
-int ctrl_l (uint8_t scan_code);
+int32_t ctrl_l (uint8_t scan_code);
+
 // caps lock and shift
-int caps_and_shift (void);
+int32_t caps_and_shift (void);
 
 // caps lock and no shift
-int caps_no_shift (void);
+int32_t caps_no_shift (void);
 
 // In the ranges of alphabet in the keybaird array
-int in_char_range (uint8_t scan_code);
-
-// ctrl_l execution
-void ctrl_l_exec (void);
-
-// Backspace execution
-void backspace_exec (void);
+int32_t in_char_range (uint8_t scan_code);
 
 // Newline execution
-void new_line_exec ();
-
-// Caps and sfit on execution
-void caps_and_shift_exec (uint8_t scan_code);
-
-// caps on, shift not on execution
-void caps_no_shift_exec (uint8_t scan_code);
-
-// Shift execution
-void shift_exec (uint8_t scan_code);
+void new_line_exec (void);
 
 // Printing the scan_code
 void print_scancode (uint8_t scan_code);
