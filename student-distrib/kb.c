@@ -258,15 +258,6 @@ int32_t caps_and_shift (void) {
   return ((caps_lock == 1) && (shift_pressed == 1));
 }
 
-/* caps_no_shift
- * checks is caps lock and shift not pressed
- * input: void
- * output: 1 or 0
- */
-int32_t caps_no_shift (void) {
-  return ((caps_lock == 1) && (shift_pressed != 1));
-}
-
 /* in_char_range
  * input: scan_code
  * output: 1 or 0
@@ -304,6 +295,7 @@ void print_scancode (uint8_t scan_code) {
  */
 void recent_release_exec (uint8_t scan_code) {
   if(scan_code == CTRL){ //If the CTRL button is pressed
+    printf("Here\n");
     ctrl_pressed = 1;
   }
   else if(scan_code == L_CHAR && ctrl_pressed == 1) {
@@ -312,12 +304,11 @@ void recent_release_exec (uint8_t scan_code) {
     clear();
   }
   else if(scan_code == BACK_SPACE){
-    back_space(); // Tests to see if the back_space has reached the beginning of the line or not
-
     // Deletes a buffer character if it is allowed
     if(buf_index > 0){
       kb_buf[buf_index] = '\0';
       buf_index--;
+      back_space();
     }
   }
   else if(scan_code == NEW_LINE){
@@ -335,10 +326,6 @@ void recent_release_exec (uint8_t scan_code) {
   // Caps and shift are pressed and it is a letter
   else if(caps_and_shift() && in_char_range(scan_code)){
     print_scancode(scan_code);
-  }
-  // Caps on, shift off and it is a letter
-  else if(caps_no_shift() && in_char_range(scan_code)){
-    print_scancode(scan_code + CAP_OFFSET);
   }
   else if(shift_pressed == 1 || caps_lock == 1){
     print_scancode(scan_code + CAP_OFFSET);

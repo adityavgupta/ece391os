@@ -31,14 +31,8 @@ int32_t ctrl_l (uint8_t scan_code);
 // caps lock and shift
 int32_t caps_and_shift (void);
 
-// caps lock and no shift
-int32_t caps_no_shift (void);
-
 // In the ranges of alphabet in the keybaird array
 int32_t in_char_range (uint8_t scan_code);
-
-// Newline execution
-void new_line_exec (void);
 
 // Printing the scan_code
 void print_scancode (uint8_t scan_code);
