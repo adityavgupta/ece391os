@@ -137,14 +137,14 @@ unsigned char kbdus[256] =
 void clear_buf(void){
 		int buf_counter;  //counter to loop through the array
 
-    //Loops from 0 to one to clear the buffer while also cpying the array
-		for(buf_counter = 0; buf_counter <= BUFF_LENGTH; buf_counter++){
+    // Loops to clear the buffer while also copying the array
+		for(buf_counter = 0; buf_counter < BUFF_LENGTH; buf_counter++){
 				prev_buf[buf_counter] = buf[buf_counter];
 				buf[buf_counter] = ZERO;
 		}
-		prev_index = buf_index; //Sotres the index of the previous buffer
-		str_len_count = ZERO; //This is redudant will need to remove later
-		buf_index = ZERO; //Sets the index back to 0
+		prev_index = buf_index; // Stores the index of the previous buffer
+		str_len_count = ZERO; // This is redudant will need to remove later
+		buf_index = ZERO; // Sets the index back to 0
 }
 
 /*
@@ -321,7 +321,7 @@ int in_char_range (uint8_t scan_code) {
  *    INPUTS: none
  *    OUTPUTS: none
  *    RETURN VALUE: none
- *    SIDE EFFECTS: cleares the screen
+ *    SIDE EFFECTS: Clears the screen
  */
 void ctrl_l_exec (void) {
   reset_screen(); //resets the screen and clears the buffer and the screen
@@ -477,9 +477,9 @@ void recent_release_exec (uint8_t scan_code) {
  *    SIDE EFFECTS: Resets the flags for ctrl and shift to zero.
  */
 void after_release_exec (uint8_t scan_code) {
-  /* If the key is recntly released gets rid of the shift_pressed flag */
+  /* If the key is recently released, gets rid of the shift_pressed flag */
   if(scan_code == LEFT_SHIFT + RECENT_RELEASE || scan_code == RIGHT_SHIFT + RECENT_RELEASE ){
-    /* 0 is used ot indicate a off state */
+    /* 0 is used to indicate a off state */
     shift_pressed = ZERO;
   }
   else if(scan_code == CTRL + RECENT_RELEASE){
