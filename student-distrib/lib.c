@@ -34,7 +34,7 @@ void clear(void) {
  * Inputs: void
  * Outputs: none
  * Effects: scrolls up the screen by one row when end of screen is reached
- * */
+ */
 void scroll_up(void){
 	int32_t i;
 	for(i = 0; i < NUM_ROWS*NUM_COLS-NUM_COLS; i++){
@@ -49,7 +49,7 @@ void scroll_up(void){
  * Inputs: void
  * Outputs: none
  * Effects: goes to newline (at end of screen, end of line, enter is pressed)
- * */
+ */
 void new_line(void){
   	/* if at the last row */
 		if(screen_y == (NUM_ROWS - 1)){
@@ -68,10 +68,10 @@ void new_line(void){
  * Input: None
  * Output: None
  * Effects: moves cursor to top left (start) of screen
- * */
+ */
 void reset_screen(void){
-		screen_y = 0; /* set start of rows (screen_y) to 0*/
-		screen_x = 0; /* set start of column (screen_x) to 0*/
+		screen_y = 0; /* set start of rows to 0 */
+		screen_x = 0; /* set start of column to 0*/
 
 		move_cursor(screen_x,screen_y); /* move cursor to start of screen */
 }
@@ -95,15 +95,6 @@ int32_t back_space(void){
 	move_cursor(screen_x, screen_y); /* update cursor position */
 
 	return return_value;
-}
-
-/* far_right
- * Input: none
- * Output: int, 1 if scrren_x is at the end of col
- * Just a helper, not necessary anymore
- * */
-int32_t far_right(void){
-		return screen_x >= COL_END;
 }
 
 /* move_cursor

@@ -79,7 +79,7 @@ uint8_t kbdus[256] =
     0,	/* F11 Key */
     0,	/* F12 Key */
     0,	/* All other keys are undefined */
-	    0,  27, '!', '@', '#', '$', '%', '^', '&', '*',	/* 9 */
+	  0,  27, '!', '@', '#', '$', '%', '^', '&', '*',	/* 9 */
   '(', ')', '_', '+', '\b',	/* Backspace */
   '\t',			/* Tab */
   'Q', 'W', 'E', 'R',	/* 19 */
@@ -119,9 +119,9 @@ uint8_t kbdus[256] =
 
 /* clear_buf
  * Description: This function will clear the buffer used for line buffering
- * INputs-None
+ * Inputs-None
  * Outputs- None
- * Return VAlue- None
+ * Return Value- None
  * Side Effects- Clears the buf array
  */
 void clear_buf(void){
@@ -340,9 +340,8 @@ void recent_release_exec (uint8_t scan_code) {
   else if(caps_no_shift() && in_char_range(scan_code)){
     print_scancode(scan_code + CAP_OFFSET);
   }
-
-  else if((shift_pressed == 1)){
-    shift_exec(scan_code + CAP_OFFSET);
+  else if(shift_pressed == 1 || caps_lock == 1){
+    print_scancode(scan_code + CAP_OFFSET);
   }
   else{
     print_scancode(scan_code);
@@ -395,9 +394,9 @@ void keyboard_interrupt_handler(void){
 
     /* Tests to see whether the key is being presed versus being released */
 		if(scan_code < RECENT_RELEASE){
-      recent_release_exec (scan_code);
+      recent_release_exec(scan_code);
 		} else{
-      after_release_exec (scan_code);
+      after_release_exec(scan_code);
 		}
 
     /* Allow interrupts again */
