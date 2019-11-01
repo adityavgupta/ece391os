@@ -275,11 +275,9 @@ void initialize_idt(void){
   		idt[init_counter].size = 1;         /* Sets the gate size ot 32 bits */
   		idt[init_counter].reserved1 = 1;
   		idt[init_counter].reserved2 = 1;
-  		idt[init_counter].reserved3 =0;
+  		idt[init_counter].reserved3 = 0;
   		idt[init_counter].reserved4 = 0;
   		idt[init_counter].seg_selector = KERNEL_CS; /* Sets the segment selector to Kernel's code segment */
-      /* Set the default interrupt handler to test_interrupt */
-  		SET_IDT_ENTRY(idt[init_counter], test_interrupt);
   	}
 
     /* Initialize system call entry in IDT */

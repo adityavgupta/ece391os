@@ -454,21 +454,21 @@ void rtc_open_test(){
 *Side Effects prints to screen the values written
 */
 void write_ret_val(void){
-  open();
+  terminal_open();
    unsigned char string[128];
   int i;
   for(i=0;i<128;i++){
   	string[i]='a';
   }
 
-  int ret_val= write(string,12*sizeof(unsigned char));
+  int ret_val= terminal_write(string,12*sizeof(unsigned char));
 
   if(ret_val==12*sizeof(unsigned char)){
   	TEST_OUTPUT("write_ret_val",PASS);
   } else{
     TEST_OUTPUT("write_ret_val",FAIL);
   }
-	  close();
+	  terminal_close();
 }
 
 
@@ -480,20 +480,18 @@ void write_ret_val(void){
  * Side Effects-Prints the screen
  */
 void read_ret_val(void){
-  open();
+  terminal_open();
    unsigned char string[128];
 
-  int ret_val= read(string,sizeof(unsigned char));
+  int ret_val= terminal_read(string,1);
 
-  //printf("%d\n",ret_val);
-
-  if(ret_val==sizeof(unsigned char)){
+  if(ret_val==1){
   	TEST_OUTPUT("read_ret_val",PASS);
   } else{
     TEST_OUTPUT("read_ret_val",FAIL);
   }
 
-  close();
+  terminal_close();
 }
 
 /* write_null
@@ -504,10 +502,10 @@ void read_ret_val(void){
  * Side Effects- None
  */
 void write_null(void){
-  	open();
+  	terminal_open();
   	unsigned char* string=NULL;
 
-  int ret_val=write(string,sizeof(unsigned char));
+  int ret_val=terminal_write(string, 1);
 
 
   //printf("%d",ret_val);
@@ -517,7 +515,7 @@ void write_null(void){
     TEST_OUTPUT("write_null",FAIL);
   }
 
-    close();
+    terminal_close();
 }
 
 /* read_null
@@ -528,10 +526,10 @@ void write_null(void){
  * Side Effects- None
  */
 void read_null(void){
-  open();
+  terminal_open();
 
   unsigned char string[128];
-  int ret_val=read(string,sizeof(unsigned char));
+  int ret_val=terminal_read(string,sizeof(unsigned char));
   //printf("%d",ret_val);
   if(ret_val==0){
   	TEST_OUTPUT("read_null",PASS);
@@ -539,7 +537,7 @@ void read_null(void){
     TEST_OUTPUT("read_null",FAIL);
   }
 
-  close();
+  terminal_close();
 }
 
 /* buffer_write
@@ -550,11 +548,11 @@ void read_null(void){
  * Side Effects-None
  */
 void buffer_write(void){
-	open();
+	terminal_open();
 	unsigned char string[]="Chief";
-	write(string,(int)strlen((char*)string)*sizeof(unsigned char));
+	terminal_write(string,(int)strlen((char*)string));
 
-	close();
+	terminal_close();
 }
 
 /* buffer_read
@@ -565,10 +563,10 @@ void buffer_write(void){
  * Side Effects-None
  * */
 void buffer_read(void){
-		open();
+		terminal_open();
 		unsigned char string[128];
-		read(string,128*sizeof(unsigned char));
-		close();
+		terminal_read(string, 128);
+		terminal_close();
 
 }
 
@@ -580,15 +578,15 @@ void buffer_read(void){
  * Side Effects- None
  * */
 void buffer_overflow_read(void) {
-  open();
+  terminal_open();
   unsigned char string[140];
 
-  int temp = read(string, 140*sizeof(unsigned char));
+  int temp = terminal_read(string, 140);
 
   putc('\n');
   // the write should just print out 128 characters
-  write(string, temp);
-  close();
+  terminal_write(string, temp);
+  terminal_close();
 }
 
 
@@ -608,12 +606,11 @@ void buffer_overflow_write(void) {
     string[i]='a';
   }
 
-  //string[159]=;
-  open();
+  terminal_open();
 
-  write(string,160*sizeof(unsigned char));
+  terminal_write(string, 60);
 
-  close();
+  terminal_close();
 }
 
 /* press_enter_test
@@ -625,13 +622,13 @@ void buffer_overflow_write(void) {
  * */
 void press_enter_test(void){
 
-	open();
+	terminal_open();
 	unsigned char string[128];
 
-	int temp=read(string,128*sizeof(unsigned char));
+	int temp=terminal_read(string, 128);
 
-	write(string,temp);
-	close();
+	terminal_write(string,temp);
+	terminal_close();
 }
 
 
@@ -651,7 +648,6 @@ void read_file_test(uint8_t* name){
   for(i=0; i<size; i++){
     putc(buf[i]);
   }
-	//puts(buf);
 }
 
 /* dir_read_test
@@ -703,6 +699,14 @@ void dread_fail_test(void){
 	}
 }
 
+void read_test(){
+	uint8_t buf[1024];
+	int32_t count;
+	while(1){
+		count = terminal_read(buf, 1023);
+		printf("%d\n", count);
+	}
+}
 
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
@@ -764,4 +768,5 @@ void launch_tests(){
 	//rtc_open_test();
 	//fread_fail_test();
 	//dread_fail_test();
+	read_test();
 }
