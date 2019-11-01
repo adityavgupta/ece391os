@@ -17,19 +17,19 @@ int32_t terminal_read(uint8_t* buf, int32_t nbytes);
 int32_t terminal_write(uint8_t* buf, int32_t nbytes);
 
 // Open funciton te=o initnilize the driver
-void terminal_open();
+int32_t terminal_open();
 
 // Closes the terminal driver
-void terminal_close();
-
-// CLears the buffer
-void clear_buf(void);
+int32_t terminal_close();
 
 // ctrl+L check
 int32_t ctrl_l (uint8_t scan_code);
 
 // caps lock and shift
 int32_t caps_and_shift (void);
+
+// caps lock and no shift
+int32_t caps_no_shift (void);
 
 // In the ranges of alphabet in the keybaird array
 int32_t in_char_range (uint8_t scan_code);

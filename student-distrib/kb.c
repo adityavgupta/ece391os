@@ -31,11 +31,11 @@ unsigned long flags; /* Hold current flags */
 // Flag whether or not the line buffer can be written to the screen or not
 static volatile int32_t line_buffer_flag = 0;
 
-volatile uint8_t kb_buf[BUF_LENGTH] = {'\0'}; // Buffer of size that is 128;
+volatile uint8_t kb_buf[BUF_LENGTH]; // Buffer of size that is 128;
 
 static volatile int32_t buf_index = 0; //Index of the current element in the buffer
 
-//Flags to indacte if shift, ctrl or caps lock is pressed
+// Flags to indacte if shift, ctrl or caps lock is pressed
 uint8_t shift_pressed = 0;
 uint8_t caps_lock = 0;
 uint8_t ctrl_pressed = 0;
@@ -117,33 +117,17 @@ uint8_t kbdus[256] =
     0,	/* All other keys are undefined */
 };
 
-/* clear_buf
- * Description: This function will clear the buffer used for line buffering
- * Inputs-None
- * Outputs- None
- * Return Value- None
- * Side Effects- Clears the buf array
- */
-void clear_buf(void){
-		int32_t buf_counter;  // counter to loop through the array
-
-    // Set buffer to 0
-		for(buf_counter = 0; buf_counter < BUF_LENGTH; buf_counter++){
-			kb_buf[buf_counter] = '\0';
-		}
-		buf_index = 0; // Sets the index back to 0
-}
-
 /*
  * terminal_open
  *    DESCRIPTION: Function to be called to open the terminal driver
  *    INPUTS: None
  *    OUTPUTS: None
- *    Return Value: None
+ *    Return Value: 0 for success
  *    SIDE EFFECTS: Initializes some of the global variables to 0
  */
-void terminal_open(){
+int32_t terminal_open(){
 		buf_index = 0;
+    return 0;
 }
 
 /*
@@ -184,17 +168,12 @@ int terminal_write(uint8_t* buf, int32_t nbytes){
  *    DESCRIPTION: Closes the terminal driver
  *    INPUTS: int32_t fd - file to close
  *    OUTPUTS: None
- *    RETURN VALUE: None
+ *    RETURN VALUE: 0 for success
  *    SIDE EFFECTS: None
  */
-void terminal_close(){
-		int i;
-
-		for(i = 0; i < BUF_LENGTH; i++){ //intilizes the buffer back to 0
-			kb_buf[i] = '\0'; // Buffer of size that is 128;
-		}
-
+int32_t terminal_close(){
 		buf_index = 0; // Sets the index back to 0
+    return 0;
 }
 
 /*
@@ -203,32 +182,27 @@ void terminal_close(){
  *    INPUTS: void* buf - Array to read into
  *		        int32_t nbytes - number of bytes to read into the buffer
  *    OUTPUTS: None
- *    RETURN VALUE: Number of bytes read
+ *    RETURN VALUE: -1 for failure, Number of bytes read
  *    SIDE EFFECTS: None
  */
 int terminal_read(uint8_t* buf, int32_t nbytes){
     int32_t bytes_read = 0; /* Number of bytes read */
-		line_buffer_flag = 0; //Sets the flag for determining whether enter is pressed
+		line_buffer_flag = 0; /* Sets the flag for determining whether enter is pressed */
 
-		if(buf == NULL){
+		if(buf == NULL || nbytes < 0){
       /* Return failure */
 			return -1;
 		}
 
-    // Spins until the line is finsied
+    /* Wait until the line is finsied */
 		while(!line_buffer_flag){
 		}
 
-    // Determines whether to print the number of bytes desired or the number of bytes typed
-		if(nbytes < buf_index){
-			memcpy(buf, (void*)kb_buf, nbytes);
-			bytes_read = nbytes;
-		} else{
-			memcpy(buf, (void*)kb_buf, buf_index);
-			bytes_read = buf_index;
-		}
+    /* Print the number of bytes desired or the number of bytes typed */
+    bytes_read = nbytes < buf_index ? nbytes : buf_index;
+    memcpy(buf, (void*)kb_buf, bytes_read);
 
-    clear_buf(); //Clears the buffer
+    buf_index = 0;
 
     return bytes_read;
 }
@@ -285,6 +259,15 @@ void print_scancode (uint8_t scan_code) {
   buf_index++;
 }
 
+/* caps_no_shift
+ * checks is caps lock and shift not pressed
+ * input: void
+ * output: 1 or 0
+ */
+int caps_no_shift (void) {
+  return ((caps_lock == 1) && (shift_pressed != 1));
+}
+
 /*
  * recent_release_exec
  *    DESCRIPTION: Executes when scan_code < RECENT_RELEASE. Handles the different scan_codes
@@ -295,21 +278,17 @@ void print_scancode (uint8_t scan_code) {
  */
 void recent_release_exec (uint8_t scan_code) {
   if(scan_code == CTRL){ //If the CTRL button is pressed
-    printf("Here\n");
     ctrl_pressed = 1;
   }
   else if(scan_code == L_CHAR && ctrl_pressed == 1) {
     reset_screen(); //resets the screen and clears the buffer and the screen
-    clear_buf();
+    buf_index = 0;
     clear();
   }
-  else if(scan_code == BACK_SPACE){
-    // Deletes a buffer character if it is allowed
-    if(buf_index > 0){
-      kb_buf[buf_index] = '\0';
-      buf_index--;
-      back_space();
-    }
+  else if(scan_code == BACK_SPACE && buf_index > 0){
+    /* Deletes a buffer character if it is allowed */
+    buf_index--;
+    back_space();
   }
   else if(scan_code == NEW_LINE){
     print_scancode(scan_code);
@@ -327,7 +306,11 @@ void recent_release_exec (uint8_t scan_code) {
   else if(caps_and_shift() && in_char_range(scan_code)){
     print_scancode(scan_code);
   }
-  else if(shift_pressed == 1 || caps_lock == 1){
+  // Caps on, shift off and it is a letter
+  else if(caps_no_shift() && in_char_range(scan_code)){
+    print_scancode(scan_code + CAP_OFFSET);
+  }
+  else if(shift_pressed == 1){
     print_scancode(scan_code + CAP_OFFSET);
   }
   else{
@@ -345,7 +328,7 @@ void recent_release_exec (uint8_t scan_code) {
  */
 void after_release_exec (uint8_t scan_code) {
   /* If the key is recently released, gets rid of the shift_pressed flag */
-  if(scan_code == LEFT_SHIFT + RECENT_RELEASE || scan_code == RIGHT_SHIFT + RECENT_RELEASE ){
+  if(scan_code == LEFT_SHIFT + RECENT_RELEASE || scan_code == RIGHT_SHIFT + RECENT_RELEASE){
     /* 0 is used to indicate a off state */
     shift_pressed = 0;
   }

@@ -81,20 +81,16 @@ void reset_screen(void){
  * Output: int return_value, used as a flag later on
  * Effects: backspace functionality
  * */
-int32_t back_space(void){
-	int32_t return_value = 0;
-	screen_x--; /* decrement column value to get new column value */
-	if(screen_x < 0){
-			screen_x = NUM_COLS - 1; /* Set to previous line */
-      screen_y--; /* Move up */
-			return_value = -1; /* set return value to be used later */
+void back_space(void){
+	/* decrement column value to get new column value */
+	if(--screen_x < 0){
+		screen_x = NUM_COLS - 1; /* Set to previous line */
+    screen_y--; /* Move up */
 	}
   /* Put empty space character in the index */
 	*(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << L_SHIFT)) = ' ';
 
 	move_cursor(screen_x, screen_y); /* update cursor position */
-
-	return return_value;
 }
 
 /* move_cursor

@@ -483,11 +483,9 @@ void read_ret_val(void){
   terminal_open();
    unsigned char string[128];
 
-  int ret_val= terminal_read(string,sizeof(unsigned char));
+  int ret_val= terminal_read(string,1);
 
-  //printf("%d\n",ret_val);
-
-  if(ret_val==sizeof(unsigned char)){
+  if(ret_val==1){
   	TEST_OUTPUT("read_ret_val",PASS);
   } else{
     TEST_OUTPUT("read_ret_val",FAIL);
@@ -507,7 +505,7 @@ void write_null(void){
   	terminal_open();
   	unsigned char* string=NULL;
 
-  int ret_val=terminal_write(string,sizeof(unsigned char));
+  int ret_val=terminal_write(string, 1);
 
 
   //printf("%d",ret_val);
@@ -552,7 +550,7 @@ void read_null(void){
 void buffer_write(void){
 	terminal_open();
 	unsigned char string[]="Chief";
-	terminal_write(string,(int)strlen((char*)string)*sizeof(unsigned char));
+	terminal_write(string,(int)strlen((char*)string));
 
 	terminal_close();
 }
@@ -567,7 +565,7 @@ void buffer_write(void){
 void buffer_read(void){
 		terminal_open();
 		unsigned char string[128];
-		terminal_read(string,128*sizeof(unsigned char));
+		terminal_read(string, 128);
 		terminal_close();
 
 }
@@ -583,7 +581,7 @@ void buffer_overflow_read(void) {
   terminal_open();
   unsigned char string[140];
 
-  int temp = terminal_read(string, 140*sizeof(unsigned char));
+  int temp = terminal_read(string, 140);
 
   putc('\n');
   // the write should just print out 128 characters
@@ -608,10 +606,9 @@ void buffer_overflow_write(void) {
     string[i]='a';
   }
 
-  //string[159]=;
   terminal_open();
 
-  terminal_write(string,160*sizeof(unsigned char));
+  terminal_write(string, 60);
 
   terminal_close();
 }
@@ -628,7 +625,7 @@ void press_enter_test(void){
 	terminal_open();
 	unsigned char string[128];
 
-	int temp=terminal_read(string,128*sizeof(unsigned char));
+	int temp=terminal_read(string, 128);
 
 	terminal_write(string,temp);
 	terminal_close();
@@ -702,6 +699,14 @@ void dread_fail_test(void){
 	}
 }
 
+void read_test(){
+	uint8_t buf[1024];
+	int32_t count;
+	while(1){
+		count = terminal_read(buf, 1023);
+		printf("%d\n", count);
+	}
+}
 
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
@@ -763,4 +768,5 @@ void launch_tests(){
 	//rtc_open_test();
 	//fread_fail_test();
 	//dread_fail_test();
+	read_test();
 }

@@ -16,7 +16,7 @@ int8_t *strrev(int8_t* s);
 uint32_t strlen(const int8_t* s);
 void clear(void);
 void new_line(void);
-int back_space(void);
+void back_space(void);
 void reset_screen(void);
 void move_cursor(int screen_x, int screen_y);
 
