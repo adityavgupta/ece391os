@@ -2,6 +2,7 @@
 #include "kb.h"
 #include "rtc.h"
 #include "linkage.h"
+#include "syscalls.h"
 
 .text
 .globl keyboard_linkage, rtc_linkage, system_call_handler
@@ -14,7 +15,13 @@ system_call_handler:
     pushl %edx
     pushl %ecx
     pushl %ebx
+
+		cmpl $5, %eax
+		ja SYSCALL_DONE
+		cmpl $0, %eax
+		jb SYSCALL_DONE
 		call *system_call_table(, %eax, 4)
+SYSCALL_DONE:
     popl %ebx
     popl %ecx
     popl %edx
