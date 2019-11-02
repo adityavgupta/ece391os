@@ -278,6 +278,8 @@ void initialize_idt(void){
   		idt[init_counter].reserved3 = 0;
   		idt[init_counter].reserved4 = 0;
   		idt[init_counter].seg_selector = KERNEL_CS; /* Sets the segment selector to Kernel's code segment */
+      /* Set the default interrupt handler to test_interrupt */
+  		SET_IDT_ENTRY(idt[init_counter], test_interrupt);
   	}
 
     /* Initialize system call entry in IDT */
@@ -291,7 +293,7 @@ void initialize_idt(void){
   	idt[SYS_CALL_INDEX].reserved4 = 0;
   	idt[SYS_CALL_INDEX].seg_selector=KERNEL_CS;  /* Sets the segment selector to the Kernel's code segment */
     /* Set system call IDT entry to sys_call_handler */
-  	SET_IDT_ENTRY(idt[SYS_CALL_INDEX],sys_call_handler);
+  	SET_IDT_ENTRY(idt[SYS_CALL_INDEX], system_call_handler);
 
     /* Set exception entries in the IDT */
     SET_IDT_ENTRY(idt[0], DIVIDE_ERROR);
