@@ -18,6 +18,29 @@ static uint32_t page_directory[TABLE_ENTRIES]  __attribute__((aligned (PAGE_SIZE
 /* Page table array */
 static uint32_t page_table[TABLE_ENTRIES]  __attribute__((aligned (PAGE_SIZE)));
 
+/*
+ * set_page_dir_entry
+ *    DESCRIPTION:
+ *    INPUTS:
+ *    OUTPUTS:
+ *    RETURN VALUE:
+ *    SIDE EFFECTS:
+ */
+int32_t set_page_dir_entry(){
+  return 0;
+}
+
+/*
+ * set_page_table_entry
+ *    DESCRIPTION:
+ *    INPUTS:
+ *    OUTPUTS:
+ *    RETURN VALUE:
+ *    SIDE EFFECTS:
+ */
+int32_t set_page_table_entry(){
+  return 0;
+}
 
 /*
  * get_dir

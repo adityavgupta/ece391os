@@ -139,7 +139,7 @@ int32_t terminal_open(){
  *    RETURN VALUE: -1 for failure, number of bytes written
  *    SIDE EFFECTS: None
  */
-int terminal_write(uint8_t* buf, int32_t nbytes){
+int terminal_write(int32_t fd, void* buf, int32_t nbytes){
   /* Check for an invalid buffer */
 	if(buf == NULL || nbytes < 0){
     /* Return failure */
@@ -153,7 +153,7 @@ int terminal_write(uint8_t* buf, int32_t nbytes){
 
   /* Print to the screen */
 	for(i = 0; i < nbytes; i++){
-		putc(buf[i]);
+		putc(*(uint8_t*)(buf+i));
 	}
 
   /* Restore interrupts */
@@ -185,7 +185,7 @@ int32_t terminal_close(){
  *    RETURN VALUE: -1 for failure, Number of bytes read
  *    SIDE EFFECTS: None
  */
-int terminal_read(uint8_t* buf, int32_t nbytes){
+int terminal_read(int32_t fd, void* buf, int32_t nbytes){
     int32_t bytes_read = 0; /* Number of bytes read */
 		line_buffer_flag = 0; /* Sets the flag for determining whether enter is pressed */
 

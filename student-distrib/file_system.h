@@ -5,6 +5,8 @@
 
 #define NAME_LENGTH 32
 
+#ifndef ASM
+
 /* Directory entry struct */
 struct dentry_struct{
   uint8_t file_name[NAME_LENGTH];
@@ -55,4 +57,6 @@ int32_t dir_read(int32_t fd, void* buf, int32_t nbytes);
 
 int32_t dir_write(void);
 
-#endif
+#endif /* ASM */
+
+#endif /* _FILE_SYSTEM_H */

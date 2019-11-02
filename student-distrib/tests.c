@@ -461,9 +461,9 @@ void write_ret_val(void){
   	string[i]='a';
   }
 
-  int ret_val= terminal_write(string,12*sizeof(unsigned char));
+  int ret_val= terminal_write(0,string,12);
 
-  if(ret_val==12*sizeof(unsigned char)){
+  if(ret_val==12){
   	TEST_OUTPUT("write_ret_val",PASS);
   } else{
     TEST_OUTPUT("write_ret_val",FAIL);
@@ -483,7 +483,7 @@ void read_ret_val(void){
   terminal_open();
    unsigned char string[128];
 
-  int ret_val= terminal_read(string,1);
+  int ret_val= terminal_read(0, string,1);
 
   if(ret_val==1){
   	TEST_OUTPUT("read_ret_val",PASS);
@@ -505,7 +505,7 @@ void write_null(void){
   	terminal_open();
   	unsigned char* string=NULL;
 
-  int ret_val=terminal_write(string, 1);
+  int ret_val=terminal_write(0, string, 1);
 
 
   //printf("%d",ret_val);
@@ -529,7 +529,7 @@ void read_null(void){
   terminal_open();
 
   unsigned char string[128];
-  int ret_val=terminal_read(string,sizeof(unsigned char));
+  int ret_val=terminal_read(0, string, 1);
   //printf("%d",ret_val);
   if(ret_val==0){
   	TEST_OUTPUT("read_null",PASS);
@@ -550,7 +550,7 @@ void read_null(void){
 void buffer_write(void){
 	terminal_open();
 	unsigned char string[]="Chief";
-	terminal_write(string,(int)strlen((char*)string));
+	terminal_write(0, string,(int)strlen((char*)string));
 
 	terminal_close();
 }
@@ -565,7 +565,7 @@ void buffer_write(void){
 void buffer_read(void){
 		terminal_open();
 		unsigned char string[128];
-		terminal_read(string, 128);
+		terminal_read(0, string, 128);
 		terminal_close();
 
 }
@@ -581,11 +581,11 @@ void buffer_overflow_read(void) {
   terminal_open();
   unsigned char string[140];
 
-  int temp = terminal_read(string, 140);
+  int temp = terminal_read(0, string, 140);
 
   putc('\n');
   // the write should just print out 128 characters
-  terminal_write(string, temp);
+  terminal_write(0, string, temp);
   terminal_close();
 }
 
@@ -608,7 +608,7 @@ void buffer_overflow_write(void) {
 
   terminal_open();
 
-  terminal_write(string, 60);
+  terminal_write(0, string, 60);
 
   terminal_close();
 }
@@ -625,9 +625,9 @@ void press_enter_test(void){
 	terminal_open();
 	unsigned char string[128];
 
-	int temp=terminal_read(string, 128);
+	int temp=terminal_read(0, string, 128);
 
-	terminal_write(string,temp);
+	terminal_write(0, string,temp);
 	terminal_close();
 }
 
@@ -703,8 +703,7 @@ void read_test(){
 	uint8_t buf[1024];
 	int32_t count;
 	while(1){
-		count = terminal_read(buf, 1023);
-		printf("%d\n", count);
+		count = terminal_read(0, buf, 1023);
 	}
 }
 
