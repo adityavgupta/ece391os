@@ -2,6 +2,7 @@
 #include "lib.h"
 #include "x86_desc.h"
 #include "paging.h"
+#include "file_system.h"
 
 /* Constants for paging */
 #define TABLE_ENTRIES 1024
@@ -11,7 +12,9 @@
 #define KERNEL_ADDR 0x400000
 #define PT_OFFSET 12
 #define PAGE_SIZE 4096
-
+#define FOUR_MB 4194304
+#define USER_PROG 0x08000000
+#define PROG_OFFSET 0x00048000
 
 /* Page directory array */
 static uint32_t page_directory[TABLE_ENTRIES]  __attribute__((aligned (PAGE_SIZE)));
@@ -174,4 +177,18 @@ void enable_paging(void){
             : "r"(page_directory),"r"(enable)
             : "eax"
     );
+}
+
+//unclear if process num needed
+int8_t program_loader(int8_t process_num,uint8_t* filename){
+  uint8_t buf[FOUR_MB]; //4MB buffer
+  int32_t fd = file_open(name);
+  uint32_t size;
+  if((size = file_read(fd, buf, FOUR_MB)) == -1){
+    file_close(fd);
+    return -1;
+  }
+  file_close(fd);
+  memcpy((void*)(USER_PROG+PROG_OFFSET),(const void*)buf,size);//copy program into physical memory
+  return 0;
 }
