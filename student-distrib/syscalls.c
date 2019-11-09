@@ -3,7 +3,7 @@
 #include "lib.h"
 
 #define VIRTUAL_ADDR 0x08000000
-#define 8MB 0x0800000
+#define 8MB 0x800000
 #define PAGE_SIZE 0x400000
 
 static int32_t process_num = -1;
