@@ -38,7 +38,7 @@ int32_t set_page_dir_entry(int32_t virtual, int32_t physical){
   }
 
   /* Create entry */
-  page_directory[virtual >> 22] = physical | 0x083;
+  page_directory[virtual >> 22] = physical | 0x087;
 
   /* Return success */
   return 0;
@@ -180,15 +180,15 @@ void enable_paging(void){
 }
 
 //unclear if process num needed
-int8_t program_loader(int8_t process_num,uint8_t* filename){
+int8_t program_loader(int8_t process_num, uint8_t* filename){
   uint8_t buf[FOUR_MB]; //4MB buffer
-  int32_t fd = file_open(name);
+  int32_t fd = file_open(filename);
   uint32_t size;
   if((size = file_read(fd, buf, FOUR_MB)) == -1){
     file_close(fd);
     return -1;
   }
   file_close(fd);
-  memcpy((void*)(USER_PROG+PROG_OFFSET),(const void*)buf,size);//copy program into physical memory
+  memcpy((void*)(USER_PROG+PROG_OFFSET), (const void*)buf, size);//copy program into physical memory
   return 0;
 }

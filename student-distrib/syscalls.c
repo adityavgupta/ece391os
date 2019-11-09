@@ -17,7 +17,7 @@ static int32_t process_num = -1;
  *    SIDE EFFECTS:
  */
 int32_t halt(uint8_t status){
-  // goto done; sketchy af
+  goto done; // sketchy af
   return 0;
 }
 
@@ -46,6 +46,7 @@ int32_t execute(const uint8_t* command){
     return -1;
   }
 
+  /* Read first 28 bytes of the executable */
   uint8_t ELF_buf[28];
   read_data(file_dentry.inode_num, 0, ELF_buf, 4);
   uint8_t elf[] = "ELF";
@@ -58,7 +59,7 @@ int32_t execute(const uint8_t* command){
   set_page_dir_entry(VIRTUAL_ADDR, 8MB + (++process_num)*PAGE_SIZE);
 
   /* Flush tlb */
-  asm volatile ("
+  asm volatile ("      \n\
      movl %%eax, %%cr3 \n\
      movl %%cr3, %%eax"
      :
@@ -76,11 +77,11 @@ int32_t execute(const uint8_t* command){
   tss.esp0 = 8MB - (process_num + 1)*0x2000;
   // potentially add ss0 change
 
-  
+  int32_t program_addr = ELF_buf[23] << 24 || ELF_buf[24] << 16 || ELF_buf[25] << 8 || ELF_buf[26];
 
   cli();
 
-  // goto context_switch; jump to the context switch
+  goto context_switch; // jump to the context switch
 
 done:
 
