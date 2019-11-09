@@ -1,8 +1,6 @@
 #ifndef _PAGING_H
 #define _PAGING_H
 
-int8_t program_loader(int8_t process_num,uint8_t* filename);
-
 /* Create an entry in the page directory */
 int32_t set_page_dir_entry();
 

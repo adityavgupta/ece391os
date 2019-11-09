@@ -1,10 +1,11 @@
 #include "syscalls.h"
 #include "x86_desc.h"
+#include "paging.h"
 #include "lib.h"
 
 #define VIRTUAL_ADDR 0x08000000
-#define 8MB 0x800000
-#define 4MB 0x400000
+#define EIGHT_MB 0x800000
+#define FOUR_MB 0x400000
 #define PAGE_SIZE 0x400000
 #define USER_PROG 0x08000000
 #define PROG_OFFSET 0x00048000
@@ -20,7 +21,6 @@ static int32_t process_num = 0;
  *    SIDE EFFECTS:
  */
 int32_t halt(uint8_t status){
-  goto done; // sketchy af
   return 0;
 }
 
@@ -54,12 +54,13 @@ int32_t execute(const uint8_t* command){
   }
 
   /* Read the executable */
-  uint8_t ELF_buf[4MB];
+  uint8_t ELF_buf[FOUR_MB];
   uint32_t size;
-  if((read_data(file_dentry.inode_num, 0, ELF_buf, 4MB) = size) == -1){
+  if((size = read_data(file_dentry.inode_num, 0, ELF_buf, FOUR_MB)) == -1){
     /* Return failure */
     return -1;
   }
+
   uint8_t elf[] = "ELF";
   /* Check if file is an executable */
   if(!(ELF_buf[0] == 0x7F && !strncmp((int8_t*)(ELF_buf + 1), (int8_t*)elf, 3))){
@@ -68,7 +69,7 @@ int32_t execute(const uint8_t* command){
   }
 
   /* Set up user page */
-  set_page_dir_entry(VIRTUAL_ADDR, 8MB + (process_num++)*PAGE_SIZE);
+  set_page_dir_entry(VIRTUAL_ADDR, EIGHT_MB + (process_num++)*PAGE_SIZE);
 
   /* Flush tlb */
   asm volatile ("      \n\
@@ -79,21 +80,19 @@ int32_t execute(const uint8_t* command){
      : "eax"
   );
 
-  // need to add pcb stuff here
+  // memcpy((void *)(EIGHT_MB - process_num*0x2000), pcb, sizeof(pcb));
 
   /* Load program into physical memory */
   memcpy((void*)(USER_PROG + PROG_OFFSET), (const void*)ELF_buf, size);
 
   /* Set TSS values */
-  tss.esp0 = 8MB - process_num*0x2000;
+  tss.esp0 = EIGHT_MB - process_num*0x2000;
   tss.ss0 = KERNEL_DS;
 
   /* Get address of first instruction */
-  uint32_t program_addr = ELF_buf[23] << 24 || ELF_buf[24] << 16 || ELF_buf[25] << 8 || ELF_buf[26];
+  uint32_t program_addr = (ELF_buf[23] << 24) || (ELF_buf[24] << 16) || (ELF_buf[25] << 8) || ELF_buf[26];
 
-  goto context_switch; // jump to the context switch
-
-done:
+  asm volatile("jmp context_switch");
 
   /* Return success */
   return 69;

@@ -13,8 +13,6 @@
 #define PT_OFFSET 12
 #define PAGE_SIZE 4096
 #define FOUR_MB 4194304
-#define USER_PROG 0x08000000
-#define PROG_OFFSET 0x00048000
 
 /* Page directory array */
 static uint32_t page_directory[TABLE_ENTRIES]  __attribute__((aligned (PAGE_SIZE)));
@@ -32,7 +30,7 @@ static uint32_t page_table[TABLE_ENTRIES]  __attribute__((aligned (PAGE_SIZE)));
  */
 int32_t set_page_dir_entry(int32_t virtual, int32_t physical){
   /* Check if page already exists */
-  if(page_directoryp[virtual >> 22] & 0x1){
+  if(page_directory[virtual >> 22] & 0x1){
     /* Return failure */
     return -1;
   }
@@ -164,31 +162,17 @@ void enable_paging(void){
      * Macro to store address of page directory in cr3. Also enables paging in cr0, and sets the
      * Page Size bit in cr4 to allow for 4MB pages.
      */
-    asm volatile ("\n\
-                movl %%cr4,%%eax\n\
-                or $0x10,%%eax\n\
-                mov %%eax, %%cr4\n\
-                movl %0,%%eax\n\
-                movl %%eax,%%cr3\n\
-                movl %%cr0,%%eax\n\
-                orl %1,%%eax\n\
-                movl %%eax,%%cr0"
+    asm volatile ("               \n\
+                movl %%cr4, %%eax \n\
+                or $0x10, %%eax   \n\
+                mov %%eax, %%cr4  \n\
+                movl %0, %%eax    \n\
+                movl %%eax, %%cr3 \n\
+                movl %%cr0, %%eax \n\
+                orl %1,%%eax      \n\
+                movl %%eax, %%cr0"
             :
-            : "r"(page_directory),"r"(enable)
+            : "r"(page_directory), "r"(enable)
             : "eax"
     );
-}
-
-//unclear if process num needed
-int8_t program_loader(int8_t process_num, uint8_t* filename){
-  uint8_t buf[FOUR_MB]; //4MB buffer
-  int32_t fd = file_open(filename);
-  uint32_t size;
-  if((size = file_read(fd, buf, FOUR_MB)) == -1){
-    file_close(fd);
-    return -1;
-  }
-  file_close(fd);
-  memcpy((void*)(USER_PROG+PROG_OFFSET), (const void*)buf, size);//copy program into physical memory
-  return 0;
 }

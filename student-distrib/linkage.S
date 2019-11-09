@@ -10,10 +10,11 @@
 
 # Switch to user space
 context_switch:
-    movw ds $USER_DS
+    movw $USER_DS, %ax
+    movw %ax, %ds
     pushf
     popl %eax
-    orl %eax, $0x200 # Set IF to 1 for user space
+    orl $0x200, %eax # Set IF to 1 for user space
     pushl %eax
     popf
     pushl %ds
