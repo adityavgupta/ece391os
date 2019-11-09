@@ -20,25 +20,37 @@ static uint32_t page_table[TABLE_ENTRIES]  __attribute__((aligned (PAGE_SIZE)));
 
 /*
  * set_page_dir_entry
- *    DESCRIPTION:
- *    INPUTS:
- *    OUTPUTS:
- *    RETURN VALUE:
+ *    DESCRIPTION: Creates an entry in the page directory
+ *    INPUTS: int32_t virtual - the virtual address
+ *            int32_t physical - the physical address to map to
+ *    OUTPUTS: none
+ *    RETURN VALUE: 0 for success, -1 for failure
  *    SIDE EFFECTS:
  */
-int32_t set_page_dir_entry(){
+int32_t set_page_dir_entry(int32_t virtual, int32_t physical){
+  /* Check if page already exists */
+  if(page_directoryp[virtual >> 22] & 0x1){
+    /* Return failure */
+    return -1;
+  }
+
+  /* Create entry */
+  page_directory[virtual >> 22] = physical | 0x083;
+
+  /* Return success */
   return 0;
 }
 
 /*
  * set_page_table_entry
- *    DESCRIPTION:
- *    INPUTS:
- *    OUTPUTS:
- *    RETURN VALUE:
- *    SIDE EFFECTS:
+ *    DESCRIPTION: Enables a page in the page table
+ *    INPUTS: none
+ *    OUTPUTS: none
+ *    RETURN VALUE: 0
+ *    SIDE EFFECTS: none
  */
 int32_t set_page_table_entry(){
+  /* Nothing for now */
   return 0;
 }
 

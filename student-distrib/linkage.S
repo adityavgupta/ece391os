@@ -3,9 +3,22 @@
 #include "rtc.h"
 #include "linkage.h"
 #include "syscalls.h"
+#include "x86_desc.h"
 
 .text
-.globl keyboard_linkage, rtc_linkage, system_call_handler
+.globl keyboard_linkage, rtc_linkage, system_call_handler, context_switch
+
+# Switch to user space
+context_switch:
+    mov ds $USER_DS
+    mov cs $USER_CS
+    pushl %ds
+    pushl $0x083FFFFF
+    pushf
+    pushl %cs
+    pushl 16(%esp) # user eip
+
+    iret
 
 # System call linkage
 system_call_handler:

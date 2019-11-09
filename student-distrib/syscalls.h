@@ -20,6 +20,6 @@ int32_t open(const uint8_t* filename);
 
 int32_t close(int32_t fd);
 
-#endif
+#endif /* ASM */
 
-#endif
+#endif /* _SYSCALLS_H */
