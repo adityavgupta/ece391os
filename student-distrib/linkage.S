@@ -12,6 +12,11 @@
 context_switch:
     mov ds $USER_DS
     mov cs $USER_CS
+    pushf
+    popl %eax
+    orl %eax, $0x200
+    pushl %eax
+    popf
     pushl %ds
     pushl $0x083FFFFF
     pushf

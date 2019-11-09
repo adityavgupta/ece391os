@@ -46,7 +46,7 @@ int32_t execute(const uint8_t* command){
     return -1;
   }
 
-  uint8_t ELF_buf[4];
+  uint8_t ELF_buf[28];
   read_data(file_dentry.inode_num, 0, ELF_buf, 4);
   uint8_t elf[] = "ELF";
   // not an executable
@@ -57,6 +57,15 @@ int32_t execute(const uint8_t* command){
 
   set_page_dir_entry(VIRTUAL_ADDR, 8MB + (++process_num)*PAGE_SIZE);
 
+  /* Flush tlb */
+  asm volatile ("
+     movl %%eax, %%cr3 \n\
+     movl %%cr3, %%eax"
+     :
+     :
+     : "eax"
+  );
+
   // need to add pcb stuff here
 
   if(program_loader(process_num, filename) == -1){
@@ -65,8 +74,11 @@ int32_t execute(const uint8_t* command){
   }
 
   tss.esp0 = 8MB - (process_num + 1)*0x2000;
+  // potentially add ss0 change
 
-  // flush tlb
+  
+
+  cli();
 
   // goto context_switch; jump to the context switch
 
