@@ -1,6 +1,6 @@
 #ifndef _PAGING_H
 #define _PAGING_H
-
+#ifndef ASM
 /* Create an entry in the page directory */
 int32_t set_page_dir_entry();
 
@@ -25,4 +25,5 @@ void init_paging(void);
 /* Activate paging */
 void enable_paging(void);
 
+#endif
 #endif /* _PAGING_H */
