@@ -10,17 +10,16 @@
 
 # Switch to user space
 context_switch:
-    mov ds $USER_DS
-    mov cs $USER_CS
+    movw ds $USER_DS
     pushf
     popl %eax
-    orl %eax, $0x200
+    orl %eax, $0x200 # Set IF to 1 for user space
     pushl %eax
     popf
     pushl %ds
     pushl $0x083FFFFF
     pushf
-    pushl %cs
+    pushl $USER_CS
     pushl 16(%esp) # user eip
 
     iret

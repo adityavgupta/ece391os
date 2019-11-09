@@ -4,9 +4,12 @@
 
 #define VIRTUAL_ADDR 0x08000000
 #define 8MB 0x800000
+#define 4MB 0x400000
 #define PAGE_SIZE 0x400000
+#define USER_PROG 0x08000000
+#define PROG_OFFSET 0x00048000
 
-static int32_t process_num = -1;
+static int32_t process_num = 0;
 
 /*
  * halt
@@ -30,9 +33,13 @@ int32_t halt(uint8_t status){
  *    SIDE EFFECTS:
  */
 int32_t execute(const uint8_t* command){
-	uint8_t filename[32];
-  int i = 0;
+	uint8_t filename[32]; /* Name of the file */
+  int i = 0; /* Loop variable */
 
+  /* Mask interrupts */
+  cli();
+
+  /* Get the file name */
   while(command[i] != '\0' && command[i] != ' ' && i < 32){
     filename[i] = command[i];
     i++;
@@ -40,23 +47,28 @@ int32_t execute(const uint8_t* command){
 
   filename[i] = '\0';
   dentry_t file_dentry;
-  // invalid file name
+  /* Check for a valid file name */
   if(read_dentry_by_name(filename, &file_dentry) == -1){
     /* Return failure */
     return -1;
   }
 
-  /* Read first 28 bytes of the executable */
-  uint8_t ELF_buf[28];
-  read_data(file_dentry.inode_num, 0, ELF_buf, 4);
+  /* Read the executable */
+  uint8_t ELF_buf[4MB];
+  uint32_t size;
+  if((read_data(file_dentry.inode_num, 0, ELF_buf, 4MB) = size) == -1){
+    /* Return failure */
+    return -1;
+  }
   uint8_t elf[] = "ELF";
-  // not an executable
+  /* Check if file is an executable */
   if(!(ELF_buf[0] == 0x7F && !strncmp((int8_t*)(ELF_buf + 1), (int8_t*)elf, 3))){
     /* Return failure */
-    return -1; // check for ELF magic number
+    return -1;
   }
 
-  set_page_dir_entry(VIRTUAL_ADDR, 8MB + (++process_num)*PAGE_SIZE);
+  /* Set up user page */
+  set_page_dir_entry(VIRTUAL_ADDR, 8MB + (process_num++)*PAGE_SIZE);
 
   /* Flush tlb */
   asm volatile ("      \n\
@@ -69,17 +81,15 @@ int32_t execute(const uint8_t* command){
 
   // need to add pcb stuff here
 
-  if(program_loader(process_num, filename) == -1){
-    /* Return failure */
-    return -1;
-  }
+  /* Load program into physical memory */
+  memcpy((void*)(USER_PROG + PROG_OFFSET), (const void*)ELF_buf, size);
 
-  tss.esp0 = 8MB - (process_num + 1)*0x2000;
-  // potentially add ss0 change
+  /* Set TSS values */
+  tss.esp0 = 8MB - process_num*0x2000;
+  tss.ss0 = KERNEL_DS;
 
-  int32_t program_addr = ELF_buf[23] << 24 || ELF_buf[24] << 16 || ELF_buf[25] << 8 || ELF_buf[26];
-
-  cli();
+  /* Get address of first instruction */
+  uint32_t program_addr = ELF_buf[23] << 24 || ELF_buf[24] << 16 || ELF_buf[25] << 8 || ELF_buf[26];
 
   goto context_switch; // jump to the context switch
 
