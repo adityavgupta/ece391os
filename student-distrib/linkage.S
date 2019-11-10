@@ -27,13 +27,14 @@ context_switch:
 
 # System call linkage
 system_call_handler:
+    sti
     pushl %ebp
     pushl %edi
     pushl %esi
     pushl %edx
     pushl %ecx
     pushl %ebx
-
+    subl $1, %eax
 		cmpl $5, %eax
 		ja SYSCALL_DONE
 		cmpl $0, %eax
@@ -49,7 +50,7 @@ SYSCALL_DONE:
 		iret
 
 system_call_table:
-	.long  halt, halt, execute, read, write, open, close
+	.long halt, execute, read, write, open, close
 
 # Linkage for the keyboard handler
 keyboard_linkage:

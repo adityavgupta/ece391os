@@ -285,8 +285,11 @@ void recent_release_exec (uint8_t scan_code) {
     buf_index = 0;
     clear();
   }
-  else if(scan_code == BACK_SPACE && buf_index > 0){
+  else if(scan_code == BACK_SPACE){
     /* Deletes a buffer character if it is allowed */
+    if(buf_index <= 0){
+      return;
+    }
     buf_index--;
     back_space();
   }

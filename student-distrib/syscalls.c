@@ -115,8 +115,7 @@ int32_t execute(const uint8_t* command){
  *    SIDE EFFECTS:
  */
 int32_t read(int32_t fd, void* buf, int32_t nbytes){
-  terminal_read(fd,buf,nbytes);
-  return 0;
+  return terminal_read(fd,buf,nbytes);
 }
 
 /*
@@ -128,8 +127,7 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes){
  *    SIDE EFFECTS:
  */
 int32_t write(int32_t fd, void* buf, int32_t nbytes){
-  terminal_write(fd,buf,nbytes);
-  return 0;
+  return terminal_write(fd,buf,nbytes);
 }
 
 /*
