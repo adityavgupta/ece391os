@@ -9,6 +9,8 @@
 #define FOUR_MB 0x400000
 #define USER_PROG 0x08000000
 #define PROG_OFFSET 0x00048000
+#define RUNNING 0
+#define STOPPED 1
 
 jump_table rtc_table = {rtc_write, rtc_read, rtc_open, rtc_close};
 jump_table file_table = {file_write, file_read, file_open, file_close};
@@ -16,21 +18,8 @@ jump_table dir_table = {dir_write, dir_read, dir_open, dir_close};
 
 jump_table stdin_table = {NULL, terminal_read, NULL, NULL};
 jump_table stdout_table = {terminal_write, NULL, NULL, NULL};
-jump_table descript3 = {NULL, NULL, NULL, NULL};
-jump_table descript4 = {NULL, NULL, NULL, NULL};
-jump_table descript5 = {NULL, NULL, NULL, NULL};
-jump_table descript6 = {NULL, NULL, NULL, NULL};
-jump_table descript7 = {NULL, NULL, NULL, NULL};
 
-file_desc stdin_descr = {&stdin_table, -1, -1, 1};
-file_desc stdout_descr = {&stdout_table, -1, -1, 1};
-file_desc descr3 = {&descript3, -1, -1, 0};
-file_desc descr4 = {&descript4, -1, -1, 0};
-file_desc descr5 = {&descript5, -1, -1, 0};
-file_desc descr6 = {&descript6, -1, -1, 0};
-file_desc descr7 = {&descript7, -1, -1, 0};
-
-file_desc* file_desc_table[8] = {&stdin_descr, &stdout_descr, &descr3, &descr4, &descr5, &descr6, &descr7};
+//file_desc* file_desc_table[8] = {&stdin_descr, &stdout_descr, &descr3, &descr4, &descr5, &descr6, &descr7};
 
 int32_t process_num = 0;
 

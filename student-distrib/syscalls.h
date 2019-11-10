@@ -28,6 +28,16 @@ typedef struct file_desc{
 
 } file_desc;
 
+typedef struct{
+  int32_t pid; //process identification number
+  int32_t parent_pid; //parent process identitifcation nubmer
+  int32_t current_esp; //current_esp
+  int32_t parent_esp; //Parent's esp
+  int32_t parent_ebp; //parent's ebp
+  file_desc fdt[8]; //File Descriptor Table
+  unsigned char process_state;
+} pcb_t;
+
 int32_t halt(uint8_t status);
 
 int32_t execute(const uint8_t* command);
