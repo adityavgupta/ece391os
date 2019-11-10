@@ -28,6 +28,16 @@ typedef struct file_desc{
 
 } file_desc;
 
+typedef struct pcb{
+  int32_t pid; //process identification number
+  int32_t parent_pid; //parent process identitifcation nubmer
+  int32_t current_esp; //current_esp
+  int32_t parent_esp; //Parent's esp
+  int32_t parent_ebp; //parent's ebp
+  file_desc fdt[8]; //File Descriptor Table
+  unsigned char process_state;
+} pcb;
+
 int32_t halt(uint8_t status);
 
 int32_t execute(const uint8_t* command);
@@ -39,6 +49,8 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes);
 int32_t open(const uint8_t* filename);
 
 int32_t close(int32_t fd);
+
+pcb* get_pcb_add (void);
 
 #endif /* ASM */
 

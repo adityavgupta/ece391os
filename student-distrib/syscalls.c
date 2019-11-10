@@ -4,10 +4,13 @@
 #include "lib.h"
 #include "kb.h"
 
+
 #define EIGHT_MB 0x800000
 #define FOUR_MB 0x400000
 #define USER_PROG 0x08000000
 #define PROG_OFFSET 0x00048000
+#define RUNNING 0
+#define STOPPED 1
 
 jump_table rtc_table = {rtc_write, rtc_read, rtc_open, rtc_close};
 jump_table file_table = {file_write, file_read, file_open, file_close};
@@ -15,21 +18,9 @@ jump_table dir_table = {dir_write, dir_read, dir_open, dir_close};
 
 jump_table stdint_table = {NULL, terminal_read, NULL, NULL};
 jump_table stdoutt_table = {terminal_write, NULL, NULL, NULL};
-jump_table  descript3 = {NULL, NULL, NULL, NULL};
-jump_table  descript4 = {NULL, NULL, NULL, NULL};
-jump_table  descript5 = {NULL, NULL, NULL, NULL};
-jump_table  descript6 = {NULL, NULL, NULL, NULL};
-jump_table  descript7 = {NULL, NULL, NULL, NULL};
 
-file_desc stdin_descr = {&stdint_table, -1, -1, 1};
-file_desc stdout_descr = {&stdoutt_table, -1, -1, 1};
-file_desc descr3 = {&descript3, -1, -1, 0};
-file_desc descr4 = {&descript4, -1, -1, 0};
-file_desc descr5 = {&descript5, -1, -1, 0};
-file_desc descr6 = {&descript6, -1, -1, 0};
-file_desc descr7 = {&descript7, -1, -1, 0};
 
-file_desc* file_desc_table[8] = {&stdin_descr, &stdout_descr, &descr3, &descr4, &descr5, &descr6, &descr7};
+//file_desc* file_desc_table[8] = {&stdin_descr, &stdout_descr, &descr3, &descr4, &descr5, &descr6, &descr7};
 
 int32_t process_num = 0;
 
@@ -140,17 +131,17 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes){
 				sti();
 				return 0;
 		}
+    pcb* pcb_start = get_pcb_add();
+		file_desc curr_file= pcb_start->fdt[fd];
 
-		file_desc* curr_file= file_desc_table[fd];
-
-		if(curr_file == NULL){
+		if(curr_file.inode == -1){
 				sti();
 				return 0;
 		}
 
-		if(curr_file->jump_ptr->read != NULL){
+		if(curr_file.jump_ptr->read != NULL){
 				sti();
-				return curr_file->jump_ptr->read(fd,buf,nbytes);
+				return curr_file.jump_ptr->read(fd,buf,nbytes);
 		}
 		sti();
 		return 0;
@@ -172,16 +163,17 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes){
 		return -1;
 	}
 
-	file_desc* curr_file = file_desc_table[fd];
+  pcb* pcb_start = get_pcb_add();
+	file_desc curr_file = pcb_start->fdt[fd];
 
-	if(curr_file == NULL){
+	if(curr_file.inode == -1){
 		sti();
 		return -1;
 	}
 
-	if(curr_file->jump_ptr->write != NULL){
+	if(curr_file.jump_ptr->write != NULL){
 		sti();
-		return curr_file->jump_ptr->write(fd,buf,nbytes);
+		return curr_file.jump_ptr->write(fd,buf,nbytes);
 	}
 
 	sti();
@@ -198,6 +190,9 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes){
  *    SIDE EFFECTS:
  */
 int32_t open(const uint8_t* filename){
+
+  pcb* pcb_start = get_pcb_add();
+
   if(strncmp((int8_t*)filename, (int8_t*)"stdin", strlen((int8_t*)filename))==0 ){
 		terminal_open(filename);
 		return 0;
@@ -220,28 +215,28 @@ int32_t open(const uint8_t* filename){
 
 	int i;
 	for(i=2;i<8;i++){
-		if(file_desc_table[i]->flags == 0){
+		if(pcb_start->fdt[i].flags == 0){
 			if(strncmp((int8_t*)filename, (int8_t*)"rtc", strlen((int8_t*)filename)) == 0){
-				file_desc_table[i]->flags = 3;
-				file_desc_table[i]->jump_ptr = &rtc_table;
-				file_desc_table[i]->inode = inode;
-				file_desc_table[i]->file_position = 0;
+				pcb_start->fdt[i].flags = 3;
+				pcb_start->fdt[i].jump_ptr = &rtc_table;
+				pcb_start->fdt[i].inode = inode;
+				pcb_start->fdt[i].file_position = 0;
 				rtc_open((uint8_t*) filename);
 				return i;
 			}
 			else if(strncmp((int8_t*)filename, (int8_t*)".", strlen((int8_t*)filename)) == 0){
-				file_desc_table[i]->flags = 3;
-				file_desc_table[i]->jump_ptr = &dir_table;
-				file_desc_table[i]->inode = inode;
-				file_desc_table[i]->file_position = 0;
+				pcb_start->fdt[i].flags = 3;
+				pcb_start->fdt[i].jump_ptr = &dir_table;
+				pcb_start->fdt[i].inode = inode;
+				pcb_start->fdt[i].file_position = 0;
 				dir_open((uint8_t*) filename);
 				return i;
 			}
 			else{
-				file_desc_table[i]->flags = 1;
-				file_desc_table[i]->jump_ptr = &file_table;
-				file_desc_table[i]->inode = inode;
-				file_desc_table[i]->file_position = 0;
+				pcb_start->fdt[i].flags = 1;
+				pcb_start->fdt[i].jump_ptr = &file_table;
+				pcb_start->fdt[i].inode = inode;
+				pcb_start->fdt[i].file_position = 0;
 				file_open((uint8_t*) filename);
 				return i;
 			}
@@ -260,15 +255,36 @@ int32_t open(const uint8_t* filename){
  *    SIDE EFFECTS:
  */
 int32_t close(int32_t fd){
+  pcb* pcb_start = get_pcb_add();
+
   if(fd > 7 || fd < 0){
 		return -1;
 	}
-	if(file_desc_table[fd]->flags == 1 || file_desc_table[fd]->flags == 3){
-		if(file_desc_table[fd]->jump_ptr->close != NULL){
-			file_desc_table[fd]->jump_ptr->close(fd);
-			file_desc_table[fd]->flags = 0;
+	if(pcb_start->fdt[fd].flags == 1 || pcb_start->fdt[fd].flags == 3){
+		if(pcb_start->fdt[fd].jump_ptr->close != NULL){
+			pcb_start->fdt[fd].jump_ptr->close(fd);
+			pcb_start->fdt[fd].flags = 0;
 		}
 		return 0;
 	}
 	return -1;
+}
+
+/*
+ * get_espval
+ *    DESCRIPTION:
+ *    INPUTS:
+ *    OUTPUTS: none
+ *    RETURN VALUE:
+ *    SIDE EFFECTS:
+ */
+pcb* get_pcb_add (void) {
+  int32_t espv;
+  pcb* pcb_add;
+  asm volatile("\n\
+    movl %%esp, %0"
+    : "=r" (espv)
+  );
+  pcb_add = (pcb*)(espv&0xFFFFE000); // 8kB = 2^13, so mask everything below 13th bit
+  return pcb_add;
 }
