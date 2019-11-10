@@ -3,7 +3,6 @@
 #include "paging.h"
 #include "lib.h"
 #include "kb.h"
-#include "pcb.h"
 
 
 #define EIGHT_MB 0x800000
