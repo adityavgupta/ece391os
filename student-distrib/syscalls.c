@@ -35,6 +35,10 @@ int32_t halt(uint8_t status){
     uint8_t sh[]="shell";
     execute((uint8_t*)sh);
   }
+  int i;
+  for(i=0;i<8;i++){
+    close(i);
+  }
   process_num--;
   set_page_dir_entry(USER_PROG, EIGHT_MB + (process_num - 1)*FOUR_MB);
   /* Flush tlb */
@@ -45,9 +49,6 @@ int32_t halt(uint8_t status){
      :
      : "eax"
   );
-  //close relevant fds
-  //int i;
-  // for(i=0;i<8;i++)close(i);
   pcb_t* cur_pcb = get_pcb_add();
   cur_pcb->process_state=STOPPED;
   tss.esp0 = cur_pcb->parent_esp;
@@ -294,7 +295,7 @@ int32_t close(int32_t fd){
   if(fd > 7 || fd < 0){
 		return -1;
 	}
-	if(pcb_start->fdt[fd].flags){
+	if(pcb_start->fdt[fd].flags==1){
 		if(pcb_start->fdt[fd].jump_ptr->close != NULL){
 			pcb_start->fdt[fd].jump_ptr->close(fd);
 			pcb_start->fdt[fd].flags = -1;
