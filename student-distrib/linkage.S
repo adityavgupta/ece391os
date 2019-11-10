@@ -18,10 +18,10 @@ context_switch:
     pushl %eax
     popf
     pushl %ds
-    pushl $0x083FFFFF
+    pushl $0x83FFFFF
     pushf
     pushl $USER_CS
-    pushl 16(%esp) # user eip
+    pushl %ecx # user eip
 
     iret
 

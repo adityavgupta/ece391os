@@ -2,6 +2,7 @@
 #include "x86_desc.h"
 #include "paging.h"
 #include "lib.h"
+#include "kb.h"
 
 #define VIRTUAL_ADDR 0x08000000
 #define EIGHT_MB 0x800000
@@ -47,9 +48,8 @@ int32_t execute(const uint8_t* command){
 
   filename[i] = '\0';
   dentry_t file_dentry;
-  int32_t temp;
   /* Check for a valid file name */
-  if((temp=read_dentry_by_name(filename, &file_dentry)) == -1){
+  if(read_dentry_by_name(filename, &file_dentry) == -1){
     /* Return failure */
     return -1;
   }
@@ -63,6 +63,16 @@ int32_t execute(const uint8_t* command){
   }
   /* Set up user page */
   set_page_dir_entry(VIRTUAL_ADDR, EIGHT_MB + (process_num++)*PAGE_SIZE);
+
+  /* Flush tlb */
+  asm volatile ("      \n\
+     movl %%cr3, %%eax \n\
+     movl %%eax, %%cr3"
+     :
+     :
+     : "eax"
+  );
+
   if((size = read_data(file_dentry.inode_num, 0, (uint8_t*)(USER_PROG + PROG_OFFSET), 40000)) == -1){
     /* Return failure */
     return -1;
@@ -75,17 +85,6 @@ int32_t execute(const uint8_t* command){
     return -1;
   }
 
-
-
-  /* Flush tlb */
-  asm volatile ("      \n\
-     movl %%cr3, %%eax \n\
-     movl %%eax, %%cr3"
-     :
-     :
-     : "eax"
-  );
-
   // memcpy((void *)(EIGHT_MB - process_num*0x2000), pcb, sizeof(pcb));
 
   /* Set TSS values */
@@ -93,9 +92,15 @@ int32_t execute(const uint8_t* command){
   tss.ss0 = KERNEL_DS;
 
   /* Get address of first instruction */
-  uint32_t program_addr = (ELF_buf[23] << 24) || (ELF_buf[24] << 16) || (ELF_buf[25] << 8) || ELF_buf[26];
+  uint32_t program_addr = *(uint32_t*)(ELF_buf+24);
 
-  asm volatile("jmp context_switch");
+  asm volatile("\n\
+    movl %0, %%ecx \n\
+    jmp context_switch"
+    :
+    : "r"(program_addr)
+    : "ecx"
+  );
 
   /* Return success */
   return 69;
