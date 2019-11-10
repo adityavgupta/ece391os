@@ -31,7 +31,7 @@ file_desc descr7 = {&descript7, -1, -1, 0};
 
 file_desc* file_desc_table[8] = {&stdin_descr, &stdout_descr, &descr3, &descr4, &descr5, &descr6, &descr7};
 
-static int32_t process_num = 0;
+int32_t process_num = 0;
 
 /*
  * halt
@@ -264,7 +264,7 @@ int32_t close(int32_t fd){
 		return -1;
 	}
 	if(file_desc_table[fd]->flags == 1 || file_desc_table[fd]->flags == 3){
-		if(file_desc_table[fd]->jump_ptr->close! = NULL){
+		if(file_desc_table[fd]->jump_ptr->close != NULL){
 			file_desc_table[fd]->jump_ptr->close(fd);
 			file_desc_table[fd]->flags = 0;
 		}

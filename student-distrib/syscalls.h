@@ -10,12 +10,14 @@
 
 #ifndef ASM
 
+extern int32_t process_num;
+
 typedef struct jump_table{
 	int32_t(*write)(int32_t,const void*,int32_t);
 	int32_t(*read)(int32_t,void*,int32_t);
 	int32_t(*open)(const uint8_t*);
 	int32_t(*close)(int32_t);
-	
+
 }jump_table;
 
 typedef struct file_desc{
@@ -23,7 +25,7 @@ typedef struct file_desc{
 	int32_t inode;
 	int32_t file_position;
 	int32_t flags;
-	
+
 } file_desc;
 
 int32_t halt(uint8_t status);
