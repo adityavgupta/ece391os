@@ -4,10 +4,8 @@
 #include "lib.h"
 #include "kb.h"
 
-#define VIRTUAL_ADDR 0x08000000
 #define EIGHT_MB 0x800000
 #define FOUR_MB 0x400000
-#define PAGE_SIZE 0x400000
 #define USER_PROG 0x08000000
 #define PROG_OFFSET 0x00048000
 
@@ -86,7 +84,7 @@ int32_t execute(const uint8_t* command){
     return -1;
   }
   /* Set up user page */
-  set_page_dir_entry(VIRTUAL_ADDR, EIGHT_MB + (process_num++)*PAGE_SIZE);
+  set_page_dir_entry(USER_PROG, EIGHT_MB + (process_num++)*FOUR_MB);
 
   /* Flush tlb */
   asm volatile ("      \n\

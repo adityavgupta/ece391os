@@ -29,12 +29,6 @@ static uint32_t page_table[TABLE_ENTRIES]  __attribute__((aligned (PAGE_SIZE)));
  *    SIDE EFFECTS:
  */
 int32_t set_page_dir_entry(int32_t virtual, int32_t physical){
-  /* Check if page already exists */
-  if(page_directory[virtual >> 22] & 0x1){
-    /* Return failure */
-    return -1;
-  }
-
   /* Create entry */
   page_directory[virtual >> 22] = physical | 0x087;
 
