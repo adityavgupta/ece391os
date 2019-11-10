@@ -3,7 +3,6 @@
 #include "paging.h"
 #include "lib.h"
 #include "kb.h"
-#include "pcb.h"
 
 
 #define EIGHT_MB 0x800000
@@ -136,7 +135,7 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes){
 				sti();
 				return 0;
 		}
-    pcb* pcb_start = get_pcb_add();
+    pcb_t* pcb_start = get_pcb_add();
 		file_desc curr_file= pcb_start->fdt[fd];
 
 		if(curr_file.inode == -1){
@@ -152,9 +151,9 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes){
 		return 0;
 	}
 
-	if(curr_file->jump_ptr->read != NULL){
+	if(curr_file.jump_ptr->read != NULL){
 		sti();
-		return curr_file->jump_ptr->read(fd,buf,nbytes);
+		return curr_file.jump_ptr->read(fd,buf,nbytes);
 	}
 
 	sti();
@@ -177,7 +176,7 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes){
 		return -1;
 	}
 
-  pcb* pcb_start = get_pcb_add();
+  pcb_t* pcb_start = get_pcb_add();
 	file_desc curr_file = pcb_start->fdt[fd];
 
 	if(curr_file.inode == -1){
@@ -205,7 +204,7 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes){
  */
 int32_t open(const uint8_t* filename){
 
-  pcb* pcb_start = get_pcb_add();
+  pcb_t* pcb_start = get_pcb_add();
 
   if(strncmp((int8_t*)filename, (int8_t*)"stdin", strlen((int8_t*)filename))==0 ){
 		terminal_open(filename);
@@ -269,7 +268,7 @@ int32_t open(const uint8_t* filename){
  *    SIDE EFFECTS:
  */
 int32_t close(int32_t fd){
-  pcb* pcb_start = get_pcb_add();
+  pcb_t* pcb_start = get_pcb_add();
 
   if(fd > 7 || fd < 0){
 		return -1;
@@ -292,13 +291,13 @@ int32_t close(int32_t fd){
  *    RETURN VALUE:
  *    SIDE EFFECTS:
  */
-pcb* get_pcb_add (void) {
+pcb_t* get_pcb_add (void) {
   int32_t espv;
-  pcb* pcb_add;
+  pcb_t* pcb_add;
   asm volatile("\n\
     movl %%esp, %0"
     : "=r" (espv)
   );
-  pcb_add = (pcb*)(espv&0xFFFFE000); // 8kB = 2^13, so mask everything below 13th bit
+  pcb_add = (pcb_t*)(espv&0xFFFFE000); // 8kB = 2^13, so mask everything below 13th bit
   return pcb_add;
 }
