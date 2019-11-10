@@ -16,7 +16,7 @@ typedef struct{
   int32_t parent_ebp; //parent's ebp
   file_desc** fdt; //File Descriptor Table
   unsigned char process_state;
-} Pcb;
+} pcb;
 
 #endif /* ASM */
 
