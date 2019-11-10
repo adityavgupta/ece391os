@@ -49,7 +49,7 @@ SYSCALL_DONE:
 		iret
 
 system_call_table:
-	.long  halt, execute, read, write, open, close
+	.long  halt, halt, execute, read, write, open, close
 
 # Linkage for the keyboard handler
 keyboard_linkage:
