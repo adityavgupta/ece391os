@@ -19,8 +19,6 @@ jump_table dir_table = {dir_write, dir_read, dir_open, dir_close};
 jump_table stdin_table = {NULL, terminal_read, NULL, NULL};
 jump_table stdout_table = {terminal_write, NULL, NULL, NULL};
 
-//file_desc* file_desc_table[8] = {&stdin_descr, &stdout_descr, &descr3, &descr4, &descr5, &descr6, &descr7};
-
 int32_t process_num = 0;
 
 /*
