@@ -454,7 +454,7 @@ void rtc_open_test(){
 *Side Effects prints to screen the values written
 */
 void write_ret_val(void){
-  terminal_open();
+  terminal_open((uint8_t*)"blah");
    unsigned char string[128];
   int i;
   for(i=0;i<128;i++){
@@ -468,7 +468,7 @@ void write_ret_val(void){
   } else{
     TEST_OUTPUT("write_ret_val",FAIL);
   }
-	  terminal_close();
+	  terminal_close(0);
 }
 
 
@@ -480,7 +480,7 @@ void write_ret_val(void){
  * Side Effects-Prints the screen
  */
 void read_ret_val(void){
-  terminal_open();
+  terminal_open((uint8_t*)"blah");
    unsigned char string[128];
 
   int ret_val= terminal_read(0, string,1);
@@ -491,7 +491,7 @@ void read_ret_val(void){
     TEST_OUTPUT("read_ret_val",FAIL);
   }
 
-  terminal_close();
+  terminal_close(0);
 }
 
 /* write_null
@@ -502,7 +502,7 @@ void read_ret_val(void){
  * Side Effects- None
  */
 void write_null(void){
-  	terminal_open();
+  	terminal_open((uint8_t*)"blah");
   	unsigned char* string=NULL;
 
   int ret_val=terminal_write(0, string, 1);
@@ -515,7 +515,7 @@ void write_null(void){
     TEST_OUTPUT("write_null",FAIL);
   }
 
-    terminal_close();
+    terminal_close(0);
 }
 
 /* read_null
@@ -526,7 +526,7 @@ void write_null(void){
  * Side Effects- None
  */
 void read_null(void){
-  terminal_open();
+  terminal_open((uint8_t*)"blah");
 
   unsigned char string[128];
   int ret_val=terminal_read(0, string, 1);
@@ -537,7 +537,7 @@ void read_null(void){
     TEST_OUTPUT("read_null",FAIL);
   }
 
-  terminal_close();
+  terminal_close(0);
 }
 
 /* buffer_write
@@ -548,11 +548,11 @@ void read_null(void){
  * Side Effects-None
  */
 void buffer_write(void){
-	terminal_open();
+	terminal_open((uint8_t*)"blah");
 	unsigned char string[]="Chief";
 	terminal_write(0, string,(int)strlen((char*)string));
 
-	terminal_close();
+	terminal_close(0);
 }
 
 /* buffer_read
@@ -563,10 +563,10 @@ void buffer_write(void){
  * Side Effects-None
  * */
 void buffer_read(void){
-		terminal_open();
+		terminal_open((uint8_t*)"blah");
 		unsigned char string[128];
 		terminal_read(0, string, 128);
-		terminal_close();
+		terminal_close(0);
 
 }
 
@@ -578,7 +578,7 @@ void buffer_read(void){
  * Side Effects- None
  * */
 void buffer_overflow_read(void) {
-  terminal_open();
+  terminal_open((uint8_t*)"blah");
   unsigned char string[140];
 
   int temp = terminal_read(0, string, 140);
@@ -586,7 +586,7 @@ void buffer_overflow_read(void) {
   putc('\n');
   // the write should just print out 128 characters
   terminal_write(0, string, temp);
-  terminal_close();
+  terminal_close(0);
 }
 
 
@@ -606,11 +606,11 @@ void buffer_overflow_write(void) {
     string[i]='a';
   }
 
-  terminal_open();
+  terminal_open((uint8_t*)"blah");
 
   terminal_write(0, string, 60);
 
-  terminal_close();
+  terminal_close(0);
 }
 
 /* press_enter_test
@@ -622,13 +622,13 @@ void buffer_overflow_write(void) {
  * */
 void press_enter_test(void){
 
-	terminal_open();
+	terminal_open((uint8_t*)"blah");
 	unsigned char string[128];
 
 	int temp=terminal_read(0, string, 128);
 
 	terminal_write(0, string,temp);
-	terminal_close();
+	terminal_close(0);
 }
 
 
@@ -643,7 +643,7 @@ void read_file_test(uint8_t* name){
   if((size = file_read(69, buf, 10000)) == -1){
     printf("Error\n");
   }
-  file_close();
+  file_close(0);
   buf[10000] = '\0';
   for(i=0; i<size; i++){
     putc(buf[i]);
@@ -662,7 +662,7 @@ void dir_read_test(){
     puts((int8_t*)buf);
     printf("\n");
   }
-  dir_close();
+  dir_close(0);
 }
 
 /* file_index_test

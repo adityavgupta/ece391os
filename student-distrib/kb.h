@@ -14,13 +14,13 @@ void keyboard_init(void);
 int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes);
 
 // Writes to the string buffer
-int32_t terminal_write(int32_t fd, void* buf, int32_t nbytes);
+int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes);
 
 // Open funciton te=o initnilize the driver
-int32_t terminal_open();
+int32_t terminal_open(const uint8_t* filename);
 
 // Closes the terminal driver
-int32_t terminal_close();
+int32_t terminal_close(int32_t fd);
 
 // ctrl+L check
 int32_t ctrl_l (uint8_t scan_code);

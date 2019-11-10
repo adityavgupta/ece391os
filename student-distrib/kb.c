@@ -125,7 +125,7 @@ uint8_t kbdus[256] =
  *    Return Value: 0 for success
  *    SIDE EFFECTS: Initializes some of the global variables to 0
  */
-int32_t terminal_open(){
+int32_t terminal_open(const uint8_t* filename){
 		buf_index = 0;
     return 0;
 }
@@ -139,7 +139,7 @@ int32_t terminal_open(){
  *    RETURN VALUE: -1 for failure, number of bytes written
  *    SIDE EFFECTS: None
  */
-int terminal_write(int32_t fd, void* buf, int32_t nbytes){
+int terminal_write(int32_t fd, const void* buf, int32_t nbytes){
   /* Check for an invalid buffer */
 	if(buf == NULL || nbytes < 0){
     /* Return failure */
@@ -171,7 +171,7 @@ int terminal_write(int32_t fd, void* buf, int32_t nbytes){
  *    RETURN VALUE: 0 for success
  *    SIDE EFFECTS: None
  */
-int32_t terminal_close(){
+int32_t terminal_close(int32_t fd){
 		buf_index = 0; // Sets the index back to 0
     return 0;
 }

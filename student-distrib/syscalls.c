@@ -196,13 +196,13 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes){
  *    SIDE EFFECTS:
  */
 int32_t open(const uint8_t* filename){
-  if(strncmp(filename,"stdin",strlen(filename))==0 ){
-			terminal_open();
+  if(strncmp((int8_t*)filename, (int8_t*)"stdin", strlen((int8_t*)filename))==0 ){
+			terminal_open(filename);
 			return 0;
 		}
-		
-		if(strncmp(filename,"stdout",strlen(filename))==0){
-			terminal_open();
+
+		if(strncmp((int8_t*)filename, (int8_t*)"stdout", strlen((int8_t*)filename))==0){
+			terminal_open(filename);
 			return 1;
 		}
 
@@ -219,7 +219,7 @@ int32_t open(const uint8_t* filename){
 		int i;
 		for(i=2;i<8;i++){
 			if(file_desc_table[i]->flags==0){
-				if(strncmp(filename,"rtc",strlen(filename))==0){
+				if(strncmp((int8_t*)filename, (int8_t*)"rtc", strlen((int8_t*)filename))==0){
 					file_desc_table[i]->flags=3;
 					file_desc_table[i]->jump_ptr=&rtc_table;
 					file_desc_table[i]->inode=inode;
@@ -227,7 +227,7 @@ int32_t open(const uint8_t* filename){
 					rtc_open((uint8_t*) filename);
 					return i;
 				}
-				else if(strncmp(filename,".",strlen(filename))==0){
+				else if(strncmp((int8_t*)filename, (int8_t*)".", strlen((int8_t*)filename))==0){
 					file_desc_table[i]->flags=3;
 					file_desc_table[i]->jump_ptr=&dir_table;
 					file_desc_table[i]->inode=inode;

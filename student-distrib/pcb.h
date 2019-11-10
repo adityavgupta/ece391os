@@ -1,7 +1,8 @@
 #ifndef _PCB_H
 #define _PCB_H
 
-#include "syscall.h"
+#include "syscalls.h"
+
 #define RUNNING 0
 #define STOPPED 1
 
