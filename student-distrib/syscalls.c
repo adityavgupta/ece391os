@@ -124,7 +124,13 @@ int32_t execute(const uint8_t* command){
   pcb.pid = process_num;
   pcb.fdt[0].jump_ptr = &stdin_table;
   pcb.fdt[1].jump_ptr = &stdout_table;
+  pcb.fdt[0].flags = 1;
+  pcb.fdt[1].flags = 1;
   pcb.process_state = 0;
+  int32_t i;
+  for(i = 2; i < 8; i++){
+    pcb.fdt[i].flags = -1;
+  }
   memcpy((void *)(EIGHT_MB - process_num*0x2000), &pcb, sizeof(pcb));
 
   /* Set TSS values */
