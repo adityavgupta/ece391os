@@ -12,35 +12,45 @@
 #define RUNNING 0
 #define STOPPED 1
 
+ //function pointers for rtc
 jump_table rtc_table = {rtc_write, rtc_read, rtc_open, rtc_close};
+
+//function pointers for file
 jump_table file_table = {file_write, file_read, file_open, file_close};
+
+//function pointers for directory
 jump_table dir_table = {dir_write, dir_read, dir_open, dir_close};
 
+//function pointers for stdin(only has terminal read)
 jump_table stdin_table = {NULL, terminal_read, NULL, NULL};
+
+//function pointers for stdout(only has terminal write)
 jump_table stdout_table = {terminal_write, NULL, NULL, NULL};
 
+//process number: 1st process has pid 1, 0 means no processes have been launched
 int32_t process_num = 0;
 
 /*
  * halt
- *    DESCRIPTION:
- *    INPUTS:
+ *    DESCRIPTION: halt system call, restores parent process paging and data and closes fds
+ *    INPUTS: status: return value from halt
  *    OUTPUTS: none
  *    RETURN VALUE:
- *    SIDE EFFECTS:
+ *    SIDE EFFECTS: halt current process, return to parent process(shell)
  */
 int32_t halt(uint8_t status){
-  if(process_num==1){
+  if(process_num==1){ //if shell tries to halt, just launch shell again
     process_num=0;
     uint8_t sh[]="shell";
     execute((uint8_t*)sh);
   }
+  //else we are in a child process
   int i;
-  for(i=0;i<8;i++){
+  for(i=0;i<8;i++){ //close all files in the pcb
     close(i);
   }
-  process_num--;
-  set_page_dir_entry(USER_PROG, EIGHT_MB + (process_num - 1)*FOUR_MB);
+  process_num--; //decrement process number
+  set_page_dir_entry(USER_PROG, EIGHT_MB + (process_num - 1)*FOUR_MB);//remap user program paging back to parent program
   /* Flush tlb */
   asm volatile ("      \n\
      movl %%cr3, %%eax \n\
@@ -49,9 +59,16 @@ int32_t halt(uint8_t status){
      :
      : "eax"
   );
-  pcb_t* cur_pcb = get_pcb_add();
-  cur_pcb->process_state=STOPPED;
-  tss.esp0 = cur_pcb->parent_esp;
+  pcb_t* cur_pcb = get_pcb_add(); //get the current process pcb
+  cur_pcb->process_state=STOPPED; //set process state to stopped
+  tss.esp0 = cur_pcb->parent_esp; //set TSS esp0 back to parent stack pointer
+
+  /*
+  inline assembly:
+    1st line: zero extend bl and move value into eax so that the correct status is returned from halt
+    2nd line: set ebp to parent process ebp
+    3rd andd 4th line: jump back to parent's system call linkage
+  */
   asm volatile ("      \n\
      movzbl %%bl,%%eax    \n\
      movl %0,%%ebp    \n\
