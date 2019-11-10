@@ -3,6 +3,7 @@
 #include "paging.h"
 #include "lib.h"
 #include "kb.h"
+#include "pcb.h"
 
 #define EIGHT_MB 0x800000
 #define FOUR_MB 0x400000
@@ -13,16 +14,16 @@ jump_table rtc_table = {rtc_write, rtc_read, rtc_open, rtc_close};
 jump_table file_table = {file_write, file_read, file_open, file_close};
 jump_table dir_table = {dir_write, dir_read, dir_open, dir_close};
 
-jump_table stdint_table = {NULL, terminal_read, NULL, NULL};
-jump_table stdoutt_table = {terminal_write, NULL, NULL, NULL};
-jump_table  descript3 = {NULL, NULL, NULL, NULL};
-jump_table  descript4 = {NULL, NULL, NULL, NULL};
-jump_table  descript5 = {NULL, NULL, NULL, NULL};
-jump_table  descript6 = {NULL, NULL, NULL, NULL};
-jump_table  descript7 = {NULL, NULL, NULL, NULL};
+jump_table stdin_table = {NULL, terminal_read, NULL, NULL};
+jump_table stdout_table = {terminal_write, NULL, NULL, NULL};
+jump_table descript3 = {NULL, NULL, NULL, NULL};
+jump_table descript4 = {NULL, NULL, NULL, NULL};
+jump_table descript5 = {NULL, NULL, NULL, NULL};
+jump_table descript6 = {NULL, NULL, NULL, NULL};
+jump_table descript7 = {NULL, NULL, NULL, NULL};
 
-file_desc stdin_descr = {&stdint_table, -1, -1, 1};
-file_desc stdout_descr = {&stdoutt_table, -1, -1, 1};
+file_desc stdin_descr = {&stdin_table, -1, -1, 1};
+file_desc stdout_descr = {&stdout_table, -1, -1, 1};
 file_desc descr3 = {&descript3, -1, -1, 0};
 file_desc descr4 = {&descript4, -1, -1, 0};
 file_desc descr5 = {&descript5, -1, -1, 0};
@@ -105,7 +106,12 @@ int32_t execute(const uint8_t* command){
     return -1;
   }
 
-  //memcpy((void *)(EIGHT_MB - process_num*0x2000), pcb, sizeof(pcb));
+  pcb_t pcb;
+  pcb.pid = process_num;
+  pcb.fdt[0].jump_ptr = &stdin_table;
+  pcb.fdt[1].jump_ptr = &stdout_table;
+  pcb.process_state = 0;
+  memcpy((void *)(EIGHT_MB - process_num*0x2000), &pcb, sizeof(pcb));
 
   /* Set TSS values */
   tss.esp0 = EIGHT_MB - process_num*0x2000;
@@ -136,24 +142,25 @@ int32_t execute(const uint8_t* command){
  */
 int32_t read(int32_t fd, void* buf, int32_t nbytes){
   cli();
-		if(fd < 0 || fd > 7){
-				sti();
-				return 0;
-		}
-
-		file_desc* curr_file= file_desc_table[fd];
-
-		if(curr_file == NULL){
-				sti();
-				return 0;
-		}
-
-		if(curr_file->jump_ptr->read != NULL){
-				sti();
-				return curr_file->jump_ptr->read(fd,buf,nbytes);
-		}
+	if(fd < 0 || fd > 7){
 		sti();
 		return 0;
+	}
+
+	file_desc* curr_file = file_desc_table[fd];
+
+	if(curr_file == NULL){
+		sti();
+		return 0;
+	}
+
+	if(curr_file->jump_ptr->read != NULL){
+		sti();
+		return curr_file->jump_ptr->read(fd,buf,nbytes);
+	}
+
+	sti();
+	return 0;
 }
 
 /*
