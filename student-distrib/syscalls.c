@@ -103,7 +103,7 @@ int32_t execute(const uint8_t* command){
   memcpy((void *)(EIGHT_MB - process_num*0x2000), &pcb, sizeof(pcb));
 
   /* Set TSS values */
-  tss.esp0 = EIGHT_MB - process_num*0x2000;
+  tss.esp0 = EIGHT_MB;
   tss.ss0 = KERNEL_DS;
 
   /* Get address of first instruction */
@@ -149,15 +149,6 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes){
 		}
 		sti();
 		return 0;
-	}
-
-	if(curr_file.jump_ptr->read != NULL){
-		sti();
-		return curr_file.jump_ptr->read(fd,buf,nbytes);
-	}
-
-	sti();
-	return 0;
 }
 
 /*
