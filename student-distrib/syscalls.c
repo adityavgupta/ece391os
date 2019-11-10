@@ -127,7 +127,6 @@ int32_t execute(const uint8_t* command){
   pcb.fdt[0].flags = 1;
   pcb.fdt[1].flags = 1;
   pcb.process_state = 0;
-  int32_t i;
   for(i = 2; i < 8; i++){
     pcb.fdt[i].flags = -1;
   }
@@ -139,13 +138,7 @@ int32_t execute(const uint8_t* command){
 
   /* Get address of first instruction */
   uint32_t program_addr = *(uint32_t*)(ELF_buf+24);
-  if(process_num==2){
-    asm volatile("\n\
-      movl %%esp, %0 \n\
-      movl %%ebp, %1"
-      :"=r"(second_pcb.parent_esp),"=r"(second_pcb.parent_ebp)
-    );
-  }
+
   asm volatile("\n\
     movl %0, %%ecx \n\
     jmp context_switch"
@@ -168,24 +161,24 @@ int32_t execute(const uint8_t* command){
  */
 int32_t read(int32_t fd, void* buf, int32_t nbytes){
   cli();
-		if(fd < 0 || fd > 7){
-				sti();
-				return 0;
-		}
-    pcb_t* pcb_start = get_pcb_add();
-		file_desc curr_file= pcb_start->fdt[fd];
-
-		if(curr_file.inode == -1){
-				sti();
-				return 0;
-		}
-
-		if(curr_file.jump_ptr->read != NULL){
-				sti();
-				return curr_file.jump_ptr->read(fd,buf,nbytes);
-		}
+	if(fd < 0 || fd > 7){
 		sti();
 		return 0;
+	}
+  pcb_t* pcb_start = get_pcb_add();
+	file_desc curr_file = pcb_start->fdt[fd];
+
+	if(curr_file.flags == -1){
+		sti();
+		return 0;
+	}
+
+	if(curr_file.jump_ptr->read != NULL){
+		sti();
+		return curr_file.jump_ptr->read(fd, buf, nbytes);
+	}
+	sti();
+	return 0;
 }
 
 /*
@@ -207,14 +200,14 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes){
   pcb_t* pcb_start = get_pcb_add();
 	file_desc curr_file = pcb_start->fdt[fd];
 
-	if(curr_file.inode == -1){
+	if(curr_file.flags == -1){
 		sti();
 		return -1;
 	}
 
 	if(curr_file.jump_ptr->write != NULL){
 		sti();
-		return curr_file.jump_ptr->write(fd,buf,nbytes);
+		return curr_file.jump_ptr->write(fd, buf, nbytes);
 	}
 
 	sti();
@@ -231,10 +224,7 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes){
  *    SIDE EFFECTS:
  */
 int32_t open(const uint8_t* filename){
-
-  pcb_t* pcb_start = get_pcb_add();
-
-  if(strncmp((int8_t*)filename, (int8_t*)"stdin", strlen((int8_t*)filename))==0 ){
+  if(strncmp((int8_t*)filename, (int8_t*)"stdin", strlen((int8_t*)filename)) == 0){
 		terminal_open(filename);
 		return 0;
 	}
@@ -252,35 +242,29 @@ int32_t open(const uint8_t* filename){
 		return -1;
 	}
 
-	int inode=temp_dentry.inode_num;
+  pcb_t* pcb_start = get_pcb_add();
 
 	int i;
-	for(i=2;i<8;i++){
-		if(pcb_start->fdt[i].flags == 0){
+	for(i = 2; i < 8; i++){
+		if(pcb_start->fdt[i].flags == -1){
 			if(strncmp((int8_t*)filename, (int8_t*)"rtc", strlen((int8_t*)filename)) == 0){
-				pcb_start->fdt[i].flags = 3;
 				pcb_start->fdt[i].jump_ptr = &rtc_table;
-				pcb_start->fdt[i].inode = inode;
-				pcb_start->fdt[i].file_position = 0;
 				rtc_open((uint8_t*) filename);
 				return i;
 			}
 			else if(strncmp((int8_t*)filename, (int8_t*)".", strlen((int8_t*)filename)) == 0){
-				pcb_start->fdt[i].flags = 3;
 				pcb_start->fdt[i].jump_ptr = &dir_table;
-				pcb_start->fdt[i].inode = inode;
-				pcb_start->fdt[i].file_position = 0;
 				dir_open((uint8_t*) filename);
 				return i;
 			}
 			else{
-				pcb_start->fdt[i].flags = 1;
 				pcb_start->fdt[i].jump_ptr = &file_table;
-				pcb_start->fdt[i].inode = inode;
-				pcb_start->fdt[i].file_position = 0;
 				file_open((uint8_t*) filename);
 				return i;
 			}
+      pcb_start->fdt[i].flags = 1;
+      pcb_start->fdt[i].inode = temp_dentry.inode_num;
+      pcb_start->fdt[i].file_position = 0;
 		}
 	}
 
@@ -301,10 +285,10 @@ int32_t close(int32_t fd){
   if(fd > 7 || fd < 0){
 		return -1;
 	}
-	if(pcb_start->fdt[fd].flags == 1 || pcb_start->fdt[fd].flags == 3){
+	if(pcb_start->fdt[fd].flags){
 		if(pcb_start->fdt[fd].jump_ptr->close != NULL){
 			pcb_start->fdt[fd].jump_ptr->close(fd);
-			pcb_start->fdt[fd].flags = 0;
+			pcb_start->fdt[fd].flags = -1;
 		}
 		return 0;
 	}
