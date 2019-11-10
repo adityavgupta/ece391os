@@ -50,6 +50,8 @@ int32_t open(const uint8_t* filename);
 
 int32_t close(int32_t fd);
 
+pcb* get_pcb_add (void);
+
 #endif /* ASM */
 
 #endif /* _SYSCALLS_H */
