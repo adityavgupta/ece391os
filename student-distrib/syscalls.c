@@ -43,7 +43,11 @@ int32_t process_num = 0;
  *    SIDE EFFECTS:
  */
 int32_t halt(uint8_t status){
-  if(process_num==0)return 0;
+  if(process_num==1){
+    process_num=0;
+    uint8_t sh[]="shell";
+    execute((uint8_t*)sh);
+  }
   process_num=0;
   set_page_dir_entry(USER_PROG, EIGHT_MB + (process_num++)*FOUR_MB);
   /* Flush tlb */
