@@ -282,8 +282,12 @@ void recent_release_exec (uint8_t scan_code) {
   }
   else if(scan_code == L_CHAR && ctrl_pressed == 1) {
     reset_screen(); //resets the screen and clears the buffer and the screen
-    buf_index = 0;
-    clear();
+    clear_l();
+	
+	int i=0;
+	for(;i<buf_index;i++){
+		putc(kb_buf[i]);
+	}
   }
   else if(scan_code == BACK_SPACE){
     /* Deletes a buffer character if it is allowed */
