@@ -37,5 +37,5 @@ file_desc desc12 = {&descrip12, -1, -1, 0};
 file_desc* first_file_desc_table[] = {&stdin_desc, &stdout_desc, &desc3, &desc4, &desc5, &desc6, &desc7};
 file_desc* second_file_desc_table[] = {&stdin_desc, &stdout_desc, &desc8, &desc9, &desc10, &desc11, &desc12};
 
-pcb first_pcb = {1, -1, 0x7FFFFF, -1, -1, first_file_desc_table, STOPPED};
-pcb second_pcb = {2, 1, 0x7FFFFF-(1024*8), 0, 0, second_file_desc_table, STOPPED};
+pcb first_pcb = {1, -1, 0x7FFFFF-(8*1024), -1, -1, first_file_desc_table, STOPPED};
+pcb second_pcb = {2, 1, 0x7FFFFF-(16*1024), 0, 0, second_file_desc_table, STOPPED};

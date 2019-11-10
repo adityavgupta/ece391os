@@ -18,6 +18,9 @@ typedef struct{
   unsigned char process_state;
 } pcb;
 
+extern pcb first_pcb;
+extern pcb second_pcb;
+
 #endif /* ASM */
 
 #endif /* _PCB_H */

@@ -3,6 +3,7 @@
 #include "paging.h"
 #include "lib.h"
 #include "kb.h"
+#include "pcb.h"
 
 #define EIGHT_MB 0x800000
 #define FOUR_MB 0x400000
@@ -42,6 +43,29 @@ int32_t process_num = 0;
  *    SIDE EFFECTS:
  */
 int32_t halt(uint8_t status){
+  if(process_num==0)return 0;
+  process_num=0;
+  set_page_dir_entry(USER_PROG, EIGHT_MB + (process_num++)*FOUR_MB);
+  /* Flush tlb */
+  asm volatile ("      \n\
+     movl %%cr3, %%eax \n\
+     movl %%eax, %%cr3"
+     :
+     :
+     : "eax"
+  );
+  //close relevant fds
+  second_pcb.process_state=STOPPED;
+  tss.esp0 = second_pcb.parent_esp;
+  asm volatile ("      \n\
+     movzbl %%bl,%%eax    \n\
+     movl %0,%%ebp    \n\
+     leave \n\
+     ret"
+     :
+     : "r"(second_pcb.parent_ebp)
+     : "ebp","eax"
+  );
   return 0;
 }
 
@@ -113,7 +137,13 @@ int32_t execute(const uint8_t* command){
 
   /* Get address of first instruction */
   uint32_t program_addr = *(uint32_t*)(ELF_buf+24);
-
+  if(process_num==2){
+    asm volatile("\n\
+      movl %%esp, %0 \n\
+      movl %%ebp, %1"
+      :"=r"(second_pcb.parent_esp),"=r"(second_pcb.parent_ebp)
+    );
+  }
   asm volatile("\n\
     movl %0, %%ecx \n\
     jmp context_switch"
