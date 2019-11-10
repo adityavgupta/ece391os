@@ -130,7 +130,7 @@ int32_t execute(const uint8_t* command){
   memcpy((void *)(EIGHT_MB - process_num*0x2000), &pcb, sizeof(pcb));
 
   /* Set TSS values */
-  tss.esp0 = EIGHT_MB;
+  tss.esp0 = EIGHT_MB - (process_num - 1)*0x2000;
   tss.ss0 = KERNEL_DS;
 
   /* Get address of first instruction */
