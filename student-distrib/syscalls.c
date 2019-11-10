@@ -35,8 +35,8 @@ int32_t halt(uint8_t status){
     uint8_t sh[]="shell";
     execute((uint8_t*)sh);
   }
-  process_num=0;
-  set_page_dir_entry(USER_PROG, EIGHT_MB + (process_num++)*FOUR_MB);
+  process_num--;
+  set_page_dir_entry(USER_PROG, EIGHT_MB + (process_num)*FOUR_MB);
   /* Flush tlb */
   asm volatile ("      \n\
      movl %%cr3, %%eax \n\
@@ -46,15 +46,18 @@ int32_t halt(uint8_t status){
      : "eax"
   );
   //close relevant fds
-  second_pcb.process_state=STOPPED;
-  tss.esp0 = second_pcb.parent_esp;
+  int i;
+  // for(i=0;i<8;i++)close(i);
+  pcb_t* cur_pcb = get_pcb_add();
+  cur_pcb->process_state=STOPPED;
+  tss.esp0 = cur_pcb->parent_esp;
   asm volatile ("      \n\
      movzbl %%bl,%%eax    \n\
      movl %0,%%ebp    \n\
      leave \n\
      ret"
      :
-     : "r"(second_pcb.parent_ebp)
+     : "r"(cur_pcb->parent_ebp)
      : "ebp","eax"
   );
   return 0;
@@ -132,9 +135,19 @@ int32_t execute(const uint8_t* command){
   }
   memcpy((void *)(EIGHT_MB - process_num*0x2000), &pcb, sizeof(pcb));
 
+  pcb_t* cur_pcb = get_pcb_add();
+  if(process_num==2){
+    asm volatile("\n\
+      movl %%esp, %0 \n\
+      movl %%ebp, %1"
+      :"=r"(cur_pcb->parent_esp),"=r"(cur_pcb->parent_ebp)
+    );
+  }
+  
   /* Set TSS values */
   tss.esp0 = EIGHT_MB - (process_num - 1)*0x2000;
   tss.ss0 = KERNEL_DS;
+
 
   /* Get address of first instruction */
   uint32_t program_addr = *(uint32_t*)(ELF_buf+24);
