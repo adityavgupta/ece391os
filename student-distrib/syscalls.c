@@ -36,7 +36,7 @@ int32_t halt(uint8_t status){
     execute((uint8_t*)sh);
   }
   process_num--;
-  set_page_dir_entry(USER_PROG, EIGHT_MB + (process_num)*FOUR_MB);
+  set_page_dir_entry(USER_PROG, EIGHT_MB + (process_num - 1)*FOUR_MB);
   /* Flush tlb */
   asm volatile ("      \n\
      movl %%cr3, %%eax \n\
@@ -46,7 +46,7 @@ int32_t halt(uint8_t status){
      : "eax"
   );
   //close relevant fds
-  int i;
+  //int i;
   // for(i=0;i<8;i++)close(i);
   pcb_t* cur_pcb = get_pcb_add();
   cur_pcb->process_state=STOPPED;
@@ -133,17 +133,15 @@ int32_t execute(const uint8_t* command){
   for(i = 2; i < 8; i++){
     pcb.fdt[i].flags = -1;
   }
-  memcpy((void *)(EIGHT_MB - process_num*0x2000), &pcb, sizeof(pcb));
-
-  pcb_t* cur_pcb = get_pcb_add();
-  if(process_num==2){
+  if(process_num >= 2){
+    pcb.parent_esp = EIGHT_MB - (process_num-2)*0x2000;
     asm volatile("\n\
-      movl %%esp, %0 \n\
-      movl %%ebp, %1"
-      :"=r"(cur_pcb->parent_esp),"=r"(cur_pcb->parent_ebp)
+    movl %%ebp, %0"
+    : "=r"(pcb.parent_ebp)
     );
   }
-  
+  memcpy((void *)(EIGHT_MB - process_num*0x2000), &pcb, sizeof(pcb));
+
   /* Set TSS values */
   tss.esp0 = EIGHT_MB - (process_num - 1)*0x2000;
   tss.ss0 = KERNEL_DS;
@@ -263,21 +261,19 @@ int32_t open(const uint8_t* filename){
 			if(strncmp((int8_t*)filename, (int8_t*)"rtc", strlen((int8_t*)filename)) == 0){
 				pcb_start->fdt[i].jump_ptr = &rtc_table;
 				rtc_open((uint8_t*) filename);
-				return i;
 			}
 			else if(strncmp((int8_t*)filename, (int8_t*)".", strlen((int8_t*)filename)) == 0){
 				pcb_start->fdt[i].jump_ptr = &dir_table;
 				dir_open((uint8_t*) filename);
-				return i;
 			}
 			else{
 				pcb_start->fdt[i].jump_ptr = &file_table;
 				file_open((uint8_t*) filename);
-				return i;
 			}
       pcb_start->fdt[i].flags = 1;
       pcb_start->fdt[i].inode = temp_dentry.inode_num;
       pcb_start->fdt[i].file_position = 0;
+      return i;
 		}
 	}
 
