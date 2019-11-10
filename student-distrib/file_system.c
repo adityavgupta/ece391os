@@ -124,7 +124,7 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 
   /* Address of given inode */
   uint8_t* inode_addr = (uint8_t*)fs_start+(FOUR_KB * (inode+1));
-  
+
   /* Size of file */
   uint32_t file_size;
 
@@ -216,7 +216,7 @@ int32_t file_open(const uint8_t* filename){
  *    RETURN VALUE: 0 for success
  *    SIDE EFFECTS: Sets the current inode number to -1 and offset to 0
  */
-int32_t file_close(void){
+int32_t file_close(int32_t fd){
   /* Update offset and inode number to indicate no file is open */
   cur_inode = -1;
   file_offset = 0;
@@ -235,7 +235,7 @@ int32_t file_close(void){
  *    RETURN VALUE: Number of bytes read
  *    SIDE EFFECTS: Updates the current file offset
  */
-int32_t file_read(int32_t fd, void* buf, uint32_t num_bytes){
+int32_t file_read(int32_t fd, void* buf, int32_t num_bytes){
   /* Check if a file is open */
   if(cur_inode == -1){
     return -1;
@@ -265,7 +265,7 @@ int32_t file_read(int32_t fd, void* buf, uint32_t num_bytes){
  *    RETURN VALUE: -1 for failure
  *    SIDE EFFECTS: none
  */
-int32_t file_write(void){
+int32_t file_write(int32_t fd, const void* buf, int32_t num_bytes){
   /* File system is read only, so return failure */
   return -1;
 }
@@ -300,7 +300,7 @@ int32_t dir_open(const uint8_t* filename){
  *    RETURN VALUE: 0 for success
  *    SIDE EFFECTS: Sets dentry index to -1 to indicate that it's closed
  */
-int32_t dir_close(void){
+int32_t dir_close(int32_t fd){
   /* Set dentry index to an invalid number */
   dentry_index = -1;
 
@@ -357,7 +357,7 @@ int32_t dir_read(int32_t fd, void* buf, int32_t nbytes){
  *    RETURN VALUE: -1 for failure
  *    SIDE EFFECTS: none
  */
-int32_t dir_write(void){
+int32_t dir_write(int32_t fd, const void* buf, int32_t num_bytes){
   /* File system is read only, so return failure */
   return -1;
 }
