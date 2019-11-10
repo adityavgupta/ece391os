@@ -168,7 +168,7 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes){
  *    RETURN VALUE:
  *    SIDE EFFECTS:
  */
-int32_t write(int32_t fd, void* buf, int32_t nbytes){
+int32_t write(int32_t fd, const void* buf, int32_t nbytes){
   cli();
 		if(fd<0|| fd>7){
 				sti();
