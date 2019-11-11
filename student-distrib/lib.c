@@ -31,27 +31,32 @@ void clear(void) {
     }
 }
 
+/*
+ * clear_l
+ *    DESCRIPTION: Clears the screen when ctrl l is pressed
+ *    INPUTS: none
+ *    OUTPUTS: Moves current typed line to the top of the screen
+ *    RETURN VALUE: none
+ *    SIDE EFFECTS: none
+ */
 void clear_l(void){
-	int32_t i, j, x;
-  x = screen_x;
+	int32_t diff, i, x; /* Loop variable and value holders */
+  x = screen_x; /* Store current screen_x value */
 
-  for(i = 0; i < current_line; i++){
-    for (j = 0; j < NUM_COLS; j++) {
-      *(uint8_t *)(video_mem + ((i*NUM_COLS + j) << 1)) = ' ';
-      *(uint8_t *)(video_mem + ((i*NUM_COLS + j) << 1) + 1) = ATTRIB;
-    }
-  }
+  /* Difference between the beginning of the typing and the current screen position */
+  diff = screen_y - current_line;
 
-  i = screen_y - current_line;
-
-  for(j = 0; j < (NUM_ROWS - (1 + i)); j++){
+  /* Add newlines to force the screen upwards */
+  for(i = 0; i < (NUM_ROWS - (1 + diff)); i++){
     new_line();
   }
 
+  /* Set new values */
   current_line = 0;
-  screen_y = i;
+  screen_y = diff;
   screen_x = x;
 
+  /* Move cursor to new position */
   move_cursor(screen_x, screen_y);
 }
 
