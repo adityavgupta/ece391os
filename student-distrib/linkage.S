@@ -35,12 +35,12 @@ system_call_handler:
     pushl %edx
     pushl %ecx
     pushl %ebx
-    subl $1, %eax # sys call numbers are from 1-6, map them to 0-5 for jump table
-		cmpl $5, %eax # check is sys call number greater than 5, if so its invalid
+    subl $1, %eax # System call numbers are from 1-6, map them to 0-5 for jump table
+		cmpl $5, %eax # Check is sys call number greater than 5, if so its invalid
 		ja SYSCALL_DONE
-		cmpl $0, %eax # check is sys call number less than 0, if so its invalid
+		cmpl $0, %eax # Check is sys call number less than 0, if so its invalid
 		jb SYSCALL_DONE
-		call *system_call_table(, %eax, 4)  # call the appropriate system call
+		call *system_call_table(, %eax, 4)  # Call the appropriate system call
 SYSCALL_DONE:
     # Restore registers
     popl %ebx
