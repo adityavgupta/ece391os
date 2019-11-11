@@ -1374,6 +1374,69 @@ void read_write(){
   write(1,read_buf,128);
 }
 
+/*
+ * fd_file_read_test
+ * 		ASSERTS: Reads a file using file descriptor
+ * 		INPUTS: None
+ * 		OUTPUTS: prints contents of file
+ * 		SIDE EFFECTS: None
+ * 		COVERAGE: open,read,close
+ * 		FILES: syscalls.c
+ * */
+void fd_file_read_test(){
+  pcb_t pcb;
+  pcb.fdt[0].jump_ptr = &stdin_table_1;
+  pcb.fdt[1].jump_ptr = &stdout_table_1;
+  pcb.fdt[0].flags = 1;
+  pcb.fdt[1].flags = 1;
+  pcb.process_state = 0;
+	int i;
+	for(i = 2; i < 8; i++){
+    pcb.fdt[i].flags = -1;
+  }
+  /* Place pcb in kernel memory */
+  memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
+	printf("Reading frame1.txt\n");
+  unsigned char read_buf[1000];
+	int fd = open((uint8_t*)"frame1.txt");
+	read(fd,read_buf,1000);
+	printf("%s\n",read_buf);
+	close(fd);
+}
+
+/*
+ * fd_dir_read_test
+ *		ASSERTS: read from . directory by listing all files in directory
+ *		INPUTS: None
+ *    OUTPUTS: prints all files in the . directory
+ *		SIDE EFFECTS: None
+ *		COVERAGE: open,read,close
+ *		FILES: syscalls.c
+ */
+void fd_dir_read_test(){
+	pcb_t pcb;
+  pcb.fdt[0].jump_ptr = &stdin_table_1;
+  pcb.fdt[1].jump_ptr = &stdout_table_1;
+  pcb.fdt[0].flags = 1;
+  pcb.fdt[1].flags = 1;
+  pcb.process_state = 0;
+	int i;
+	for(i = 2; i < 8; i++){
+    pcb.fdt[i].flags = -1;
+  }
+  /* Place pcb in kernel memory */
+  memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
+	uint8_t buf[33];
+  int32_t cnt;
+  uint8_t dirName[]={'.'};
+  int fd =open((const uint8_t*)dirName);
+  while (0 != (cnt = read (fd, (void*)buf, 32))) {
+    if(cnt==-1)break;
+    puts((int8_t*)buf);
+    printf("\n");
+  }
+  close(fd);
+}
 
 /* Checkpoint 4 tests */
 /* Checkpoint 5 tests */
@@ -1435,23 +1498,28 @@ void launch_tests(){
 	//fread_fail_test();
 	//dread_fail_test();
 	//read_test();
-	open_null_test();
-	open_test_fail();
-	execute_fail_test();
-	read_test_fail_1();
-	read_test_fail_2();
-	read_test_fail_3();
-	read_test_fail_4();
-	read_test_fail_5();
-	write_test_fail_1();
-	write_test_fail_2();
-	write_test_fail_2();
-	write_test_fail_3();
-	write_test_fail_4();
-	write_test_fail_5();
-	close_fail_1();
-	close_fail_2();
-	close_fail_3();
-	close_fail_4();
-	close_fail_5();
+
+	/* checkpoint 3 tests */
+	
+	// open_null_test();
+	// open_test_fail();
+	// execute_fail_test();
+	// read_test_fail_1();
+	// read_test_fail_2();
+	// read_test_fail_3();
+	// read_test_fail_4();
+	// read_test_fail_5();
+	// write_test_fail_1();
+	// write_test_fail_2();
+	// write_test_fail_2();
+	// write_test_fail_3();
+	// write_test_fail_4();
+	// write_test_fail_5();
+	// close_fail_1();
+	// close_fail_2();
+	// close_fail_3();
+	// close_fail_4();
+	// close_fail_5();
+	// fd_file_read_test();
+	// fd_dir_read_test();
 }
