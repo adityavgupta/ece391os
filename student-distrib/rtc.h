@@ -18,6 +18,7 @@
 
 /* Flag to allow prints for test cases */
 extern uint32_t rtc_test_flag;
+extern uint32_t rtc_read_test_flag;
 
 /* Initialize RTC */
 void rtc_init(void);

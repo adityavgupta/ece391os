@@ -1531,7 +1531,7 @@ void rtc_system_call_test(){
 	while(count < 1000000000){
 		count++;
 	}
-	printf("\nWrite called\n");
+	printf("\nWrite called: 64hz\n");
 	if(-1 == write(fd, buf, 4)){
 		TEST_OUTPUT("rtc write failure", FAIL);
 	}
@@ -1545,9 +1545,11 @@ void rtc_system_call_test(){
 		TEST_OUTPUT("rtc write failure", FAIL);
 	}
 	rtc_test_flag = 0;
+	rtc_read_test_flag = 1;
 	if(-1 == read(fd, buf, 4)){
 		TEST_OUTPUT("rtc read failure", FAIL);
 	}
+	rtc_read_test_flag = 0;
 	if(-1 == close(fd)){
 		TEST_OUTPUT("rtc close failure", FAIL);
 	}

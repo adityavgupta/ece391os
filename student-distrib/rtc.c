@@ -7,6 +7,7 @@ volatile uint32_t rtc_interrupt;
 
 /* Flag to allow prints for test cases */
 uint32_t rtc_test_flag = 0;
+uint32_t rtc_read_test_flag = 0;
 
 /*
  * rtc_init
@@ -162,12 +163,12 @@ int32_t rtc_read(int32_t fd, void* buf, int32_t nbytes){
   /* Reset interrupt flag */
   rtc_interrupt = 0;
 
-  printf("Waiting for interrupt\n");
+  if(rtc_read_test_flag) printf("Waiting for interrupt\n");
   /* Block until an RTC interrupt occurs */
   while(!rtc_interrupt){
-
+    
   }
-  printf("Interrupt occurred\n");
+  if(rtc_read_test_flag) printf("Interrupt occurred\n");
   /* Return success */
   return 0;
 }
