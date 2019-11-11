@@ -761,6 +761,8 @@ jump_table stdin_table_1 = {NULL, terminal_read, terminal_open, terminal_close};
 /* function pointers for stdout(only has terminal write) */
 jump_table stdout_table_1 = {terminal_write, NULL, terminal_open, terminal_close};
 
+/* jump table for files*/
+jump_table file_table_1 = {file_write, file_read, file_open, file_close};
 /*
  * execute_fail_test
  * 		ASSERTS: Running execute on invalid executable file should fail
@@ -1232,6 +1234,38 @@ void write_test_fail_5(void){
 }
 
 /*
+ * write_test_fail_6
+ * 		ASSERTS: Cannot write to files
+ * 		INPUTS: None
+ * 		OUTPUTS: PASS - if ret = -1
+							 FAIL - if ret != -1
+ * 		SIDE EFFECTS: None
+ * 		COVERAGE: write
+ * 		FILES: syscalls.c
+ * */
+void write_test_fail_6(void){
+	pcb_t pcb;
+	pcb.fdt[0].jump_ptr= &stdin_table_1;
+	pcb.fdt[1].jump_ptr= &stdout_table_1;
+	pcb.fdt[2].jump_ptr=  &file_table_1;
+	pcb.fdt[0].flags=1;
+	pcb.fdt[1].flags=1;
+	pcb.fdt[2].flags=1;
+	pcb.process_state=0;
+
+	memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
+	open((uint8_t*)"pingpong");
+	unsigned char write_buf[128];
+        int ret=write(2,write_buf,128);
+
+  if(ret==-1){
+    TEST_OUTPUT("write_test_fail_6",PASS);
+  } else{
+    TEST_OUTPUT("write_test_fail_6",FAIL);
+  }
+
+}
+/*
  * close_fail_1
  * 		ASSERTS: Cannot close when fd < 0
  * 		INPUTS: None
@@ -1660,6 +1694,7 @@ void launch_tests(){
 	write_test_fail_3();
 	write_test_fail_4();
 	write_test_fail_5();
+	write_test_fail_6();
 	close_fail_1();
 	close_fail_2();
 	close_fail_3();
