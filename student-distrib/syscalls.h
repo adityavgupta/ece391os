@@ -15,20 +15,18 @@ extern int32_t process_num;
 
 /* Jump table for system calls */
 typedef struct jump_table{
-	int32_t(*write)(int32_t,const void*,int32_t);
-	int32_t(*read)(int32_t,void*,int32_t);
+	int32_t(*write)(int32_t, const void*, int32_t);
+	int32_t(*read)(int32_t, void*, int32_t);
 	int32_t(*open)(const uint8_t*);
 	int32_t(*close)(int32_t);
-
 } jump_table;
 
 /* File descriptor struct */
 typedef struct file_desc{
-	jump_table* jump_ptr;
-	int32_t inode;
-	int32_t file_position;
-	int32_t flags;
-
+	jump_table* jump_ptr;     /* Jump table to file's system calls */
+	int32_t inode;            /* File inode number */
+	int32_t file_position;    /* Current position of the file */
+	int32_t flags;            /* Flag to indicate is a descriptor is in use */
 } file_desc;
 
 /* PCB struct,  */
