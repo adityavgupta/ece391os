@@ -16,6 +16,7 @@
 
 static int screen_x;
 static int screen_y;
+static int current_line = 0;
 static char* video_mem = (char *)VIDEO;
 
 /* void clear(void);
@@ -31,12 +32,27 @@ void clear(void) {
 }
 
 void clear_l(void){
-	int32_t i;
-    for (i = 0; i < NUM_ROWS * NUM_COLS; i++) {
-        *(uint8_t *)(video_mem + (i << 1)) = ' ';
-        *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
+	int32_t i, j, x;
+  x = screen_x;
+
+  for(i = 0; i < current_line; i++){
+    for (j = 0; j < NUM_COLS; j++) {
+      *(uint8_t *)(video_mem + ((i*NUM_COLS + j) << 1)) = ' ';
+      *(uint8_t *)(video_mem + ((i*NUM_COLS + j) << 1) + 1) = ATTRIB;
     }
-	printf("391OS> ");
+  }
+
+  i = screen_y - current_line;
+
+  for(j = 0; j < (NUM_ROWS - (1 + i)); j++){
+    new_line();
+  }
+
+  current_line = 0;
+  screen_y = i;
+  screen_x = x;
+
+  move_cursor(screen_x, screen_y);
 }
 
 /* scroll_up
@@ -81,6 +97,7 @@ void new_line(void){
 void reset_screen(void){
 		screen_y = 0; /* set start of rows to 0 */
 		screen_x = 0; /* set start of column to 0*/
+    current_line = 0;
 
 		move_cursor(screen_x,screen_y); /* move cursor to start of screen */
 }
@@ -262,6 +279,7 @@ int32_t puts(int8_t* s) {
 void putc(uint8_t c) {
     if(c == '\n' || c == '\r') {
         new_line();
+        current_line = screen_y;
     } else {
         *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = c;
         *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
