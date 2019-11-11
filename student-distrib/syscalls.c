@@ -238,7 +238,7 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes){
 	sti();
 
   /* Return success */
-	return 0;
+	return -1;
 }
 
 /*
@@ -296,6 +296,11 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes){
  */
 int32_t open(const uint8_t* filename){
   /* Open stdin */
+  
+  if(filename==NULL){
+	 return -1; 
+  }
+  
   if(strncmp((int8_t*)filename, (int8_t*)"stdin", strlen((int8_t*)filename)) == 0){
 		terminal_open(filename);
     /* Return fd */
@@ -366,7 +371,7 @@ int32_t close(int32_t fd){
   pcb_t* pcb_start = get_pcb_add();
 
   /* Check for an invalid fd */
-  if(fd > 7 || fd < 0){
+  if(fd > 7 || fd < 2){
     /* Return failure */
 		return -1;
 	}
