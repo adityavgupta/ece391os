@@ -113,6 +113,7 @@ int32_t execute(const uint8_t* command){
   /* Check for a valid file name */
   if(read_dentry_by_name(filename, &file_dentry) == -1){
     /* Return failure */
+    sti();
     return -1;
   }
 
@@ -121,6 +122,7 @@ int32_t execute(const uint8_t* command){
   uint32_t size; /* Size of executable file */
   if((size = read_data(file_dentry.inode_num, 0, ELF_buf, 30)) == -1){
     /* Return failure */
+    sti();
     return -1;
   }
 
@@ -128,6 +130,7 @@ int32_t execute(const uint8_t* command){
   /* Check if file is an executable */
   if(!(ELF_buf[0] == 0x7F && !strncmp((int8_t*)(ELF_buf + 1), (int8_t*)elf, 3))){
     /* Return failure */
+    sti();
     return -1;
   }
 
@@ -370,6 +373,8 @@ int32_t close(int32_t fd){
     /* Return failure */
 		return -1;
 	}
+  //generate page exception for testing
+  //if(pcb_start->fdt[fd].flags){
 
   /* Check if file desciptor is in use */
 	if(pcb_start->fdt[fd].flags == 1){
