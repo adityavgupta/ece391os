@@ -250,7 +250,7 @@ int32_t in_char_range (uint8_t scan_code) {
  *    SIDE EFFECTS: prints the matching characters of the scan_code
  */
 void print_scancode (uint8_t scan_code) {
-  if(buf_index >= (BUF_LENGTH - 1) || line_buffer_flag){
+  if((buf_index >= (BUF_LENGTH - 1) && scan_code != NEW_LINE) || line_buffer_flag){
     return;
   }
 
