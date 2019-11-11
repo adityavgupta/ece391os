@@ -1,13 +1,12 @@
 #include "file_system.h"
 #include "lib.h"
+#include "syscalls.h"
 
 #define FOUR_KB 4096
 
+/* Address of the file system */
 static boot_block_t* boot_block;
 static uint32_t* fs_start;
-static uint32_t dentry_index = -1;
-static uint32_t file_offset = 0;
-static uint32_t cur_inode = -1;
 
 /*
  * file_system_init
@@ -124,7 +123,7 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 
   /* Address of given inode */
   uint8_t* inode_addr = (uint8_t*)fs_start+(FOUR_KB * (inode+1));
-  
+
   /* Size of file */
   uint32_t file_size;
 
@@ -191,19 +190,6 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
  *    SIDE EFFECTS: Initializes the file offset to 0 and stores the current inode number
  */
 int32_t file_open(const uint8_t* filename){
-  /* Dentry struct to copy to */
-  dentry_t file_dentry;
-
-  /* Read dentry, and check for valid file name */
-  if(read_dentry_by_name(filename, &file_dentry) == -1){
-    /* Return failure */
-    return -1;
-  }
-
-  /* Initialize the file offset, and set the current inode number */
-  file_offset = 0;
-  cur_inode = file_dentry.inode_num;
-
   /* Return success */
   return 0;
 }
@@ -216,11 +202,7 @@ int32_t file_open(const uint8_t* filename){
  *    RETURN VALUE: 0 for success
  *    SIDE EFFECTS: Sets the current inode number to -1 and offset to 0
  */
-int32_t file_close(void){
-  /* Update offset and inode number to indicate no file is open */
-  cur_inode = -1;
-  file_offset = 0;
-
+int32_t file_close(int32_t fd){
   /* Return success */
   return 0;
 }
@@ -235,23 +217,24 @@ int32_t file_close(void){
  *    RETURN VALUE: Number of bytes read
  *    SIDE EFFECTS: Updates the current file offset
  */
-int32_t file_read(int32_t fd, void* buf, uint32_t num_bytes){
+int32_t file_read(int32_t fd, void* buf, int32_t num_bytes){
   /* Check if a file is open */
-  if(cur_inode == -1){
+  pcb_t* pcb = get_pcb_add();
+  if(pcb->fdt[fd].inode == -1){
     return -1;
   }
 
   /* Number of bytes read */
-  int read_ret;
+  int32_t read_ret;
 
   /* Read data, and check if file reading worked */
-  if((read_ret = read_data(cur_inode, file_offset, (uint8_t*)buf, num_bytes)) == -1){
+  if((read_ret = read_data(pcb->fdt[fd].inode, pcb->fdt[fd].file_position, (uint8_t*)buf, num_bytes)) == -1){
     /* Return failure */
     return -1;
   }
 
   /* Update point in file */
-  file_offset += num_bytes;
+  pcb->fdt[fd].file_position += num_bytes;
 
   /* Number of bytes read */
 	return read_ret;
@@ -265,7 +248,7 @@ int32_t file_read(int32_t fd, void* buf, uint32_t num_bytes){
  *    RETURN VALUE: -1 for failure
  *    SIDE EFFECTS: none
  */
-int32_t file_write(void){
+int32_t file_write(int32_t fd, const void* buf, int32_t num_bytes){
   /* File system is read only, so return failure */
   return -1;
 }
@@ -279,15 +262,6 @@ int32_t file_write(void){
  *    SIDE EFFECTS: Sets the current index of the dentry to 0
  */
 int32_t dir_open(const uint8_t* filename){
-  /* Dentry struct to copy to */
-  dentry_t dentry;
-
-  /* Initial index into directory is 0 */
-  dentry_index = 0;
-
-  /* Read the directory */
-  read_dentry_by_name(filename, &dentry);
-
   /* Return success */
   return 0;
 }
@@ -300,10 +274,7 @@ int32_t dir_open(const uint8_t* filename){
  *    RETURN VALUE: 0 for success
  *    SIDE EFFECTS: Sets dentry index to -1 to indicate that it's closed
  */
-int32_t dir_close(void){
-  /* Set dentry index to an invalid number */
-  dentry_index = -1;
-
+int32_t dir_close(int32_t fd){
   /* Return success */
   return 0;
 }
@@ -321,21 +292,22 @@ int32_t dir_close(void){
 int32_t dir_read(int32_t fd, void* buf, int32_t nbytes){
   /* Dentry struct to copy to */
   dentry_t dentry;
+  pcb_t* pcb = get_pcb_add();
 
   /* Check for a valid index */
-  if(dentry_index == -1){
+  if(pcb->fdt[fd].file_position == -1){
     /* Return failure */
     return -1;
   }
 
   /* Check if directory is done reading */
-  if(dentry_index >= boot_block->num_dentries){
+  if(pcb->fdt[fd].file_position >= boot_block->num_dentries){
     /* Return success */
     return 0;
   }
 
   /* Read dentry at the index, and check if read worked */
-	if(-1 == read_dentry_by_index(dentry_index, &dentry)){
+	if(-1 == read_dentry_by_index(pcb->fdt[fd].file_position, &dentry)){
     return -1;
   }
 
@@ -343,7 +315,7 @@ int32_t dir_read(int32_t fd, void* buf, int32_t nbytes){
   strncpy((int8_t*)buf, (const int8_t*)dentry.file_name, NAME_LENGTH);
 
   /* Go to the next entry */
-  dentry_index++;
+  pcb->fdt[fd].file_position++;
 
   /* Number of bytes wirtten is length of file name */
   return NAME_LENGTH;
@@ -357,7 +329,7 @@ int32_t dir_read(int32_t fd, void* buf, int32_t nbytes){
  *    RETURN VALUE: -1 for failure
  *    SIDE EFFECTS: none
  */
-int32_t dir_write(void){
+int32_t dir_write(int32_t fd, const void* buf, int32_t num_bytes){
   /* File system is read only, so return failure */
   return -1;
 }

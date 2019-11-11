@@ -5,6 +5,7 @@
 #include "kb.h"
 #include "file_system.h"
 #include "rtc.h"
+#include "syscalls.h"
 
 #define SYSCALL_NUM 0x80
 #define PASS 1
@@ -454,21 +455,21 @@ void rtc_open_test(){
 *Side Effects prints to screen the values written
 */
 void write_ret_val(void){
-  terminal_open();
+  terminal_open((uint8_t*)"blah");
    unsigned char string[128];
   int i;
   for(i=0;i<128;i++){
   	string[i]='a';
   }
 
-  int ret_val= terminal_write(string,12*sizeof(unsigned char));
+  int ret_val= terminal_write(0,string,12);
 
-  if(ret_val==12*sizeof(unsigned char)){
+  if(ret_val==12){
   	TEST_OUTPUT("write_ret_val",PASS);
   } else{
     TEST_OUTPUT("write_ret_val",FAIL);
   }
-	  terminal_close();
+	  terminal_close(0);
 }
 
 
@@ -480,10 +481,10 @@ void write_ret_val(void){
  * Side Effects-Prints the screen
  */
 void read_ret_val(void){
-  terminal_open();
+  terminal_open((uint8_t*)"blah");
    unsigned char string[128];
 
-  int ret_val= terminal_read(string,1);
+  int ret_val= terminal_read(0, string,1);
 
   if(ret_val==1){
   	TEST_OUTPUT("read_ret_val",PASS);
@@ -491,7 +492,7 @@ void read_ret_val(void){
     TEST_OUTPUT("read_ret_val",FAIL);
   }
 
-  terminal_close();
+  terminal_close(0);
 }
 
 /* write_null
@@ -502,10 +503,10 @@ void read_ret_val(void){
  * Side Effects- None
  */
 void write_null(void){
-  	terminal_open();
+  	terminal_open((uint8_t*)"blah");
   	unsigned char* string=NULL;
 
-  int ret_val=terminal_write(string, 1);
+  int ret_val=terminal_write(0, string, 1);
 
 
   //printf("%d",ret_val);
@@ -515,7 +516,7 @@ void write_null(void){
     TEST_OUTPUT("write_null",FAIL);
   }
 
-    terminal_close();
+    terminal_close(0);
 }
 
 /* read_null
@@ -526,10 +527,10 @@ void write_null(void){
  * Side Effects- None
  */
 void read_null(void){
-  terminal_open();
+  terminal_open((uint8_t*)"blah");
 
   unsigned char string[128];
-  int ret_val=terminal_read(string,sizeof(unsigned char));
+  int ret_val=terminal_read(0, string, 1);
   //printf("%d",ret_val);
   if(ret_val==0){
   	TEST_OUTPUT("read_null",PASS);
@@ -537,7 +538,7 @@ void read_null(void){
     TEST_OUTPUT("read_null",FAIL);
   }
 
-  terminal_close();
+  terminal_close(0);
 }
 
 /* buffer_write
@@ -548,11 +549,11 @@ void read_null(void){
  * Side Effects-None
  */
 void buffer_write(void){
-	terminal_open();
+	terminal_open((uint8_t*)"blah");
 	unsigned char string[]="Chief";
-	terminal_write(string,(int)strlen((char*)string));
+	terminal_write(0, string,(int)strlen((char*)string));
 
-	terminal_close();
+	terminal_close(0);
 }
 
 /* buffer_read
@@ -563,10 +564,10 @@ void buffer_write(void){
  * Side Effects-None
  * */
 void buffer_read(void){
-		terminal_open();
+		terminal_open((uint8_t*)"blah");
 		unsigned char string[128];
-		terminal_read(string, 128);
-		terminal_close();
+		terminal_read(0, string, 128);
+		terminal_close(0);
 
 }
 
@@ -578,15 +579,15 @@ void buffer_read(void){
  * Side Effects- None
  * */
 void buffer_overflow_read(void) {
-  terminal_open();
+  terminal_open((uint8_t*)"blah");
   unsigned char string[140];
 
-  int temp = terminal_read(string, 140);
+  int temp = terminal_read(0, string, 140);
 
   putc('\n');
   // the write should just print out 128 characters
-  terminal_write(string, temp);
-  terminal_close();
+  terminal_write(0, string, temp);
+  terminal_close(0);
 }
 
 
@@ -606,11 +607,11 @@ void buffer_overflow_write(void) {
     string[i]='a';
   }
 
-  terminal_open();
+  terminal_open((uint8_t*)"blah");
 
-  terminal_write(string, 60);
+  terminal_write(0, string, 60);
 
-  terminal_close();
+  terminal_close(0);
 }
 
 /* press_enter_test
@@ -622,19 +623,25 @@ void buffer_overflow_write(void) {
  * */
 void press_enter_test(void){
 
-	terminal_open();
+	terminal_open((uint8_t*)"blah");
 	unsigned char string[128];
 
-	int temp=terminal_read(string, 128);
+	int temp=terminal_read(0, string, 128);
 
-	terminal_write(string,temp);
-	terminal_close();
+	terminal_write(0, string,temp);
+	terminal_close(0);
 }
 
 
-/* read_file_test
- * Description-
- * */
+/*
+ * read_file_test
+ *		ASSERTS: file can be read
+ *		INPUTS: uint8_t* name
+ *    OUTPUTS: None
+ *		SIDE EFFECTS: None
+ *		COVERAGE: file open file close
+ *		FILES: file_system.c
+ */
 void read_file_test(uint8_t* name){
 	int8_t buf[10000];
   volatile uint32_t size;
@@ -643,15 +650,22 @@ void read_file_test(uint8_t* name){
   if((size = file_read(69, buf, 10000)) == -1){
     printf("Error\n");
   }
-  file_close();
+  file_close(0);
   buf[10000] = '\0';
   for(i=0; i<size; i++){
     putc(buf[i]);
   }
 }
 
-/* dir_read_test
- * */
+/*
+ * dir_read_test
+ *		ASSERTS: dir can be read
+ *		INPUTS: None
+ *    OUTPUTS: None
+ *		SIDE EFFECTS: None
+ *		COVERAGE: dir open dir close
+ *		FILES: file_system.c
+ */
 void dir_read_test(){
 	uint8_t buf[33];
   int32_t cnt;
@@ -662,11 +676,18 @@ void dir_read_test(){
     puts((int8_t*)buf);
     printf("\n");
   }
-  dir_close();
+  dir_close(0);
 }
 
-/* file_index_test
- * */
+/*
+ * file_index_test
+ *		ASSERTS: the file index can be read and has the correct file_name, file_type and inode_num in it
+ *		INPUTS: uint32_t* index
+ *    OUTPUTS: None
+ *		SIDE EFFECTS: None
+ *		COVERAGE: dentry_t, read_dentry_by_index
+ *		FILES: file_system.c
+ */
 void file_index_test(uint32_t index){
 	dentry_t dentry;
 	read_dentry_by_index(index,&dentry);
@@ -675,7 +696,15 @@ void file_index_test(uint32_t index){
 	printf("inode Num: %d\n",dentry.inode_num);
 }
 
-//test reading from a file without calling file_open;
+/*
+ * fread_fail_test
+ *		ASSERTS: reading from a file without calling file_open will fail, else pass
+ *		INPUTS: None
+ *    OUTPUTS: None
+ *		SIDE EFFECTS: None
+ *		COVERAGE: file_read
+ *		FILES: file_system.c
+ */
 void fread_fail_test(void){
 	TEST_HEADER;
 	int8_t buf[10000];
@@ -687,7 +716,15 @@ void fread_fail_test(void){
 	}
 }
 
-//test reading from dir withouting call dir_open;
+/*
+ * dread_fail_test
+ *		ASSERTS: reading from dir withouting call dir_open works
+ *		INPUTS: None
+ *    OUTPUTS: None
+ *		SIDE EFFECTS: None
+ *		COVERAGE: dir_read
+ *		FILES: file_system.c
+ */
 void dread_fail_test(void){
 	TEST_HEADER;
 	uint8_t buf[33];
@@ -699,16 +736,645 @@ void dread_fail_test(void){
 	}
 }
 
+/*
+ * read_test
+ *		ASSERTS: succesful read from the buffer
+ *		INPUTS: None
+ *    OUTPUTS: None
+ *		SIDE EFFECTS: None
+ *		COVERAGE: terminal read
+ *		FILES: kb.c
+ */
 void read_test(){
 	uint8_t buf[1024];
 	int32_t count;
 	while(1){
-		count = terminal_read(buf, 1023);
-		printf("%d\n", count);
+		count = terminal_read(0, buf, 1023);
 	}
 }
 
 /* Checkpoint 3 tests */
+
+/* Function pointers for stdin (only has terminal read) */
+jump_table stdin_table_1 = {NULL, terminal_read, terminal_open, terminal_close};
+
+/* function pointers for stdout(only has terminal write) */
+jump_table stdout_table_1 = {terminal_write, NULL, terminal_open, terminal_close};
+
+/*
+ * execute_fail_test
+ * 		ASSERTS: Running execute on invalid executable file should fail
+ * 		INPUTS: None
+ * 		OUTPUTS: PASS - if ret = -1
+							 FAIL - if ret != -1
+ * 		SIDE EFFECTS: None
+ * 		COVERAGE: execute
+ * 		FILES: syscalls.c
+ * */
+void execute_fail_test(void){
+  TEST_HEADER;
+  uint8_t file[]="thanOS.exe";
+  int8_t ret;
+  ret = execute((uint8_t*)file);
+  if(ret==-1){
+    TEST_OUTPUT("execute_fail_test", PASS);
+  }
+  else{
+    TEST_OUTPUT("execute_fail_test", FAIL);
+  }
+}
+
+#define EIGHT_MB 0x800000
+
+ /*
+  * open_null_test
+  * 		ASSERTS: Opening a NULL file should fail
+  * 		INPUTS: None
+	* 		OUTPUTS: PASS - if ret = -1
+  							 FAIL - if ret != -1
+  * 		SIDE EFFECTS: None
+  * 		COVERAGE: open
+  * 		FILES: syscalls.c
+  * */
+void open_null_test(void){
+  pcb_t pcb;
+  pcb.fdt[0].jump_ptr = &stdin_table_1;
+  pcb.fdt[1].jump_ptr = &stdout_table_1;
+  pcb.fdt[0].flags = 1;
+  pcb.fdt[1].flags = 1;
+  pcb.process_state = 0;
+  /* Place pcb in kernel memory */
+  memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
+
+  int ret=open(NULL);
+
+  if(ret==-1){
+    TEST_OUTPUT("open_null_test",PASS);
+  } else{
+    TEST_OUTPUT("open_null_test",FAIL);
+  }
+
+}
+
+/*
+ * open_test_fail
+ * 		ASSERTS: Opening a non existing file should lead to error
+ * 		INPUTS: None
+ * 		OUTPUTS: PASS - if ret = -1
+ 							 FAIL - if ret != -1
+ * 		SIDE EFFECTS: None
+ * 		COVERAGE: open
+ * 		FILES: syscalls.c
+ * */
+void open_test_fail(void){
+  pcb_t pcb;
+  pcb.fdt[0].jump_ptr = &stdin_table_1;
+  pcb.fdt[1].jump_ptr = &stdout_table_1;
+  pcb.fdt[0].flags = 1;
+  pcb.fdt[1].flags = 1;
+  pcb.process_state = 0;
+  /* Place pcb in kernel memory */
+  memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
+
+  int ret=open((uint8_t*)"PiedPiper.exe");
+
+  if(ret==-1){
+    TEST_OUTPUT("open_test_fail",PASS);
+  } else{
+    TEST_OUTPUT("open_test_fail",FAIL);
+  }
+}
+
+/*
+ * close_test_fail_1
+ * 		ASSERTS: Cannot access fd < 0
+ * 		INPUTS: None
+ * 		OUTPUTS: PASS - if ret = -1
+							 FAIL - if ret != -1
+ * 		SIDE EFFECTS: None
+ * 		COVERAGE: close
+ * 		FILES: syscalls.c
+ * */
+void close_test_fail_1(void){
+  pcb_t pcb;
+  pcb.fdt[0].jump_ptr = &stdin_table_1;
+  pcb.fdt[1].jump_ptr = &stdout_table_1;
+  pcb.fdt[0].flags = 1;
+  pcb.fdt[1].flags = 1;
+  pcb.process_state = 0;
+  /* Place pcb in kernel memory */
+  memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
+
+  int ret=close(-1);
+
+  if(ret==-1){
+    TEST_OUTPUT("close_test_fail_1",PASS);
+  } else{
+    TEST_OUTPUT("close_test_fail_1",FAIL);
+  }
+}
+/*
+ * close_test_fail_2
+ * 		ASSERTS: Cannot access fd > 7
+ * 		INPUTS: None
+ * 		OUTPUTS: PASS - if ret = -1
+							 FAIL - if ret != -1
+ * 		SIDE EFFECTS: None
+ * 		COVERAGE: close
+ * 		FILES: syscalls.c
+ * */
+void close_test_fail_2(void){
+  pcb_t pcb;
+  pcb.fdt[0].jump_ptr = &stdin_table_1;
+  pcb.fdt[1].jump_ptr = &stdout_table_1;
+  pcb.fdt[0].flags = 1;
+  pcb.fdt[1].flags = 1;
+  pcb.process_state = 0;
+
+  /* Place pcb in kernel memory */
+  memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
+
+  int ret=close(8);
+
+  if(ret==-1){
+    TEST_OUTPUT("close_test_fail_2",PASS);
+  } else{
+    TEST_OUTPUT("close_test_fail_2",FAIL);
+  }
+}
+
+/*
+ * read_test_fail_1
+ * 		ASSERTS: Cannot access fd < 0
+ * 		INPUTS: None
+ * 		OUTPUTS: PASS - if ret = -1
+							 FAIL - if ret != -1
+ * 		SIDE EFFECTS: None
+ * 		COVERAGE: read
+ * 		FILES: syscalls.c
+ * */
+void read_test_fail_1(void){
+  pcb_t pcb;
+  pcb.fdt[0].jump_ptr = &stdin_table_1;
+  pcb.fdt[1].jump_ptr = &stdout_table_1;
+  pcb.fdt[0].flags = 1;
+  pcb.fdt[1].flags = 1;
+  pcb.process_state = 0;
+
+  /* Place pcb in kernel memory */
+  memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
+  unsigned char read_buf[128];
+  int ret=read(-1,read_buf,128);
+
+  if(ret==-1){
+    TEST_OUTPUT("read_test_fail_1",PASS);
+  } else{
+    TEST_OUTPUT("read_test_fail_1",FAIL);
+  }
+
+}
+
+/*
+ * read_test_fail_2
+ * 		ASSERTS: Cannot access fd > 7
+ * 		INPUTS: None
+ * 		OUTPUTS: PASS - if ret = -1
+							 FAIL - if ret != -1
+ * 		SIDE EFFECTS: None
+ * 		COVERAGE: read
+ * 		FILES: syscalls.c
+ * */
+void read_test_fail_2(void){
+  pcb_t pcb;
+  pcb.fdt[0].jump_ptr = &stdin_table_1;
+  pcb.fdt[1].jump_ptr = &stdout_table_1;
+  pcb.fdt[0].flags = 1;
+  pcb.fdt[1].flags = 1;
+  pcb.process_state = 0;
+
+  /* Place pcb in kernel memory */
+  memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
+  unsigned char read_buf[128];
+  int ret=read(8,read_buf,128);
+
+  if(ret==-1){
+    TEST_OUTPUT("read_test_fail_2",PASS);
+  } else{
+    TEST_OUTPUT("read_test_fail_2",FAIL);
+  }
+
+}
+
+/*
+ * read_test_fail_3
+ * 		ASSERTS: Cannot access read a NULL buffer
+ * 		INPUTS: None
+ * 		OUTPUTS: PASS - if ret = -1
+							 FAIL - if ret != -1
+ * 		SIDE EFFECTS: None
+ * 		COVERAGE: read
+ * 		FILES: syscalls.c
+ * */
+void read_test_fail_3(void){
+  pcb_t pcb;
+  pcb.fdt[0].jump_ptr = &stdin_table_1;
+  pcb.fdt[1].jump_ptr = &stdout_table_1;
+  pcb.fdt[0].flags = 1;
+  pcb.fdt[1].flags = 1;
+  pcb.process_state = 0;
+
+  /* Place pcb in kernel memory */
+  memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
+  int ret=read(0,NULL,128);
+
+  if(ret==-1){
+    TEST_OUTPUT("read_test_fail_3",PASS);
+  } else{
+    TEST_OUTPUT("read_test_fail_3",FAIL);
+  }
+
+}
+
+/*
+ * read_test_fail_4
+ * 		ASSERTS: Cannot access read a soze of buffer < 0
+ * 		INPUTS: None
+ * 		OUTPUTS: PASS - if ret = -1
+							 FAIL - if ret != -1
+ * 		SIDE EFFECTS: None
+ * 		COVERAGE: read
+ * 		FILES: syscalls.c
+ * */
+void read_test_fail_4(void){
+  pcb_t pcb;
+  pcb.fdt[0].jump_ptr = &stdin_table_1;
+  pcb.fdt[1].jump_ptr = &stdout_table_1;
+  pcb.fdt[0].flags = 1;
+  pcb.fdt[1].flags = 1;
+  pcb.process_state = 0;
+  /* Place pcb in kernel memory */
+  memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
+  unsigned char read_buf[128];
+  int ret=read(0,read_buf,-1);
+
+  if(ret==-1){
+    TEST_OUTPUT("read_test_fail_4",PASS);
+  } else{
+    TEST_OUTPUT("read_test_fail_4",FAIL);
+  }
+
+}
+
+/*
+ * read_test_fail_5
+ * 		ASSERTS: Cannot read stout
+ * 		INPUTS: None
+ * 		OUTPUTS: PASS - if ret = -1
+							 FAIL - if ret != -1
+ * 		SIDE EFFECTS: None
+ * 		COVERAGE: read
+ * 		FILES: syscalls.c
+ * */
+void read_test_fail_5(void){
+  pcb_t pcb;
+  pcb.fdt[0].jump_ptr = &stdin_table_1;
+  pcb.fdt[1].jump_ptr = &stdout_table_1;
+  pcb.fdt[0].flags = 1;
+  pcb.fdt[1].flags = 1;
+  pcb.process_state = 0;
+  /* Place pcb in kernel memory */
+  memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
+  unsigned char read_buf[128];
+  int ret=read(1,read_buf,128);
+
+  if(ret==-1){
+    TEST_OUTPUT("read_test_fail_5",PASS);
+  } else{
+    TEST_OUTPUT("read_test_fail_5",FAIL);
+  }
+
+}
+
+/*
+ * write_test_fail_1
+ * 		ASSERTS: Cannot write when fd < 0
+ * 		INPUTS: None
+ * 		OUTPUTS: PASS - if ret = -1
+							 FAIL - if ret != -1
+ * 		SIDE EFFECTS: None
+ * 		COVERAGE: write
+ * 		FILES: syscalls.c
+ * */
+void write_test_fail_1(void){
+  pcb_t pcb;
+  pcb.fdt[0].jump_ptr = &stdin_table_1;
+  pcb.fdt[1].jump_ptr = &stdout_table_1;
+  pcb.fdt[0].flags = 1;
+  pcb.fdt[1].flags = 1;
+  pcb.process_state = 0;
+
+  /* Place pcb in kernel memory */
+  memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
+  unsigned char read_buf[128];
+  int ret = write(-1,read_buf,128);
+
+  if(ret==-1){
+    TEST_OUTPUT("write_test_fail_1",PASS);
+  } else{
+    TEST_OUTPUT("write_test_fail_1",FAIL);
+  }
+
+}
+
+/*
+ * write_test_fail_2
+ * 		ASSERTS: Cannot write when fd > 7
+ * 		INPUTS: None
+ * 		OUTPUTS: PASS - if ret = -1
+							 FAIL - if ret != -1
+ * 		SIDE EFFECTS: None
+ * 		COVERAGE: write
+ * 		FILES: syscalls.c
+ * */
+void write_test_fail_2(void){
+  pcb_t pcb;
+  pcb.fdt[0].jump_ptr = &stdin_table_1;
+  pcb.fdt[1].jump_ptr = &stdout_table_1;
+  pcb.fdt[0].flags = 1;
+  pcb.fdt[1].flags = 1;
+  pcb.process_state = 0;
+
+  /* Place pcb in kernel memory */
+  memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
+  unsigned char read_buf[128];
+  int ret=write(8,read_buf,128);
+
+  if(ret==-1){
+    TEST_OUTPUT("write_test_fail_2",PASS);
+  } else{
+    TEST_OUTPUT("write_test_fail_2",FAIL);
+  }
+
+}
+
+/*
+ * write_test_fail_3
+ * 		ASSERTS: Cannot write when buff is NULL
+ * 		INPUTS: None
+ * 		OUTPUTS: PASS - if ret = -1
+							 FAIL - if ret != -1
+ * 		SIDE EFFECTS: None
+ * 		COVERAGE: write
+ * 		FILES: syscalls.c
+ * */
+void write_test_fail_3(void){
+  pcb_t pcb;
+  pcb.fdt[0].jump_ptr = &stdin_table_1;
+  pcb.fdt[1].jump_ptr = &stdout_table_1;
+  pcb.fdt[0].flags = 1;
+  pcb.fdt[1].flags = 1;
+  pcb.process_state = 0;
+
+  /* Place pcb in kernel memory */
+  memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
+  //unsigned char read_buf[128];
+  int ret=write(1,NULL,128);
+
+  if(ret==-1){
+    TEST_OUTPUT("write_test_fail_3",PASS);
+  } else{
+    TEST_OUTPUT("write_test_fail_3",FAIL);
+  }
+
+}
+
+/*
+ * write_test_fail_4
+ * 		ASSERTS: Cannot write when size of buff < 0
+ * 		INPUTS: None
+ * 		OUTPUTS: PASS - if ret = -1
+							 FAIL - if ret != -1
+ * 		SIDE EFFECTS: None
+ * 		COVERAGE: write
+ * 		FILES: syscalls.c
+ * */
+void write_test_fail_4(void){
+  pcb_t pcb;
+  pcb.fdt[0].jump_ptr = &stdin_table_1;
+  pcb.fdt[1].jump_ptr = &stdout_table_1;
+  pcb.fdt[0].flags = 1;
+  pcb.fdt[1].flags = 1;
+  pcb.process_state = 0;
+  /* Place pcb in kernel memory */
+  memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
+  unsigned char write_buf[128];
+  int ret=write(1,write_buf,-1);
+
+  if(ret==-1){
+    TEST_OUTPUT("write_test_fail_4",PASS);
+  } else{
+    TEST_OUTPUT("write_test_fail_4",FAIL);
+  }
+
+}
+
+/*
+ * write_test_fail_5
+ * 		ASSERTS: Cannot write stdin
+ * 		INPUTS: None
+ * 		OUTPUTS: PASS - if ret = -1
+							 FAIL - if ret != -1
+ * 		SIDE EFFECTS: None
+ * 		COVERAGE: write
+ * 		FILES: syscalls.c
+ * */
+void write_test_fail_5(void){
+  pcb_t pcb;
+  pcb.fdt[0].jump_ptr = &stdin_table_1;
+  pcb.fdt[1].jump_ptr = &stdout_table_1;
+  pcb.fdt[0].flags = 1;
+  pcb.fdt[1].flags = 1;
+  pcb.process_state = 0;
+  /* Place pcb in kernel memory */
+  memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
+  unsigned char write_buf[128];
+  int ret=write(0,write_buf,128);
+
+  if(ret==-1){
+    TEST_OUTPUT("write_test_fail_5",PASS);
+  } else{
+    TEST_OUTPUT("write_test_fail_5",FAIL);
+  }
+
+}
+
+/*
+ * close_fail_1
+ * 		ASSERTS: Cannot close when fd < 0
+ * 		INPUTS: None
+ * 		OUTPUTS: PASS - if ret = -1
+							 FAIL - if ret != -1
+ * 		SIDE EFFECTS: None
+ * 		COVERAGE: close
+ * 		FILES: syscalls.c
+ * */
+void close_fail_1(){
+  pcb_t pcb;
+  pcb.fdt[0].jump_ptr = &stdin_table_1;
+  pcb.fdt[1].jump_ptr = &stdout_table_1;
+  pcb.fdt[0].flags = 1;
+  pcb.fdt[1].flags = 1;
+  pcb.process_state = 0;
+  /* Place pcb in kernel memory */
+  memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
+  int ret=close(-1);
+
+  if(ret==-1){
+    TEST_OUTPUT("close_fail_1",PASS);
+  } else{
+    TEST_OUTPUT("close_fail_1",FAIL);
+  }
+}
+
+/*
+ * close_fail_2
+ * 		ASSERTS: Cannot close if there is nothing open
+ * 		INPUTS: None
+ * 		OUTPUTS: PASS - if ret = -1
+							 FAIL - if ret != -1
+ * 		SIDE EFFECTS: None
+ * 		COVERAGE: close
+ * 		FILES: syscalls.c
+ * */
+void close_fail_2(){
+  pcb_t pcb;
+  pcb.fdt[0].jump_ptr = &stdin_table_1;
+  pcb.fdt[1].jump_ptr = &stdout_table_1;
+  pcb.fdt[0].flags = 1;
+  pcb.fdt[1].flags = 1;
+  pcb.process_state = 0;
+  /* Place pcb in kernel memory */
+  memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
+  int ret=close(3);
+
+  if(ret==-1){
+    TEST_OUTPUT("close_fail_2",PASS);
+  } else{
+    TEST_OUTPUT("close_fail_2",FAIL);
+  }
+}
+
+/*
+ * close_fail_3
+ * 		ASSERTS: Cannot close when fd > 8
+ * 		INPUTS: None
+ * 		OUTPUTS: PASS - if ret = -1
+							 FAIL - if ret != -1
+ * 		SIDE EFFECTS: None
+ * 		COVERAGE: close
+ * 		FILES: syscalls.c
+ * */
+void close_fail_3(){
+  pcb_t pcb;
+  pcb.fdt[0].jump_ptr = &stdin_table_1;
+  pcb.fdt[1].jump_ptr = &stdout_table_1;
+  pcb.fdt[0].flags = 1;
+  pcb.fdt[1].flags = 1;
+  pcb.process_state = 0;
+  /* Place pcb in kernel memory */
+  memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
+  int ret=close(8);
+
+  if(ret==-1){
+    TEST_OUTPUT("close_fail_3",PASS);
+  } else{
+    TEST_OUTPUT("close_fail_3",FAIL);
+  }
+}
+
+/*
+ * close_fail_4
+ * 		ASSERTS: Cannot close stdin
+ * 		INPUTS: None
+ * 		OUTPUTS: PASS - if ret = -1
+							 FAIL - if ret != -1
+ * 		SIDE EFFECTS: None
+ * 		COVERAGE: close
+ * 		FILES: syscalls.c
+ * */
+void close_fail_4(){
+  pcb_t pcb;
+  pcb.fdt[0].jump_ptr = &stdin_table_1;
+  pcb.fdt[1].jump_ptr = &stdout_table_1;
+  pcb.fdt[0].flags = 1;
+  pcb.fdt[1].flags = 1;
+  pcb.process_state = 0;
+  /* Place pcb in kernel memory */
+  memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
+  int ret=close(0);
+
+  if(ret==-1){
+    TEST_OUTPUT("close_fail_4",PASS);
+  } else{
+    TEST_OUTPUT("close_fail_4",FAIL);
+  }
+}
+
+/*
+ * close_fail_5
+ * 		ASSERTS: Cannot close stdout
+ * 		INPUTS: None
+ * 		OUTPUTS: PASS - if ret = -1
+							 FAIL - if ret != -1
+ * 		SIDE EFFECTS: None
+ * 		COVERAGE: close
+ * 		FILES: syscalls.c
+ * */
+void close_fail_5(){
+  pcb_t pcb;
+  pcb.fdt[0].jump_ptr = &stdin_table_1;
+  pcb.fdt[1].jump_ptr = &stdout_table_1;
+  pcb.fdt[0].flags = 1;
+  pcb.fdt[1].flags = 1;
+  pcb.process_state = 0;
+  /* Place pcb in kernel memory */
+  memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
+  int ret=close(1);
+
+  if(ret==-1){
+    TEST_OUTPUT("close_fail_5",PASS);
+  } else{
+    TEST_OUTPUT("close_fail_5",FAIL);
+  }
+}
+
+/*
+ * read_write
+ * 		ASSERTS: Reads stdin, writes stdout
+ * 		INPUTS: None
+ * 		OUTPUTS: PASS - if ret = -1
+							 FAIL - if ret != -1
+ * 		SIDE EFFECTS: None
+ * 		COVERAGE: close
+ * 		FILES: syscalls.c
+ * */
+void read_write(){
+  pcb_t pcb;
+  pcb.fdt[0].jump_ptr = &stdin_table_1;
+  pcb.fdt[1].jump_ptr = &stdout_table_1;
+  pcb.fdt[0].flags = 1;
+  pcb.fdt[1].flags = 1;
+  pcb.process_state = 0;
+  /* Place pcb in kernel memory */
+  memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
+  unsigned char read_buf[128];
+
+ 	read(0,read_buf,128);
+
+  write(1,read_buf,128);
+}
+
+
 /* Checkpoint 4 tests */
 /* Checkpoint 5 tests */
 
@@ -768,5 +1434,24 @@ void launch_tests(){
 	//rtc_open_test();
 	//fread_fail_test();
 	//dread_fail_test();
-	read_test();
+	//read_test();
+	open_null_test();
+	open_test_fail();
+	execute_fail_test();
+	read_test_fail_1();
+	read_test_fail_2();
+	read_test_fail_3();
+	read_test_fail_4();
+	read_test_fail_5();
+	write_test_fail_1();
+	write_test_fail_2();
+	write_test_fail_2();
+	write_test_fail_3();
+	write_test_fail_4();
+	write_test_fail_5();
+	close_fail_1();
+	close_fail_2();
+	close_fail_3();
+	close_fail_4();
+	close_fail_5();
 }

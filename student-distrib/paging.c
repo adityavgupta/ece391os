@@ -2,6 +2,7 @@
 #include "lib.h"
 #include "x86_desc.h"
 #include "paging.h"
+#include "file_system.h"
 
 /* Constants for paging */
 #define TABLE_ENTRIES 1024
@@ -11,13 +12,42 @@
 #define KERNEL_ADDR 0x400000
 #define PT_OFFSET 12
 #define PAGE_SIZE 4096
-
+#define FOUR_MB 4194304
 
 /* Page directory array */
 static uint32_t page_directory[TABLE_ENTRIES]  __attribute__((aligned (PAGE_SIZE)));
 /* Page table array */
 static uint32_t page_table[TABLE_ENTRIES]  __attribute__((aligned (PAGE_SIZE)));
 
+/*
+ * set_page_dir_entry
+ *    DESCRIPTION: Creates an entry in the page directory
+ *    INPUTS: int32_t virtual - the virtual address
+ *            int32_t physical - the physical address to map to
+ *    OUTPUTS: none
+ *    RETURN VALUE: 0 for success, -1 for failure
+ *    SIDE EFFECTS:
+ */
+int32_t set_page_dir_entry(int32_t virtual, int32_t physical){
+  /* Create entry */
+  page_directory[virtual >> 22] = physical | 0x087;
+
+  /* Return success */
+  return 0;
+}
+
+/*
+ * set_page_table_entry
+ *    DESCRIPTION: Enables a page in the page table
+ *    INPUTS: none
+ *    OUTPUTS: none
+ *    RETURN VALUE: 0
+ *    SIDE EFFECTS: none
+ */
+int32_t set_page_table_entry(){
+  /* Nothing for now */
+  return 0;
+}
 
 /*
  * get_dir
@@ -126,17 +156,17 @@ void enable_paging(void){
      * Macro to store address of page directory in cr3. Also enables paging in cr0, and sets the
      * Page Size bit in cr4 to allow for 4MB pages.
      */
-    asm volatile ("\n\
-                movl %%cr4,%%eax\n\
-                or $0x10,%%eax\n\
-                mov %%eax, %%cr4\n\
-                movl %0,%%eax\n\
-                movl %%eax,%%cr3\n\
-                movl %%cr0,%%eax\n\
-                orl %1,%%eax\n\
-                movl %%eax,%%cr0"
+    asm volatile ("               \n\
+                movl %%cr4, %%eax \n\
+                or $0x10, %%eax   \n\
+                mov %%eax, %%cr4  \n\
+                movl %0, %%eax    \n\
+                movl %%eax, %%cr3 \n\
+                movl %%cr0, %%eax \n\
+                orl %1,%%eax      \n\
+                movl %%eax, %%cr0"
             :
-            : "r"(page_directory),"r"(enable)
+            : "r"(page_directory), "r"(enable)
             : "eax"
     );
 }

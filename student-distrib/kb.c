@@ -125,7 +125,7 @@ uint8_t kbdus[256] =
  *    Return Value: 0 for success
  *    SIDE EFFECTS: Initializes some of the global variables to 0
  */
-int32_t terminal_open(){
+int32_t terminal_open(const uint8_t* filename){
 		buf_index = 0;
     return 0;
 }
@@ -139,7 +139,7 @@ int32_t terminal_open(){
  *    RETURN VALUE: -1 for failure, number of bytes written
  *    SIDE EFFECTS: None
  */
-int terminal_write(uint8_t* buf, int32_t nbytes){
+int terminal_write(int32_t fd, const void* buf, int32_t nbytes){
   /* Check for an invalid buffer */
 	if(buf == NULL || nbytes < 0){
     /* Return failure */
@@ -153,7 +153,7 @@ int terminal_write(uint8_t* buf, int32_t nbytes){
 
   /* Print to the screen */
 	for(i = 0; i < nbytes; i++){
-		putc(buf[i]);
+		putc(*(uint8_t*)(buf+i));
 	}
 
   /* Restore interrupts */
@@ -171,7 +171,7 @@ int terminal_write(uint8_t* buf, int32_t nbytes){
  *    RETURN VALUE: 0 for success
  *    SIDE EFFECTS: None
  */
-int32_t terminal_close(){
+int32_t terminal_close(int32_t fd){
 		buf_index = 0; // Sets the index back to 0
     return 0;
 }
@@ -185,7 +185,7 @@ int32_t terminal_close(){
  *    RETURN VALUE: -1 for failure, Number of bytes read
  *    SIDE EFFECTS: None
  */
-int terminal_read(uint8_t* buf, int32_t nbytes){
+int terminal_read(int32_t fd, void* buf, int32_t nbytes){
     int32_t bytes_read = 0; /* Number of bytes read */
 		line_buffer_flag = 0; /* Sets the flag for determining whether enter is pressed */
 
@@ -250,7 +250,7 @@ int32_t in_char_range (uint8_t scan_code) {
  *    SIDE EFFECTS: prints the matching characters of the scan_code
  */
 void print_scancode (uint8_t scan_code) {
-  if(buf_index >= (BUF_LENGTH - 1) && scan_code != NEW_LINE){
+  if(buf_index >= (BUF_LENGTH - 1) || line_buffer_flag){
     return;
   }
 
@@ -281,12 +281,13 @@ void recent_release_exec (uint8_t scan_code) {
     ctrl_pressed = 1;
   }
   else if(scan_code == L_CHAR && ctrl_pressed == 1) {
-    reset_screen(); //resets the screen and clears the buffer and the screen
-    buf_index = 0;
-    clear();
+    clear_l();
   }
-  else if(scan_code == BACK_SPACE && buf_index > 0){
+  else if(scan_code == BACK_SPACE){
     /* Deletes a buffer character if it is allowed */
+    if(buf_index <= 0){
+      return;
+    }
     buf_index--;
     back_space();
   }
