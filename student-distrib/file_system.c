@@ -4,6 +4,7 @@
 
 #define FOUR_KB 4096
 
+/* Address of the file system */
 static boot_block_t* boot_block;
 static uint32_t* fs_start;
 
