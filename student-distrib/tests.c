@@ -633,9 +633,15 @@ void press_enter_test(void){
 }
 
 
-/* read_file_test
- * Description-
- * */
+/*
+ * read_file_test
+ *		ASSERTS: file can be read
+ *		INPUTS: uint8_t* name
+ *    OUTPUTS: None
+ *		SIDE EFFECTS: None
+ *		COVERAGE: file open file close
+ *		FILES: file_system.c
+ */
 void read_file_test(uint8_t* name){
 	int8_t buf[10000];
   volatile uint32_t size;
@@ -651,8 +657,15 @@ void read_file_test(uint8_t* name){
   }
 }
 
-/* dir_read_test
- * */
+/*
+ * dir_read_test
+ *		ASSERTS: dir can be read
+ *		INPUTS: None
+ *    OUTPUTS: None
+ *		SIDE EFFECTS: None
+ *		COVERAGE: dir open dir close
+ *		FILES: file_system.c
+ */
 void dir_read_test(){
 	uint8_t buf[33];
   int32_t cnt;
@@ -666,8 +679,15 @@ void dir_read_test(){
   dir_close(0);
 }
 
-/* file_index_test
- * */
+/*
+ * file_index_test
+ *		ASSERTS: the file index can be read and has the correct file_name, file_type and inode_num in it
+ *		INPUTS: uint32_t* index
+ *    OUTPUTS: None
+ *		SIDE EFFECTS: None
+ *		COVERAGE: dentry_t, read_dentry_by_index
+ *		FILES: file_system.c
+ */
 void file_index_test(uint32_t index){
 	dentry_t dentry;
 	read_dentry_by_index(index,&dentry);
@@ -676,7 +696,15 @@ void file_index_test(uint32_t index){
 	printf("inode Num: %d\n",dentry.inode_num);
 }
 
-//test reading from a file without calling file_open;
+/*
+ * fread_fail_test
+ *		ASSERTS: reading from a file without calling file_open will fail, else pass
+ *		INPUTS: None
+ *    OUTPUTS: None
+ *		SIDE EFFECTS: None
+ *		COVERAGE: file_read
+ *		FILES: file_system.c
+ */
 void fread_fail_test(void){
 	TEST_HEADER;
 	int8_t buf[10000];
@@ -688,7 +716,15 @@ void fread_fail_test(void){
 	}
 }
 
-//test reading from dir withouting call dir_open;
+/*
+ * dread_fail_test
+ *		ASSERTS: reading from dir withouting call dir_open works
+ *		INPUTS: None
+ *    OUTPUTS: None
+ *		SIDE EFFECTS: None
+ *		COVERAGE: dir_read
+ *		FILES: file_system.c
+ */
 void dread_fail_test(void){
 	TEST_HEADER;
 	uint8_t buf[33];
@@ -700,6 +736,15 @@ void dread_fail_test(void){
 	}
 }
 
+/*
+ * read_test
+ *		ASSERTS: succesful read from the buffer
+ *		INPUTS: None
+ *    OUTPUTS: None
+ *		SIDE EFFECTS: None
+ *		COVERAGE: terminal read
+ *		FILES: kb.c
+ */
 void read_test(){
 	uint8_t buf[1024];
 	int32_t count;
@@ -716,12 +761,15 @@ jump_table stdin_table_1 = {NULL, terminal_read, terminal_open, terminal_close};
 /* function pointers for stdout(only has terminal write) */
 jump_table stdout_table_1 = {terminal_write, NULL, terminal_open, terminal_close};
 
-/* execute_fail_test
- * Description- tries to run execute on invalid executable file
- * Inputs-None
- * Outputs-None
- * Return Value-None
- * Side Effects- outputs pass if couldn't execute file
+/*
+ * execute_fail_test
+ * 		ASSERTS: Running execute on invalid executable file should fail
+ * 		INPUTS: None
+ * 		OUTPUTS: PASS - if ret = -1
+							 FAIL - if ret != -1
+ * 		SIDE EFFECTS: None
+ * 		COVERAGE: execute
+ * 		FILES: syscalls.c
  * */
 void execute_fail_test(void){
   TEST_HEADER;
@@ -738,13 +786,16 @@ void execute_fail_test(void){
 
 #define EIGHT_MB 0x800000
 
-/* open_null_test
- * Description- tries to open a null file
- * Inputs-None
- * Outputs-None
- * Return Value-None
- * Side Effects- None
- * */
+ /*
+  * open_null_test
+  * 		ASSERTS: Opening a NULL file should fail
+  * 		INPUTS: None
+	* 		OUTPUTS: PASS - if ret = -1
+  							 FAIL - if ret != -1
+  * 		SIDE EFFECTS: None
+  * 		COVERAGE: open
+  * 		FILES: syscalls.c
+  * */
 void open_null_test(void){
   pcb_t pcb;
   pcb.fdt[0].jump_ptr = &stdin_table_1;
@@ -754,24 +805,27 @@ void open_null_test(void){
   pcb.process_state = 0;
   /* Place pcb in kernel memory */
   memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
-  
+
   int ret=open(NULL);
-  
+
   if(ret==-1){
     TEST_OUTPUT("open_null_test",PASS);
   } else{
     TEST_OUTPUT("open_null_test",FAIL);
   }
-  
+
 }
+
 /*
-* open_test_fail
-* Description- Tries to open file that does not exist
-* Inputs-None
-* Outputs-None
-* Return Value-None
-* Side Effects-None
-*/
+ * open_test_fail
+ * 		ASSERTS: Opening a non existing file should lead to error
+ * 		INPUTS: None
+ * 		OUTPUTS: PASS - if ret = -1
+ 							 FAIL - if ret != -1
+ * 		SIDE EFFECTS: None
+ * 		COVERAGE: open
+ * 		FILES: syscalls.c
+ * */
 void open_test_fail(void){
   pcb_t pcb;
   pcb.fdt[0].jump_ptr = &stdin_table_1;
@@ -781,23 +835,26 @@ void open_test_fail(void){
   pcb.process_state = 0;
   /* Place pcb in kernel memory */
   memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
-  
+
   int ret=open((uint8_t*)"PiedPiper.exe");
-  
+
   if(ret==-1){
     TEST_OUTPUT("open_test_fail",PASS);
   } else{
     TEST_OUTPUT("open_test_fail",FAIL);
   }
 }
+
 /*
-* close_test fail_1
-* Description- Tries acces fd values less than 0
-* Input- None
-* Output-None
-* Return Value-None
-* Side Effects- None
-*/
+ * close_test_fail_1
+ * 		ASSERTS: Cannot access fd < 0
+ * 		INPUTS: None
+ * 		OUTPUTS: PASS - if ret = -1
+							 FAIL - if ret != -1
+ * 		SIDE EFFECTS: None
+ * 		COVERAGE: close
+ * 		FILES: syscalls.c
+ * */
 void close_test_fail_1(void){
   pcb_t pcb;
   pcb.fdt[0].jump_ptr = &stdin_table_1;
@@ -807,23 +864,25 @@ void close_test_fail_1(void){
   pcb.process_state = 0;
   /* Place pcb in kernel memory */
   memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
-  
+
   int ret=close(-1);
-  
+
   if(ret==-1){
     TEST_OUTPUT("close_test_fail_1",PASS);
   } else{
     TEST_OUTPUT("close_test_fail_1",FAIL);
-  } 
+  }
 }
 /*
-* close_test_fail_2
-* Description- Tries to access fd value greater than 7
-* Input- None
-* Output- None
-* Return Value- None
-* Side Effects- None
-*/
+ * close_test_fail_2
+ * 		ASSERTS: Cannot access fd > 7
+ * 		INPUTS: None
+ * 		OUTPUTS: PASS - if ret = -1
+							 FAIL - if ret != -1
+ * 		SIDE EFFECTS: None
+ * 		COVERAGE: close
+ * 		FILES: syscalls.c
+ * */
 void close_test_fail_2(void){
   pcb_t pcb;
   pcb.fdt[0].jump_ptr = &stdin_table_1;
@@ -834,23 +893,26 @@ void close_test_fail_2(void){
 
   /* Place pcb in kernel memory */
   memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
-  
+
   int ret=close(8);
-  
+
   if(ret==-1){
     TEST_OUTPUT("close_test_fail_2",PASS);
   } else{
     TEST_OUTPUT("close_test_fail_2",FAIL);
-  } 
+  }
 }
+
 /*
-* read_test_fail_1
-* Description- Reads fd value less that 0
-*Input-None
-* Output-None
-* Return Value- None
-* Side Effects-None
-*/
+ * read_test_fail_1
+ * 		ASSERTS: Cannot access fd < 0
+ * 		INPUTS: None
+ * 		OUTPUTS: PASS - if ret = -1
+							 FAIL - if ret != -1
+ * 		SIDE EFFECTS: None
+ * 		COVERAGE: read
+ * 		FILES: syscalls.c
+ * */
 void read_test_fail_1(void){
   pcb_t pcb;
   pcb.fdt[0].jump_ptr = &stdin_table_1;
@@ -863,15 +925,25 @@ void read_test_fail_1(void){
   memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
   unsigned char read_buf[128];
   int ret=read(-1,read_buf,128);
-  
+
   if(ret==-1){
     TEST_OUTPUT("read_test_fail_1",PASS);
   } else{
     TEST_OUTPUT("read_test_fail_1",FAIL);
   }
-  
+
 }
 
+/*
+ * read_test_fail_2
+ * 		ASSERTS: Cannot access fd > 7
+ * 		INPUTS: None
+ * 		OUTPUTS: PASS - if ret = -1
+							 FAIL - if ret != -1
+ * 		SIDE EFFECTS: None
+ * 		COVERAGE: read
+ * 		FILES: syscalls.c
+ * */
 void read_test_fail_2(void){
   pcb_t pcb;
   pcb.fdt[0].jump_ptr = &stdin_table_1;
@@ -884,17 +956,25 @@ void read_test_fail_2(void){
   memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
   unsigned char read_buf[128];
   int ret=read(8,read_buf,128);
-  
+
   if(ret==-1){
     TEST_OUTPUT("read_test_fail_2",PASS);
   } else{
     TEST_OUTPUT("read_test_fail_2",FAIL);
   }
-  
+
 }
 
-
-
+/*
+ * read_test_fail_3
+ * 		ASSERTS: Cannot access read a NULL buffer
+ * 		INPUTS: None
+ * 		OUTPUTS: PASS - if ret = -1
+							 FAIL - if ret != -1
+ * 		SIDE EFFECTS: None
+ * 		COVERAGE: read
+ * 		FILES: syscalls.c
+ * */
 void read_test_fail_3(void){
   pcb_t pcb;
   pcb.fdt[0].jump_ptr = &stdin_table_1;
@@ -906,15 +986,25 @@ void read_test_fail_3(void){
   /* Place pcb in kernel memory */
   memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
   int ret=read(0,NULL,128);
-  
+
   if(ret==-1){
     TEST_OUTPUT("read_test_fail_3",PASS);
   } else{
     TEST_OUTPUT("read_test_fail_3",FAIL);
   }
-  
+
 }
 
+/*
+ * read_test_fail_4
+ * 		ASSERTS: Cannot access read a soze of buffer < 0
+ * 		INPUTS: None
+ * 		OUTPUTS: PASS - if ret = -1
+							 FAIL - if ret != -1
+ * 		SIDE EFFECTS: None
+ * 		COVERAGE: read
+ * 		FILES: syscalls.c
+ * */
 void read_test_fail_4(void){
   pcb_t pcb;
   pcb.fdt[0].jump_ptr = &stdin_table_1;
@@ -926,15 +1016,25 @@ void read_test_fail_4(void){
   memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
   unsigned char read_buf[128];
   int ret=read(0,read_buf,-1);
-  
+
   if(ret==-1){
     TEST_OUTPUT("read_test_fail_4",PASS);
   } else{
     TEST_OUTPUT("read_test_fail_4",FAIL);
   }
-  
+
 }
 
+/*
+ * read_test_fail_5
+ * 		ASSERTS: Cannot read stout
+ * 		INPUTS: None
+ * 		OUTPUTS: PASS - if ret = -1
+							 FAIL - if ret != -1
+ * 		SIDE EFFECTS: None
+ * 		COVERAGE: read
+ * 		FILES: syscalls.c
+ * */
 void read_test_fail_5(void){
   pcb_t pcb;
   pcb.fdt[0].jump_ptr = &stdin_table_1;
@@ -946,16 +1046,25 @@ void read_test_fail_5(void){
   memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
   unsigned char read_buf[128];
   int ret=read(1,read_buf,128);
-  
+
   if(ret==-1){
     TEST_OUTPUT("read_test_fail_5",PASS);
   } else{
     TEST_OUTPUT("read_test_fail_5",FAIL);
   }
-  
+
 }
 
-
+/*
+ * write_test_fail_1
+ * 		ASSERTS: Cannot write when fd < 0
+ * 		INPUTS: None
+ * 		OUTPUTS: PASS - if ret = -1
+							 FAIL - if ret != -1
+ * 		SIDE EFFECTS: None
+ * 		COVERAGE: write
+ * 		FILES: syscalls.c
+ * */
 void write_test_fail_1(void){
   pcb_t pcb;
   pcb.fdt[0].jump_ptr = &stdin_table_1;
@@ -967,16 +1076,26 @@ void write_test_fail_1(void){
   /* Place pcb in kernel memory */
   memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
   unsigned char read_buf[128];
-  int ret=write(-1,read_buf,128);
-  
+  int ret = write(-1,read_buf,128);
+
   if(ret==-1){
     TEST_OUTPUT("write_test_fail_1",PASS);
   } else{
     TEST_OUTPUT("write_test_fail_1",FAIL);
   }
-  
+
 }
 
+/*
+ * write_test_fail_2
+ * 		ASSERTS: Cannot write when fd > 7
+ * 		INPUTS: None
+ * 		OUTPUTS: PASS - if ret = -1
+							 FAIL - if ret != -1
+ * 		SIDE EFFECTS: None
+ * 		COVERAGE: write
+ * 		FILES: syscalls.c
+ * */
 void write_test_fail_2(void){
   pcb_t pcb;
   pcb.fdt[0].jump_ptr = &stdin_table_1;
@@ -989,15 +1108,25 @@ void write_test_fail_2(void){
   memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
   unsigned char read_buf[128];
   int ret=write(8,read_buf,128);
-  
+
   if(ret==-1){
     TEST_OUTPUT("write_test_fail_2",PASS);
   } else{
     TEST_OUTPUT("write_test_fail_2",FAIL);
   }
-  
+
 }
 
+/*
+ * write_test_fail_3
+ * 		ASSERTS: Cannot write when buff is NULL
+ * 		INPUTS: None
+ * 		OUTPUTS: PASS - if ret = -1
+							 FAIL - if ret != -1
+ * 		SIDE EFFECTS: None
+ * 		COVERAGE: write
+ * 		FILES: syscalls.c
+ * */
 void write_test_fail_3(void){
   pcb_t pcb;
   pcb.fdt[0].jump_ptr = &stdin_table_1;
@@ -1010,15 +1139,25 @@ void write_test_fail_3(void){
   memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
   //unsigned char read_buf[128];
   int ret=write(1,NULL,128);
-  
+
   if(ret==-1){
     TEST_OUTPUT("write_test_fail_3",PASS);
   } else{
     TEST_OUTPUT("write_test_fail_3",FAIL);
   }
-  
+
 }
 
+/*
+ * write_test_fail_4
+ * 		ASSERTS: Cannot write when size of buff < 0
+ * 		INPUTS: None
+ * 		OUTPUTS: PASS - if ret = -1
+							 FAIL - if ret != -1
+ * 		SIDE EFFECTS: None
+ * 		COVERAGE: write
+ * 		FILES: syscalls.c
+ * */
 void write_test_fail_4(void){
   pcb_t pcb;
   pcb.fdt[0].jump_ptr = &stdin_table_1;
@@ -1030,15 +1169,25 @@ void write_test_fail_4(void){
   memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
   unsigned char write_buf[128];
   int ret=write(1,write_buf,-1);
-  
+
   if(ret==-1){
     TEST_OUTPUT("write_test_fail_4",PASS);
   } else{
     TEST_OUTPUT("write_test_fail_4",FAIL);
   }
-  
+
 }
 
+/*
+ * write_test_fail_5
+ * 		ASSERTS: Cannot write stdin
+ * 		INPUTS: None
+ * 		OUTPUTS: PASS - if ret = -1
+							 FAIL - if ret != -1
+ * 		SIDE EFFECTS: None
+ * 		COVERAGE: write
+ * 		FILES: syscalls.c
+ * */
 void write_test_fail_5(void){
   pcb_t pcb;
   pcb.fdt[0].jump_ptr = &stdin_table_1;
@@ -1050,15 +1199,25 @@ void write_test_fail_5(void){
   memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
   unsigned char write_buf[128];
   int ret=write(0,write_buf,128);
-  
+
   if(ret==-1){
     TEST_OUTPUT("write_test_fail_5",PASS);
   } else{
     TEST_OUTPUT("write_test_fail_5",FAIL);
   }
-  
+
 }
 
+/*
+ * close_fail_1
+ * 		ASSERTS: Cannot close when fd < 0
+ * 		INPUTS: None
+ * 		OUTPUTS: PASS - if ret = -1
+							 FAIL - if ret != -1
+ * 		SIDE EFFECTS: None
+ * 		COVERAGE: close
+ * 		FILES: syscalls.c
+ * */
 void close_fail_1(){
   pcb_t pcb;
   pcb.fdt[0].jump_ptr = &stdin_table_1;
@@ -1069,14 +1228,24 @@ void close_fail_1(){
   /* Place pcb in kernel memory */
   memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
   int ret=close(-1);
-  
+
   if(ret==-1){
     TEST_OUTPUT("close_fail_1",PASS);
   } else{
     TEST_OUTPUT("close_fail_1",FAIL);
-  } 
+  }
 }
 
+/*
+ * close_fail_2
+ * 		ASSERTS: Cannot close if there is nothing open
+ * 		INPUTS: None
+ * 		OUTPUTS: PASS - if ret = -1
+							 FAIL - if ret != -1
+ * 		SIDE EFFECTS: None
+ * 		COVERAGE: close
+ * 		FILES: syscalls.c
+ * */
 void close_fail_2(){
   pcb_t pcb;
   pcb.fdt[0].jump_ptr = &stdin_table_1;
@@ -1087,14 +1256,24 @@ void close_fail_2(){
   /* Place pcb in kernel memory */
   memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
   int ret=close(3);
-  
+
   if(ret==-1){
     TEST_OUTPUT("close_fail_2",PASS);
   } else{
     TEST_OUTPUT("close_fail_2",FAIL);
-  } 
+  }
 }
 
+/*
+ * close_fail_3
+ * 		ASSERTS: Cannot close when fd > 8
+ * 		INPUTS: None
+ * 		OUTPUTS: PASS - if ret = -1
+							 FAIL - if ret != -1
+ * 		SIDE EFFECTS: None
+ * 		COVERAGE: close
+ * 		FILES: syscalls.c
+ * */
 void close_fail_3(){
   pcb_t pcb;
   pcb.fdt[0].jump_ptr = &stdin_table_1;
@@ -1105,14 +1284,24 @@ void close_fail_3(){
   /* Place pcb in kernel memory */
   memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
   int ret=close(8);
-  
+
   if(ret==-1){
     TEST_OUTPUT("close_fail_3",PASS);
   } else{
     TEST_OUTPUT("close_fail_3",FAIL);
-  } 
+  }
 }
 
+/*
+ * close_fail_4
+ * 		ASSERTS: Cannot close stdin
+ * 		INPUTS: None
+ * 		OUTPUTS: PASS - if ret = -1
+							 FAIL - if ret != -1
+ * 		SIDE EFFECTS: None
+ * 		COVERAGE: close
+ * 		FILES: syscalls.c
+ * */
 void close_fail_4(){
   pcb_t pcb;
   pcb.fdt[0].jump_ptr = &stdin_table_1;
@@ -1123,7 +1312,7 @@ void close_fail_4(){
   /* Place pcb in kernel memory */
   memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
   int ret=close(0);
-  
+
   if(ret==-1){
     TEST_OUTPUT("close_fail_4",PASS);
   } else{
@@ -1131,6 +1320,16 @@ void close_fail_4(){
   }
 }
 
+/*
+ * close_fail_5
+ * 		ASSERTS: Cannot close stdout
+ * 		INPUTS: None
+ * 		OUTPUTS: PASS - if ret = -1
+							 FAIL - if ret != -1
+ * 		SIDE EFFECTS: None
+ * 		COVERAGE: close
+ * 		FILES: syscalls.c
+ * */
 void close_fail_5(){
   pcb_t pcb;
   pcb.fdt[0].jump_ptr = &stdin_table_1;
@@ -1141,7 +1340,7 @@ void close_fail_5(){
   /* Place pcb in kernel memory */
   memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
   int ret=close(1);
-  
+
   if(ret==-1){
     TEST_OUTPUT("close_fail_5",PASS);
   } else{
@@ -1149,9 +1348,16 @@ void close_fail_5(){
   }
 }
 
-
-
-
+/*
+ * read_write
+ * 		ASSERTS: Reads stdin, writes stdout
+ * 		INPUTS: None
+ * 		OUTPUTS: PASS - if ret = -1
+							 FAIL - if ret != -1
+ * 		SIDE EFFECTS: None
+ * 		COVERAGE: close
+ * 		FILES: syscalls.c
+ * */
 void read_write(){
   pcb_t pcb;
   pcb.fdt[0].jump_ptr = &stdin_table_1;
@@ -1162,16 +1368,11 @@ void read_write(){
   /* Place pcb in kernel memory */
   memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
   unsigned char read_buf[128];
-  
- read(0,read_buf,128);
-   
+
+ 	read(0,read_buf,128);
+
   write(1,read_buf,128);
 }
-
-
-
-
-
 
 
 /* Checkpoint 4 tests */
