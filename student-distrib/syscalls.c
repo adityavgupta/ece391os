@@ -41,9 +41,9 @@ int32_t process_num = 0;
  */
 int32_t halt(uint8_t status){
   /* If shell tries to halt, just launch shell again */
-  if(process_num==1){
-    process_num=0;
-    uint8_t sh[]="shell";
+  if(process_num == 1){
+    process_num = 0;
+    uint8_t sh[] = "shell";
     execute((uint8_t*)sh);
   }
   //else we are in a child process
@@ -300,12 +300,13 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes){
  *    SIDE EFFECTS: none
  */
 int32_t open(const uint8_t* filename){
-  /* Open stdin */
-
-  if(filename==NULL||strncmp((int8_t*)filename,(int8_t*)"",strlen((int8_t*)filename))==0){
+  /* Check for NULL */
+  if(filename == NULL || strncmp((int8_t*)filename, (int8_t*)"", strlen((int8_t*)filename)) == 0){
+   /* Return failure */
 	 return -1;
   }
 
+  /* Open stdin */
   if(strncmp((int8_t*)filename, (int8_t*)"stdin", strlen((int8_t*)filename)) == 0){
 		terminal_open(filename);
     /* Return fd */
