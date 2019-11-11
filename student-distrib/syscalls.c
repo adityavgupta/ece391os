@@ -302,7 +302,7 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes){
 int32_t open(const uint8_t* filename){
   /* Open stdin */
 
-  if(filename==NULL){
+  if(filename==NULL||strncmp((int8_t*)filename,(int8_t*)"",strlen((int8_t*)filename))==0){
 	 return -1;
   }
 
