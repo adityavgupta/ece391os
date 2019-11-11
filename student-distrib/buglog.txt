@@ -8,7 +8,7 @@ Checkpoint 1:
 
 -> Error in linkage.S: Page faults occurred after typing in multiple characters. We needed to do assembly linkage for keyboard interrupt handler. Without the linkage, registers containing addresses were clobbered and accessed unallocated memory. (5 hrs)
 
--> Error in init_idt: When exceptions were called, the while(1) loop wasn’t running. Interrupts could still be typed to the screen even though the while loop should have been running. Included cli to mask interrupts, which stopped allowed the while(1) loop to run continuously.(1 hrs)
+-> Error in init_idt: When exceptions were called, the while(1) loop wasn’t running. Interrupts could still be typed to the screen even though the while loop should have been running. Included cli to mask interrupts, which stopped allowed the while(1) loop to run continuously.(1 hrs)	
 
 Checkpoint 2:
 Terminal driver:
@@ -21,9 +21,24 @@ Terminal driver:
 
 -> Buffer was taking more than 128 characters. This was another off by one error (15 min).
 
--> Global variables not changing. Had to change to be static in order to get this to work also moved the terminal driver into keyboard. This error happened multiple times (2-3 hours).
+-> Global variables not changing. Had to change to be static in order to get this to work also moved the terminal driver into keyboard. This error happened multiple times (2-3 hours). 
 
 File system:
 -> Reading wrong data blocks when trying to read file data. Turned out to be an issue with pointer arithmetic, we were offsetting the starting data block address by four times more than needed. (1 hour)
 
 -> Directory read displays unreadable characters. Needed to null terminate the string properly by strncpy all 32 characters from the file name. (1-2 hours)
+
+Checkpoint 3:
+-> testprint works in shell but returns abnormally. Didn’t return the proper status that was passed to halt. (Took 10 minutes)
+
+-> Page fault when trying to run a command in shell. The parent esp in the child process’ pcb turned out to be calculated incorrectly and paging was being mapped to the wrong place. (Took 1.5 hour)
+
+-> Page fault when trying to launch the shell. We were passing in the physical address of the eip instead of the virtual address for the shell. (Took 1 hour) 
+
+-> Open crashes when NULL point is passed. We did not place checks for null pointers. This error took approximately 1 minute to fix. (1 min)
+
+-> Crashes when tries to close all files in halt. This turned out to be an issue with how we were detecting if files were open. We changed how we were detecting if a file was open or not. (This error took roughly 30 minutes to fix).
+
+-> Clear-L would not print 391OS. We had to create another helper function to use instead of our current implementation of clear(). (30 minutes)
+
+-> close would try to close stdin and stdout. Changed the if statement to prevent this from being written to. (1 minutes)
