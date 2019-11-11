@@ -250,7 +250,7 @@ int32_t in_char_range (uint8_t scan_code) {
  *    SIDE EFFECTS: prints the matching characters of the scan_code
  */
 void print_scancode (uint8_t scan_code) {
-  if(buf_index >= (BUF_LENGTH - 1) && scan_code != NEW_LINE){
+  if(buf_index >= (BUF_LENGTH - 1) || line_buffer_flag){
     return;
   }
 
@@ -281,13 +281,7 @@ void recent_release_exec (uint8_t scan_code) {
     ctrl_pressed = 1;
   }
   else if(scan_code == L_CHAR && ctrl_pressed == 1) {
-    reset_screen(); //resets the screen and clears the buffer and the screen
     clear_l();
-	
-	int i=0;
-	for(;i<buf_index;i++){
-		putc(kb_buf[i]);
-	}
   }
   else if(scan_code == BACK_SPACE){
     /* Deletes a buffer character if it is allowed */

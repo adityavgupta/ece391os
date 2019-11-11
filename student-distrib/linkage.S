@@ -27,7 +27,7 @@ context_switch:
 
 # System call linkage
 system_call_handler:
-    sti # enable interrupts in kernel space
+    sti # Enable interrupts in kernel space
     # Save registers
     pushl %ebp
     pushl %edi
@@ -36,11 +36,14 @@ system_call_handler:
     pushl %ecx
     pushl %ebx
     subl $1, %eax # System call numbers are from 1-6, map them to 0-5 for jump table
-		cmpl $5, %eax # Check is sys call number greater than 5, if so its invalid
-		ja SYSCALL_DONE
-		cmpl $0, %eax # Check is sys call number less than 0, if so its invalid
-		jb SYSCALL_DONE
+		cmpl $5, %eax # Check if sys call number is greater than 5, if so it's invalid
+		ja SYSCALL_FAIL
+		cmpl $0, %eax # Check if sys call number is less than 0, if so it's invalid
+		jb SYSCALL_FAIL
 		call *system_call_table(, %eax, 4)  # Call the appropriate system call
+    jmp SYSCALL_DONE
+SYSCALL_FAIL:
+    movl $-1, %eax # System call number is invalid
 SYSCALL_DONE:
     # Restore registers
     popl %ebx

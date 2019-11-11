@@ -7,10 +7,18 @@
 #include "i8259.h"
 #include "kb.h"
 #include "linkage.h"
+#include "syscalls.h"
+#include "paging.h"
 
 #define NUM_EXCEPTION 32
 #define SYS_CALL_INDEX 0x80
 
+#define EIGHT_MB 0x800000
+#define FOUR_MB 0x400000
+#define USER_PROG 0x08000000
+#define PROG_OFFSET 0x00048000
+#define RUNNING 0
+#define STOPPED 1
 /*
  * irq0_handler
  *    DESCRIPTION: Handles IRQ0 interrupts
@@ -197,10 +205,28 @@ void test_interrupt(void){
 #define EXCEPTION_MAKER(x,msg) \
 	void x(void){ \
     cli(); \
-    clear();\
-		printf("Exception: %s",msg); \
-        while(1);\
-        sti(); \
+		printf("Exception: %s\n",msg); \
+      process_num--; \
+      set_page_dir_entry(USER_PROG, EIGHT_MB);\
+      asm volatile ("      \n\
+         movl %%cr3, %%eax \n\
+         movl %%eax, %%cr3" \
+         :  \
+         :  \
+         : "eax"  \
+      );  \
+      pcb_t* cur_pcb = get_pcb_add(); /* Get the current process pcb */ \
+      tss.esp0 = cur_pcb->parent_esp; /* Set TSS esp0 back to parent stack pointer */ \
+      asm volatile ("      \n\
+         movl $256,%%eax \n\
+         movl %0,%%ebp     \n\
+         sti              \n\
+         leave             \n\
+         ret" \
+         :  \
+         : "r"(cur_pcb->parent_ebp) \
+         : "ebp","eax"  \
+      );  \
      }
 
 /* List of excetions */
