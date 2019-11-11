@@ -10,6 +10,7 @@
 
 # Switch to user space
 context_switch:
+    # Point ds to user stack segment
     movw $USER_DS, %ax
     movw %ax, %ds
     pushf
@@ -17,18 +18,18 @@ context_switch:
     orl $0x200, %eax # Set IF to 1 for user space
     pushl %eax
     popf
-    pushl %ds # push user ds
-    pushl $0x83FFFFF # push stack pointer of user program
-    pushf # push EFLAGS
-    pushl $USER_CS  # push user cs
-    pushl %ecx # user eip
-
-    iret  # switch to user space
+    pushl %ds # Push user ds
+    pushl $0x83FFFFF # Push stack pointer of user program
+    pushf # Push EFLAGS
+    pushl $USER_CS  # Push user cs
+    pushl %ecx # User eip
+    iret  # Switch to user space
 
 # System call linkage
 system_call_handler:
     sti # enable interrupts in kernel space
-    pushl %ebp  # save registers
+    # Save registers
+    pushl %ebp
     pushl %edi
     pushl %esi
     pushl %edx
@@ -40,7 +41,8 @@ system_call_handler:
 		cmpl $0, %eax # check is sys call number less than 0, if so its invalid
 		jb SYSCALL_DONE
 		call *system_call_table(, %eax, 4)  # call the appropriate system call
-SYSCALL_DONE: # restore registers
+SYSCALL_DONE:
+    # Restore registers
     popl %ebx
     popl %ecx
     popl %edx
@@ -49,7 +51,7 @@ SYSCALL_DONE: # restore registers
     popl %ebp
 		iret  # switch back to user space
 
-# jump table for system call
+# Jump table for system call
 system_call_table:
 	.long halt, execute, read, write, open, close
 
