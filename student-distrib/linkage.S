@@ -36,7 +36,6 @@ system_call_handler:
     pushl %ecx
     pushl %ebx
     subl $1, %eax # System call numbers are from 1-6, map them to 0-5 for jump table
-    movl $-1, %eax
 		cmpl $5, %eax # Check if sys call number is greater than 5, if so it's invalid
 		ja SYSCALL_FAIL
 		cmpl $0, %eax # Check if sys call number is less than 0, if so it's invalid
