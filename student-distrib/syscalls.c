@@ -10,6 +10,8 @@
 #define PROG_OFFSET 0x00048000
 #define RUNNING 0
 #define STOPPED 1
+#define MAX_PROG_SIZE FOUR_MB - PROG_OFFSET
+#define EIGHT_KB 0x2000
 
 /* Function pointers for rtc */
 jump_table rtc_table = {rtc_write, rtc_read, rtc_open, rtc_close};
@@ -147,7 +149,7 @@ int32_t execute(const uint8_t* command){
   );
 
   /* Copy executable to 128MB */
-  if((size = read_data(file_dentry.inode_num, 0, (uint8_t*)(USER_PROG + PROG_OFFSET), 40000)) == -1){
+  if((size = read_data(file_dentry.inode_num, 0, (uint8_t*)(USER_PROG + PROG_OFFSET), MAX_PROG_SIZE)) == -1){
     /* Return failure */
     return -1;
   }
@@ -169,7 +171,7 @@ int32_t execute(const uint8_t* command){
 
   /* Set parent esp and ebp for child processes */
   if(process_num >= 2){
-    pcb.parent_esp = EIGHT_MB - (process_num-2)*0x2000;
+    pcb.parent_esp = EIGHT_MB - (process_num-2)*EIGHT_KB;
     asm volatile("  \n\
     movl %%ebp, %0"
     : "=r"(pcb.parent_ebp)
@@ -177,10 +179,10 @@ int32_t execute(const uint8_t* command){
   }
 
   /* Place pcb in kernel memory */
-  memcpy((void *)(EIGHT_MB - process_num*0x2000), &pcb, sizeof(pcb));
+  memcpy((void *)(EIGHT_MB - process_num*EIGHT_KB), &pcb, sizeof(pcb));
 
   /* Set TSS to point to kernel stack */
-  tss.esp0 = EIGHT_MB - (process_num - 1)*0x2000;
+  tss.esp0 = EIGHT_MB - (process_num - 1)*EIGHT_KB;
   tss.ss0 = KERNEL_DS;
 
 
@@ -299,11 +301,11 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes){
  */
 int32_t open(const uint8_t* filename){
   /* Open stdin */
-  
+
   if(filename==NULL){
-	 return -1; 
+	 return -1;
   }
-  
+
   if(strncmp((int8_t*)filename, (int8_t*)"stdin", strlen((int8_t*)filename)) == 0){
 		terminal_open(filename);
     /* Return fd */
