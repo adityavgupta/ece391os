@@ -1520,6 +1520,68 @@ void rtc_system_call_test(){
 	TEST_OUTPUT("rtc_system_call_test", PASS);
 }
 
+void pcb_overflow(){
+	TEST_HEADER;
+
+	pcb_t pcb;
+  pcb.fdt[0].jump_ptr = &stdin_table_1;
+  pcb.fdt[1].jump_ptr = &stdout_table_1;
+  pcb.fdt[0].flags = 1;
+  pcb.fdt[1].flags = 1;
+  pcb.process_state = 0;
+	int i;
+	for(i = 2; i < 8; i++){
+    pcb.fdt[i].flags = -1;
+  }
+	memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
+
+	if(-1 == open((uint8_t*)"rtc")){
+		TEST_OUTPUT("Opening file 1", FAIL);
+	} else{
+		TEST_OUTPUT("Opening file 1", PASS);
+	}
+	if(-1 == open((uint8_t*)"frame1.txt")){
+		TEST_OUTPUT("Opening file 2", FAIL);
+	} else{
+		TEST_OUTPUT("Opening file 2", PASS);
+	}
+	if(-1 == open((uint8_t*)"frame0.txt")){
+		TEST_OUTPUT("Opening file 3", FAIL);
+	} else{
+		TEST_OUTPUT("Opening file 3", PASS);
+	}
+	if(-1 == open((uint8_t*)"hello")){
+		TEST_OUTPUT("Opening file 4", FAIL);
+	} else{
+		TEST_OUTPUT("Opening file 4", PASS);
+	}
+	if(-1 == open((uint8_t*)"shell")){
+		TEST_OUTPUT("Opening file 5", FAIL);
+	} else{
+		TEST_OUTPUT("Opening file 5", PASS);
+	}
+	if(-1 == open((uint8_t*)".")){
+		TEST_OUTPUT("Opening file 6", FAIL);
+	} else{
+		TEST_OUTPUT("Opening file 6", PASS);
+	}
+	if(-1 == open((uint8_t*)"verylargetextwithverylongname.txt")){
+		TEST_OUTPUT("Opening file 7", FAIL);
+	} else{
+		TEST_OUTPUT("Opening file 7", PASS);
+	}
+	if(-1 == close(3)){
+		TEST_OUTPUT("Closing file 1", FAIL);
+	} else{
+		TEST_OUTPUT("Closing file 1", PASS);
+	}
+	if(-1 == open((uint8_t*)"verylargetextwithverylongname.txt")){
+		TEST_OUTPUT("Opening file 7", FAIL);
+	} else {
+		TEST_OUTPUT("Opening file 7", PASS);
+	}
+}
+
 /* Checkpoint 4 tests */
 /* Checkpoint 5 tests */
 
@@ -1606,4 +1668,5 @@ void launch_tests(){
 	// fd_file_read_test();
 	// fd_dir_read_test();
 	// rtc_system_call_test();
+	// pcb_overflow();
 }
