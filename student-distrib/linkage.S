@@ -19,7 +19,7 @@ context_switch:
     pushl %eax
     popf
     pushl %ds # Push user ds
-    pushl $0x83FFFFF # Push stack pointer of user program
+    pushl $USER_ESP # Push stack pointer of user program
     pushf # Push EFLAGS
     pushl $USER_CS  # Push user cs
     pushl %ecx # User eip

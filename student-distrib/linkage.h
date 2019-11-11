@@ -3,8 +3,12 @@
 
 #include "types.h"
 
+/* Virtual address of the user stack */
+#define USER_ESP 0x83FFFFF
+
 #ifndef ASM
 
+/* Linkage and jump table for system calls */
 extern int32_t system_call_handler();
 
 /* Save registers for keyboard handler */
