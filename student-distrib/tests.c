@@ -1497,9 +1497,9 @@ void fd_dir_read_test(){
 
 /*
  * rtc_system_call_test
- *		ASSERTS:
- *		INPUTS:
- *    OUTPUTS:
+ *		ASSERTS: RTC jump tables work
+ *		INPUTS: none
+ *    OUTPUTS: PASS or FAIL
  *		SIDE EFFECTS: Sets the rtc rate
  *		COVERAGE: Opening an RTC file type
  *		FILES: syscalls.c
@@ -1554,6 +1554,15 @@ void rtc_system_call_test(){
 	TEST_OUTPUT("rtc_system_call_test", PASS);
 }
 
+/*
+ * pcb_overflow
+ *		ASSERTS: Can't add more than 6 file descriptors
+ *		INPUTS: none
+ *    OUTPUTS: PASS or FAIL
+ *		SIDE EFFECTS: Sets file descriptors to in use
+ *		COVERAGE: Adding file descriptors
+ *		FILES: syscalls.c
+ */
 void pcb_overflow(){
 	TEST_HEADER;
 
