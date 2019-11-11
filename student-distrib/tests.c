@@ -784,6 +784,29 @@ void execute_fail_test(void){
   }
 }
 
+/*
+ * execute_fail_test_2
+ * 		ASSERTS: Running execute on text file should fail
+ * 		INPUTS: None
+ * 		OUTPUTS: PASS - if ret = -1
+							 FAIL - if ret != -1
+ * 		SIDE EFFECTS: None
+ * 		COVERAGE: execute
+ * 		FILES: syscalls.c
+ * */
+void execute_fail_test_2(void){
+  TEST_HEADER;
+  uint8_t file[]="frame0.txt";
+  int8_t ret;
+  ret = execute((uint8_t*)file);
+  if(ret==-1){
+    TEST_OUTPUT("execute_fail_test", PASS);
+  }
+  else{
+    TEST_OUTPUT("execute_fail_test", FAIL);
+  }
+}
+
 #define EIGHT_MB 0x800000
 
  /*
@@ -1500,26 +1523,27 @@ void launch_tests(){
 	//read_test();
 
 	/* checkpoint 3 tests */
-	
-	// open_null_test();
-	// open_test_fail();
-	// execute_fail_test();
-	// read_test_fail_1();
-	// read_test_fail_2();
-	// read_test_fail_3();
-	// read_test_fail_4();
-	// read_test_fail_5();
-	// write_test_fail_1();
-	// write_test_fail_2();
-	// write_test_fail_2();
-	// write_test_fail_3();
-	// write_test_fail_4();
-	// write_test_fail_5();
-	// close_fail_1();
-	// close_fail_2();
-	// close_fail_3();
-	// close_fail_4();
-	// close_fail_5();
+
+	open_null_test();
+	open_test_fail();
+	execute_fail_test();
+	execute_fail_test_2();
+	read_test_fail_1();
+	read_test_fail_2();
+	read_test_fail_3();
+	read_test_fail_4();
+	read_test_fail_5();
+	write_test_fail_1();
+	write_test_fail_2();
+	write_test_fail_2();
+	write_test_fail_3();
+	write_test_fail_4();
+	write_test_fail_5();
+	close_fail_1();
+	close_fail_2();
+	close_fail_3();
+	close_fail_4();
+	close_fail_5();
 	// fd_file_read_test();
 	// fd_dir_read_test();
 }
