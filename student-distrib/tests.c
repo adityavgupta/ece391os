@@ -1461,6 +1461,65 @@ void fd_dir_read_test(){
   close(fd);
 }
 
+/*
+ * rtc_system_call_test
+ *		ASSERTS:
+ *		INPUTS:
+ *    OUTPUTS:
+ *		SIDE EFFECTS: Sets the rtc rate
+ *		COVERAGE: Opening an RTC file type
+ *		FILES: syscalls.c
+ */
+void rtc_system_call_test(){
+	TEST_HEADER;
+
+	pcb_t pcb;
+  pcb.fdt[0].jump_ptr = &stdin_table_1;
+  pcb.fdt[1].jump_ptr = &stdout_table_1;
+  pcb.fdt[0].flags = 1;
+  pcb.fdt[1].flags = 1;
+  pcb.process_state = 0;
+	int i;
+	for(i = 2; i < 8; i++){
+    pcb.fdt[i].flags = -1;
+  }
+	memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
+
+	int fd;
+	int32_t buf[1] = {64};
+	int count;
+
+	printf("Opening RTC\n");
+	if(-1 == (fd = open((uint8_t*)"rtc"))){
+		TEST_OUTPUT("rtc open failure", FAIL);
+	}
+	rtc_test_flag = 1;
+	while(count < 1000000000){
+		count++;
+	}
+	printf("\nWrite called\n");
+	if(-1 == write(fd, buf, 4)){
+		TEST_OUTPUT("rtc write failure", FAIL);
+	}
+	count = 0;
+	while(count < 1000000000){
+		count++;
+	}
+	printf("\n");
+	buf[0] = 1;
+	if(-1 == write(fd, buf, 4)){
+		TEST_OUTPUT("rtc write failure", FAIL);
+	}
+	rtc_test_flag = 0;
+	if(-1 == read(fd, buf, 4)){
+		TEST_OUTPUT("rtc read failure", FAIL);
+	}
+	if(-1 == close(fd)){
+		TEST_OUTPUT("rtc close failure", FAIL);
+	}
+	TEST_OUTPUT("rtc_system_call_test", PASS);
+}
+
 /* Checkpoint 4 tests */
 /* Checkpoint 5 tests */
 
@@ -1546,4 +1605,5 @@ void launch_tests(){
 	close_fail_5();
 	// fd_file_read_test();
 	// fd_dir_read_test();
+	// rtc_system_call_test();
 }
