@@ -58,6 +58,12 @@ int32_t open(const uint8_t* filename);
 /* Close system call, closes a file descriptor */
 int32_t close(int32_t fd);
 
+/* Function for bad read system calls */
+int32_t invalid_read(int32_t fd, void* buf, int32_t nbytes);
+
+/* Function for bad write system calls */
+int32_t invalid_write(int32_t fd, const void* buf, int32_t nbytes);
+
 /* Gets the address of the current pcb */
 pcb_t* get_pcb_add (void);
 

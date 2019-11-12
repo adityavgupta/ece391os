@@ -12,6 +12,7 @@
 #define STOPPED 1
 #define MAX_PROG_SIZE FOUR_MB - PROG_OFFSET
 #define EIGHT_KB 0x2000
+#define MAX_FD_NUM 7
 
 /* Function pointers for rtc */
 jump_table rtc_table = {rtc_write, rtc_read, rtc_open, rtc_close};
@@ -23,10 +24,10 @@ jump_table file_table = {file_write, file_read, file_open, file_close};
 jump_table dir_table = {dir_write, dir_read, dir_open, dir_close};
 
 /* Function pointers for stdin (only has terminal read) */
-jump_table stdin_table = {NULL, terminal_read, terminal_open, terminal_close};
+jump_table stdin_table = {invalid_write, terminal_read, terminal_open, terminal_close};
 
 /* function pointers for stdout(only has terminal write) */
-jump_table stdout_table = {terminal_write, NULL, terminal_open, terminal_close};
+jump_table stdout_table = {terminal_write, invalid_read, terminal_open, terminal_close};
 
 /* process number: 1st process has pid 1, 0 means no processes have been launched */
 int32_t process_num = 0;
@@ -49,7 +50,7 @@ int32_t halt(uint8_t status){
   //else we are in a child process
   int i; /* Loop variable */
   /* Close all files in the pcb */
-  for(i = 0; i < 8; i++){
+  for(i = 0; i <= MAX_FD_NUM; i++){
     close(i);
   }
 
@@ -67,9 +68,9 @@ int32_t halt(uint8_t status){
      : "eax"
   );
 
-  pcb_t* cur_pcb = get_pcb_add(); /* Get the current process pcb */
-  cur_pcb->process_state=STOPPED; /* Set process state to stopped */
-  tss.esp0 = cur_pcb->parent_esp; /* Set TSS esp0 back to parent stack pointer */
+  pcb_t* cur_pcb = get_pcb_add();   /* Get the current process pcb */
+  cur_pcb->process_state = STOPPED; /* Set process state to stopped */
+  tss.esp0 = cur_pcb->parent_esp;   /* Set TSS esp0 back to parent stack pointer */
 
   /*
   inline assembly:
@@ -98,14 +99,14 @@ int32_t halt(uint8_t status){
  *    SIDE EFFECTS: Copies executable program and pcb into memory
  */
 int32_t execute(const uint8_t* command){
-	uint8_t filename[32]; /* Name of the file */
+	uint8_t filename[NAME_LENGTH]; /* Name of the file */
   int i = 0; /* Loop variable */
 
   /* Mask interrupts */
   cli();
 
   /* Get the file name */
-  while(command[i] != '\0' && command[i] != ' ' && i < 32){
+  while(command[i] != '\0' && command[i] != ' ' && i < NAME_LENGTH){
     filename[i] = command[i];
     i++;
   }
@@ -120,9 +121,9 @@ int32_t execute(const uint8_t* command){
   }
 
   /* Read the executable */
-  uint8_t ELF_buf[30];
+  uint8_t ELF_buf[NAME_LENGTH];
   uint32_t size; /* Size of executable file */
-  if((size = read_data(file_dentry.inode_num, 0, ELF_buf, 30)) == -1){
+  if((size = read_data(file_dentry.inode_num, 0, ELF_buf, NAME_LENGTH)) == -1){
     /* Return failure */
     sti();
     return -1;
@@ -165,7 +166,7 @@ int32_t execute(const uint8_t* command){
   pcb.process_state = 0;
 
   /* Mark remaining file descriptors as not in use */
-  for(i = 2; i < 8; i++){
+  for(i = 2; i <= MAX_FD_NUM; i++){
     pcb.fdt[i].flags = -1;
   }
 
@@ -216,15 +217,14 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes){
   cli(); /* Mask interrupts */
 
   /* Check for a valid fd */
-	if(fd < 0 || fd > 7){
+	if(fd < 0 || fd > MAX_FD_NUM){
 		sti();
     /* Return failure */
 		return -1;
 	}
 
   /* Pointer to current pcb */
-  pcb_t* pcb_start = get_pcb_add();
-	file_desc curr_file = pcb_start->fdt[fd];
+	file_desc curr_file = get_pcb_add()->fdt[fd];
 
   /* Check if file descriptor is in use */
 	if(curr_file.flags == -1){
@@ -233,14 +233,9 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes){
 		return -1;
 	}
 
-  /* Check for read in jump table */
-	if(curr_file.jump_ptr->read != NULL){
-		sti();
-    /* Jump to read */
-		return curr_file.jump_ptr->read(fd, buf, nbytes);
-	}
-
-	sti();
+  sti();
+  /* Jump to read */
+	return curr_file.jump_ptr->read(fd, buf, nbytes);
 
   /* Return success */
 	return -1;
@@ -260,15 +255,14 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes){
   cli(); /* Mask interrupts */
 
   /* Check for a valid fd */
-	if(fd < 0 || fd > 7){
+	if(fd < 0 || fd > MAX_FD_NUM){
 		sti();
     /* Return failure */
 		return -1;
 	}
 
   /* Pointer to current pcb */
-  pcb_t* pcb_start = get_pcb_add();
-	file_desc curr_file = pcb_start->fdt[fd];
+	file_desc curr_file = get_pcb_add()->fdt[fd];
 
   /* Check if descriptor is in use */
 	if(curr_file.flags == -1){
@@ -277,12 +271,8 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes){
 		return -1;
 	}
 
-  /* Check for write in jump table */
-	if(curr_file.jump_ptr->write != NULL){
-		sti();
-    /* Jump to write */
-		return curr_file.jump_ptr->write(fd, buf, nbytes);
-	}
+  /* Jump to write */
+	return curr_file.jump_ptr->write(fd, buf, nbytes);
 
 
 	sti(); /* Restore interrupts */
@@ -333,7 +323,7 @@ int32_t open(const uint8_t* filename){
 
 	int i; /* Loop variable */
   /* Go through each file descriptor */
-	for(i = 2; i < 8; i++){
+	for(i = 2; i <= MAX_FD_NUM; i++){
     /* Find file descriptor not in use */
 		if(pcb_start->fdt[i].flags == -1){
       /* Load rtc jump table */
@@ -377,12 +367,10 @@ int32_t close(int32_t fd){
   pcb_t* pcb_start = get_pcb_add();
 
   /* Check for an invalid fd */
-  if(fd > 7 || fd < 2){
+  if(fd < 2 || fd > MAX_FD_NUM){
     /* Return failure */
 		return -1;
 	}
-  //generate page exception for testing
-  //if(pcb_start->fdt[fd].flags){
 
   /* Check if file desciptor is in use */
 	if(pcb_start->fdt[fd].flags == 1){
@@ -395,6 +383,30 @@ int32_t close(int32_t fd){
 
   /* Return failure */
 	return -1;
+}
+
+/*
+ * invalid_read
+ *    DESCRIPTION: Function for jump tables with no read
+ *    INPUTS: Not used
+ *    OUTPUTS: none
+ *    RETURN VALUE: -1 for failure
+ *    SIDE EFFECTS: none
+ */
+int32_t invalid_read(int32_t fd, void* buf, int32_t nbytes){
+  return -1;
+}
+
+/*
+ * get_pcb_add
+ *    DESCRIPTION: Function for jump tables with no write
+ *    INPUTS: Not used
+ *    OUTPUTS: none
+ *    RETURN VALUE: -1 for failure
+ *    SIDE EFFECTS: none
+ */
+int32_t invalid_write(int32_t fd, const void* buf, int32_t nbytes){
+  return -1;
 }
 
 /*
