@@ -56,7 +56,7 @@ SYSCALL_DONE:
 
 # Jump table for system call
 system_call_table:
-	.long halt, execute, read, write, open, close
+	.long halt, execute, read, write, open, close, getargs, vidmap, set_handler, sigreturn
 
 # Linkage for the keyboard handler
 keyboard_linkage:

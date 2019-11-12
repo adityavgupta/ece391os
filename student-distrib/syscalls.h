@@ -58,6 +58,14 @@ int32_t open(const uint8_t* filename);
 /* Close system call, closes a file descriptor */
 int32_t close(int32_t fd);
 
+int32_t getargs(uint8_t* buf, int32_t nbytes);
+
+int32_t vidmap(uint8_t** screen_start);
+
+int32_t set_handler(int32_t signum, void* handler_address);
+
+int32_t sigreturn(void);
+
 /* Function for bad read system calls */
 int32_t invalid_read(int32_t fd, void* buf, int32_t nbytes);
 
@@ -65,7 +73,7 @@ int32_t invalid_read(int32_t fd, void* buf, int32_t nbytes);
 int32_t invalid_write(int32_t fd, const void* buf, int32_t nbytes);
 
 /* Gets the address of the current pcb */
-pcb_t* get_pcb_add (void);
+pcb_t* get_pcb_add(void);
 
 #endif /* ASM */
 
