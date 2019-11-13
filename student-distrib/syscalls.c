@@ -411,13 +411,13 @@ int32_t getargs(uint8_t* buf, int32_t nbytes){
 /*
  * vidmap
  *    DESCRIPTION:
- *    INPUTS:
+ *    INPUTS: uint8_t** screen_start - 
  *    OUTPUTS:
  *    RETURN VALUE: 0 for success, -1 for failure
  *    SIDE EFFECTS:
  */
 int32_t vidmap(uint8_t** screen_start){
-  
+
   return 0;
 }
 
