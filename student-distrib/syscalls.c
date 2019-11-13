@@ -4,15 +4,14 @@
 #include "lib.h"
 #include "kb.h"
 
-#define EIGHT_MB 0x800000
-#define FOUR_MB 0x400000
-#define USER_PROG 0x08000000
-#define PROG_OFFSET 0x00048000
-#define RUNNING 0
-#define STOPPED 1
-#define MAX_PROG_SIZE FOUR_MB - PROG_OFFSET
-#define EIGHT_KB 0x2000
-#define MAX_FD_NUM 7
+#define EIGHT_MB        0x800000
+#define FOUR_MB         0x400000
+#define USER_PROG       0x8000000
+#define PROG_OFFSET     0x00048000
+#define RUNNING         0
+#define STOPPED         1
+#define MAX_PROG_SIZE   FOUR_MB - PROG_OFFSET
+#define EIGHT_KB        0x2000
 
 /* Function pointers for rtc */
 jump_table rtc_table = {rtc_write, rtc_read, rtc_open, rtc_close};
@@ -110,6 +109,8 @@ int32_t execute(const uint8_t* command){
     filename[i] = command[i];
     i++;
   }
+
+   // store command in pcb
 
   filename[i] = '\0';
   dentry_t file_dentry;
@@ -402,7 +403,7 @@ int32_t getargs(uint8_t* buf, int32_t nbytes){
   }
 
   /* Copy the arguments to userspace */
-  strncpy(buf, , nbytes);
+  strncpy(buf, get_pcb_add()->command, nbytes);
 
   /* Return success */
   return 0;
@@ -411,13 +412,17 @@ int32_t getargs(uint8_t* buf, int32_t nbytes){
 /*
  * vidmap
  *    DESCRIPTION:
- *    INPUTS: uint8_t** screen_start - 
+ *    INPUTS: uint8_t** screen_start -
  *    OUTPUTS:
  *    RETURN VALUE: 0 for success, -1 for failure
  *    SIDE EFFECTS:
  */
 int32_t vidmap(uint8_t** screen_start){
-
+  // 4kb user video memory page, between 8MB and 128MB
+  // return address of 4kb page to user
+  // take note in pcb so can unmap video memory page (flag)
+  // set_page_table_entry();
+  // screen_start =
   return 0;
 }
 

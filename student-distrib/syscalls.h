@@ -8,6 +8,8 @@
 #include "linkage.h"
 #include "lib.h"
 
+#define MAX_FD_NUM 7
+
 #ifndef ASM
 
 /* Number of active processes */
@@ -36,8 +38,9 @@ typedef struct{
   int32_t current_esp; 					/* Current esp */
   int32_t parent_esp; 					/* Parent's esp */
   int32_t parent_ebp; 					/* Parent's ebp */
-  file_desc fdt[8]; 						/* File Descriptor Table */
+  file_desc fdt[MAX_FD_NUM+1]; 	/* File Descriptor Table */
   unsigned char process_state;  /* State of process */
+	uint8_t command[BUF_LENGTH];  /* Commands passed in */
 } pcb_t;
 
 /* Halt system call, stop a process */
