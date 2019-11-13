@@ -385,20 +385,65 @@ int32_t close(int32_t fd){
 	return -1;
 }
 
+/*
+ * getargs
+ *    DESCRIPTION:
+ *    INPUTS: uint8_t* buf - buffer to copy commands to
+ *            int32_t nbytes - size of buffer
+ *    OUTPUTS: none
+ *    RETURN VALUE: 0 for success, -1 for failure
+ *    SIDE EFFECTS: none
+ */
 int32_t getargs(uint8_t* buf, int32_t nbytes){
+  /* Check for valid command */
+  if(strlen() > nbytes || buf == NULL){
+    /* Return failure */
+    return -1;
+  }
+
+  /* Copy the arguments to userspace */
+  strncpy(buf, , nbytes);
+
+  /* Return success */
   return 0;
 }
 
+/*
+ * vidmap
+ *    DESCRIPTION:
+ *    INPUTS:
+ *    OUTPUTS:
+ *    RETURN VALUE: 0 for success, -1 for failure
+ *    SIDE EFFECTS:
+ */
 int32_t vidmap(uint8_t** screen_start){
+  
   return 0;
 }
 
+/*
+ * set_handler
+ *    DESCRIPTION: Does nothing for now
+ *    INPUTS: int32_t signum -
+ *            void* handler_address -
+ *    OUTPUTS: none
+ *    RETURN VALUE: -1 for failure
+ *    SIDE EFFECTS: none
+ */
 int32_t set_handler(int32_t signum, void* handler_address){
-  return 0;
+  return -1;
 }
 
+/*
+ * sigreturn
+ *    DESCRIPTION: Does nothing for now
+ *    INPUTS: none
+ *    OUTPUTS: none
+ *    RETURN VALUE: 0 for success, -1 for failure
+ *    SIDE EFFECTS: none
+ */
 int32_t sigreturn(){
-  return 0;
+  return -1;
 }
 
 /*

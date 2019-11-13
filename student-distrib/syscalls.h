@@ -58,12 +58,16 @@ int32_t open(const uint8_t* filename);
 /* Close system call, closes a file descriptor */
 int32_t close(int32_t fd);
 
+/* Copy program commands to userspace */
 int32_t getargs(uint8_t* buf, int32_t nbytes);
 
+/* Map video memory to userspace */
 int32_t vidmap(uint8_t** screen_start);
 
+/* */
 int32_t set_handler(int32_t signum, void* handler_address);
 
+/* */
 int32_t sigreturn(void);
 
 /* Function for bad read system calls */
