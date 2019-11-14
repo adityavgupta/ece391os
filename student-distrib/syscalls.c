@@ -461,6 +461,15 @@ int32_t vidmap(uint8_t** screen_start){
   /* Add page to page table */
   set_page_table_entry(USER_VIDEO_MEM, VIDEO_MEM_ADDR);
 
+  /* Flush tlb */
+  asm volatile ("      \n\
+     movl %%cr3, %%eax \n\
+     movl %%eax, %%cr3"
+     :
+     :
+     : "eax"
+  );
+
   /* Return virtual address of page */
   *screen_start = (uint8_t *)USER_VIDEO_MEM;
 

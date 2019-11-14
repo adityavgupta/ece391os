@@ -5,13 +5,14 @@
 #include "file_system.h"
 
 /* Constants for paging */
-#define TABLE_ENTRIES 1024
+#define TABLE_ENTRIES  1024
 #define RW_NOT_PRESENT 0x02
-#define RW_PRESENT 0x03
-#define KERNEL_ADDR 0x400000
-#define PT_OFFSET 12
-#define PAGE_SIZE 4096
-#define FOUR_MB 4194304
+#define RW_PRESENT     0x03
+#define USER_MODE      0x07
+#define KERNEL_ADDR    0x400000
+#define PT_OFFSET      12
+#define PAGE_SIZE      4096
+#define FOUR_MB        0x400000
 
 /* Page directory array */
 static uint32_t page_directory[TABLE_ENTRIES]  __attribute__((aligned (PAGE_SIZE)));
@@ -46,14 +47,14 @@ int32_t set_page_dir_entry(int32_t virtual, int32_t physical){
  *    SIDE EFFECTS: none
  */
 int32_t set_page_table_entry(int32_t virtual, int32_t physical){
-  second_page_table[256] = physical | 0x7;
+  second_page_table[(virtual >> 12) & 0x3FF] = (physical) | USER_MODE;
 
   /* Return success */
   return 0;
 }
 
 int32_t disable_page_entry(int32_t virtual){
-  second_page_table[256] &= 0xFFFFFFFE;
+  second_page_table[(virtual >> 12) & 0x3FF] &= 0xFFFFFFFE;
 
   return 0;
 }
@@ -128,7 +129,7 @@ void init_page_directory(void){
     page_directory[KERNEL_ADDR >> 22] = (KERNEL_ADDR | 0x083);
 
     /* Enable the second page table */
-    page_directory[USER_VIDEO_MEM >> 22] = ((unsigned int)second_page_table) | RW_PRESENT;
+    page_directory[USER_VIDEO_MEM >> 22] = ((unsigned int)second_page_table) | USER_MODE;
 }
 
 /*
