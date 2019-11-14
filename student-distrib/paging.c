@@ -45,7 +45,7 @@ int32_t set_page_dir_entry(int32_t virtual, int32_t physical){
  *    SIDE EFFECTS: none
  */
 int32_t set_page_table_entry(int32_t virtual, int32_t physical){
-  page_table[] = physical | ;
+//  page_table[] = physical | ;
   return 0;
 }
 

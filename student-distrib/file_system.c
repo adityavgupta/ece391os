@@ -132,8 +132,8 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 
   /* Check for a valid offset */
   if(offset > file_size){
-    /* Return failure */
-    return -1;
+    /* Return 0 bytes read */
+    return 0;
   }
 
   /* Ending point in the file  */

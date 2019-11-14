@@ -98,7 +98,7 @@ int32_t halt(uint8_t status){
  *    SIDE EFFECTS: Copies executable program and pcb into memory
  */
 int32_t execute(const uint8_t* command){
-	uint8_t filename[NAME_LENGTH]; /* Name of the file */
+	uint8_t filename[NAME_LENGTH+1]; /* Name of the file, with null terminate*/
   int i = 0; /* Loop variable */
 
   /* Mask interrupts */
@@ -138,6 +138,30 @@ int32_t execute(const uint8_t* command){
     return -1;
   }
 
+  uint8_t args[BUF_LENGTH];
+  args[0]='\0'; //default args is empty string
+
+  /* TODO: set pcb.args directly */
+  const uint8_t* command_args= &(command[i]); //start of args
+  i=0;
+  int j=0;
+  while(command_args[i]==' '){  //get rid of leading spaces in arguments
+    i++;
+  }
+  while(j<BUF_LENGTH && command_args[i+j]!='\0'){
+    if(j>0 && args[j-1]==' ' && command_args[i+j]==' '){//skip extra spaces
+        i++;
+        continue;
+    }
+    args[j]=command_args[i+j];//copy character over
+    j++;
+  }
+  if(j<BUF_LENGTH){
+    if(args[j-1]==' ')args[j-1]='\0';//remove space at end of args if exists
+    else args[j]='\0';
+  }
+  args[BUF_LENGTH-1]='\0';
+
   /* Set up user page */
   set_page_dir_entry(USER_PROG, EIGHT_MB + (process_num++)*FOUR_MB);
 
@@ -165,7 +189,7 @@ int32_t execute(const uint8_t* command){
   pcb.fdt[0].flags = 1;
   pcb.fdt[1].flags = 1;
   pcb.process_state = 0;
-
+  strncpy((int8_t*)pcb.args,(const int8_t*)args,BUF_LENGTH);
   /* Mark remaining file descriptors as not in use */
   for(i = 2; i <= MAX_FD_NUM; i++){
     pcb.fdt[i].flags = -1;
@@ -238,7 +262,7 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes){
   /* Jump to read */
 	return curr_file.jump_ptr->read(fd, buf, nbytes);
 
-  /* Return success */
+  /* Return failure */
 	return -1;
 }
 
@@ -397,13 +421,15 @@ int32_t close(int32_t fd){
  */
 int32_t getargs(uint8_t* buf, int32_t nbytes){
   /* Check for valid command */
-  if(strlen() > nbytes || buf == NULL){
+  pcb_t* cur_pcb = get_pcb_add();
+  // +1 is for null terminator 
+  if(strlen((const int8_t*)cur_pcb->args)+1 > nbytes || buf == NULL || (cur_pcb->args)[0]=='\0'){
     /* Return failure */
     return -1;
   }
 
   /* Copy the arguments to userspace */
-  strncpy(buf, get_pcb_add()->command, nbytes);
+  strncpy((int8_t*)buf, (const int8_t*)cur_pcb->args, nbytes);
 
   /* Return success */
   return 0;

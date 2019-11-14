@@ -9,6 +9,7 @@
 #include "lib.h"
 
 #define MAX_FD_NUM 7
+#define BUF_LENGTH 128
 
 #ifndef ASM
 
@@ -40,7 +41,7 @@ typedef struct{
   int32_t parent_ebp; 					/* Parent's ebp */
   file_desc fdt[MAX_FD_NUM+1]; 	/* File Descriptor Table */
   unsigned char process_state;  /* State of process */
-	uint8_t command[BUF_LENGTH];  /* Commands passed in */
+	uint8_t args[BUF_LENGTH];  /* Commands passed in */
 } pcb_t;
 
 /* Halt system call, stop a process */
