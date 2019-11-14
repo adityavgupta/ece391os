@@ -71,6 +71,7 @@ int32_t halt(uint8_t status){
   cur_pcb->process_state = STOPPED; /* Set process state to stopped */
   tss.esp0 = cur_pcb->parent_esp;   /* Set TSS esp0 back to parent stack pointer */
 
+  /* Check if program was using video memory */
   if(cur_pcb->vidmem){
     disable_page_entry(USER_VIDEO_MEM);
   }
@@ -442,18 +443,24 @@ int32_t getargs(uint8_t* buf, int32_t nbytes){
 
 /*
  * vidmap
- *    DESCRIPTION:
- *    INPUTS: uint8_t** screen_start -
- *    OUTPUTS:
+ *    DESCRIPTION: Sets up a user page for video memory
+ *    INPUTS: uint8_t** screen_start - address of
+ *    OUTPUTS: none
  *    RETURN VALUE: 0 for success, -1 for failure
- *    SIDE EFFECTS:
+ *    SIDE EFFECTS: Enables a new page
  */
 int32_t vidmap(uint8_t** screen_start){
-  // 4kb user video memory page, between 8MB and 128MB
-  // return address of 4kb page to user
-  // take note in pcb so can unmap video memory page (flag)
-  // set_page_table_entry();
-  // screen_start =
+  /* Check for a valid pointer */
+  if(screen_start == NULL){
+    /* Return failure */
+    return -1;
+  }
+
+  /* Check for a user level pointer */
+  if(screen_start < (uint8_t**)(USER_PROG) || screen_start >= (uint8_t**)(USER_PROG + FOUR_MB)){
+    /* Return failure */
+    return -1;
+  }
 
   /* Mark pcb as having video memory page */
   get_pcb_add()->vidmem = 1;
@@ -486,6 +493,7 @@ int32_t vidmap(uint8_t** screen_start){
  *    SIDE EFFECTS: none
  */
 int32_t set_handler(int32_t signum, void* handler_address){
+  /* Return failure */
   return -1;
 }
 
@@ -498,6 +506,7 @@ int32_t set_handler(int32_t signum, void* handler_address){
  *    SIDE EFFECTS: none
  */
 int32_t sigreturn(){
+  /* Return failure */
   return -1;
 }
 
