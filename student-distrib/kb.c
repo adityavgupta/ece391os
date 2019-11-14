@@ -24,8 +24,6 @@
 #define CAP_OFFSET        90
 #define UP_BOUND          128
 
-#define BUF_LENGTH 128
-
 unsigned long flags; /* Hold current flags */
 
 // Flag whether or not the line buffer can be written to the screen or not

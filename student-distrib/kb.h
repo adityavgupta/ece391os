@@ -5,6 +5,8 @@
 
 #include "types.h"
 
+#define BUF_LENGTH 128
+
 #ifndef ASM
 
 /* Enable keyboard interrupts */

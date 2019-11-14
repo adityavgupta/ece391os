@@ -9,7 +9,6 @@
 #include "lib.h"
 
 #define MAX_FD_NUM 7
-#define BUF_LENGTH 128
 
 #ifndef ASM
 
