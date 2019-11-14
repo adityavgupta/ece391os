@@ -8,7 +8,6 @@
 #define TABLE_ENTRIES 1024
 #define RW_NOT_PRESENT 0x02
 #define RW_PRESENT 0x03
-#define VIDEO_MEM_ADDR 0xB8000
 #define KERNEL_ADDR 0x400000
 #define PT_OFFSET 12
 #define PAGE_SIZE 4096
@@ -16,8 +15,10 @@
 
 /* Page directory array */
 static uint32_t page_directory[TABLE_ENTRIES]  __attribute__((aligned (PAGE_SIZE)));
-/* Page table array */
-static uint32_t page_table[TABLE_ENTRIES]  __attribute__((aligned (PAGE_SIZE)));
+/* First page table array */
+static uint32_t first_page_table[TABLE_ENTRIES]  __attribute__((aligned (PAGE_SIZE)));
+/* Second page table array */
+static uint32_t second_page_table[TABLE_ENTRIES] __attribute__((aligned (PAGE_SIZE)));
 
 /*
  * set_page_dir_entry
@@ -45,7 +46,15 @@ int32_t set_page_dir_entry(int32_t virtual, int32_t physical){
  *    SIDE EFFECTS: none
  */
 int32_t set_page_table_entry(int32_t virtual, int32_t physical){
-//  page_table[] = physical | ;
+  second_page_table[256] = physical | 0x7;
+
+  /* Return success */
+  return 0;
+}
+
+int32_t disable_page_entry(int32_t virtual){
+  second_page_table[256] &= 0xFFFFFFFE;
+
   return 0;
 }
 
@@ -70,7 +79,7 @@ uint32_t get_dir(unsigned int i){
  *    SIDE EFFECTS: none
  */
 uint32_t get_page(unsigned int i){
-  return page_table[i];
+  return first_page_table[i];
 }
 
 /*
@@ -104,19 +113,22 @@ void init_page_directory(void){
     int i; /* Variable to loop over table entries */
 
     /* Go through each entry in the table */
-    for(i = 0;i < TABLE_ENTRIES; i++){
+    for(i = 0; i < TABLE_ENTRIES; i++){
       /* Set entry to not present */
       page_directory[i] = RW_NOT_PRESENT;
     }
 
     /* Set the first entry to the address of the page table, and mark it as present */
-    page_directory[0] = ((unsigned int)page_table) | RW_PRESENT;
+    page_directory[0] = ((unsigned int)first_page_table) | RW_PRESENT;
 
     /*
      * Set the second entry to the address of the kernel (4 MB). The page size bit must be
      * enabled. The entry is marked as present as well.
      */
-    page_directory[KERNEL_ADDR >> 22]= (KERNEL_ADDR | 0x083);
+    page_directory[KERNEL_ADDR >> 22] = (KERNEL_ADDR | 0x083);
+
+    /* Enable the second page table */
+    page_directory[USER_VIDEO_MEM >> 22] = ((unsigned int)second_page_table) | RW_PRESENT;
 }
 
 /*
@@ -131,13 +143,14 @@ void init_page_table(void){
     int i; /* Variable to loop */
 
     /* Go through each entry in the page table */
-    for(i=0;i<TABLE_ENTRIES;i++){
-      /* Address of each page is every 4 kiB (PAGE_SIZE), and entry is not present */
-      page_table[i] = (i * PAGE_SIZE)| RW_NOT_PRESENT;
+    for(i = 0; i < TABLE_ENTRIES; i++){
+      /* Address of each page is every 4 kB (PAGE_SIZE), and entry is not present */
+      first_page_table[i] = (i * PAGE_SIZE) | RW_NOT_PRESENT;
+      second_page_table[i] = (i * PAGE_SIZE) | RW_NOT_PRESENT;
     }
 
     /* Set video memory page to present, read/write, and supervisor mode */
-    page_table[VIDEO_MEM_ADDR >> PT_OFFSET]|= RW_PRESENT;
+    first_page_table[VIDEO_MEM_ADDR >> PT_OFFSET] |= RW_PRESENT;
 }
 
 /*

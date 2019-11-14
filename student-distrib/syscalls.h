@@ -41,7 +41,8 @@ typedef struct{
   int32_t parent_ebp; 					/* Parent's ebp */
   file_desc fdt[MAX_FD_NUM+1]; 	/* File Descriptor Table */
   unsigned char process_state;  /* State of process */
-	uint8_t args[BUF_LENGTH];  /* Commands passed in */
+	uint8_t args[BUF_LENGTH];     /* Commands passed in */
+	int32_t vidmem;
 } pcb_t;
 
 /* Halt system call, stop a process */

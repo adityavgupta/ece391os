@@ -71,6 +71,10 @@ int32_t halt(uint8_t status){
   cur_pcb->process_state = STOPPED; /* Set process state to stopped */
   tss.esp0 = cur_pcb->parent_esp;   /* Set TSS esp0 back to parent stack pointer */
 
+  if(cur_pcb->vidmem){
+    disable_page_entry(USER_VIDEO_MEM);
+  }
+
   /*
   inline assembly:
     1st line: zero extend bl and move value into eax so that the correct status is returned from halt
@@ -189,6 +193,7 @@ int32_t execute(const uint8_t* command){
   pcb.fdt[0].flags = 1;
   pcb.fdt[1].flags = 1;
   pcb.process_state = 0;
+  pcb.vidmem = 0;
   strncpy((int8_t*)pcb.args,(const int8_t*)args,BUF_LENGTH);
   /* Mark remaining file descriptors as not in use */
   for(i = 2; i <= MAX_FD_NUM; i++){
@@ -422,7 +427,7 @@ int32_t close(int32_t fd){
 int32_t getargs(uint8_t* buf, int32_t nbytes){
   /* Check for valid command */
   pcb_t* cur_pcb = get_pcb_add();
-  // +1 is for null terminator 
+  // +1 is for null terminator
   if(strlen((const int8_t*)cur_pcb->args)+1 > nbytes || buf == NULL || (cur_pcb->args)[0]=='\0'){
     /* Return failure */
     return -1;
@@ -449,6 +454,16 @@ int32_t vidmap(uint8_t** screen_start){
   // take note in pcb so can unmap video memory page (flag)
   // set_page_table_entry();
   // screen_start =
+
+  /* Mark pcb as having video memory page */
+  get_pcb_add()->vidmem = 1;
+
+  /* Add page to page table */
+  set_page_table_entry(USER_VIDEO_MEM, VIDEO_MEM_ADDR);
+
+  /* Return virtual address of page */
+  *screen_start = (uint8_t *)USER_VIDEO_MEM;
+
   return 0;
 }
 

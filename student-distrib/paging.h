@@ -1,6 +1,9 @@
 #ifndef _PAGING_H
 #define _PAGING_H
 
+#define VIDEO_MEM_ADDR 0xB8000
+#define USER_VIDEO_MEM 0x4500000
+
 #ifndef ASM
 
 /* Create an entry in the page directory */
@@ -8,6 +11,8 @@ int32_t set_page_dir_entry(int32_t virtual, int32_t physical);
 
 /* Create an entry in the page table */
 int32_t set_page_table_entry(int32_t virtual, int32_t physical);
+
+int32_t disable_page_entry(int32_t virtual);
 
 /* Get a page directory entry */
 uint32_t get_dir(uint32_t i);
