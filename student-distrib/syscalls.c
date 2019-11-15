@@ -154,16 +154,11 @@ int32_t execute(const uint8_t* command){
     i++;
   }
   while(j<BUF_LENGTH && command_args[i+j]!='\0'){
-    // if(j>0 && (args[j-1]==' ' && command_args[i+j]==' ') ){//skip extra spaces
-    //     i++;
-    //     continue;
-    // }
     args[j]=command_args[i+j];//copy character over
     j++;
   }
   if(j<BUF_LENGTH){
-    if(args[j-1]==' ')args[j-1]='\0';//remove space at end of args if exists
-    else args[j]='\0';
+    args[j]='\0';
   }
   args[BUF_LENGTH-1]='\0';
 
