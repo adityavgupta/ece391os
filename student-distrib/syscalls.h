@@ -8,6 +8,7 @@
 #include "linkage.h"
 #include "lib.h"
 
+/* Maximum number of file descriptor indexes */
 #define MAX_FD_NUM 7
 
 #ifndef ASM
@@ -39,7 +40,7 @@ typedef struct{
   int32_t parent_esp; 					/* Parent's esp */
   int32_t parent_ebp; 					/* Parent's ebp */
   file_desc fdt[MAX_FD_NUM+1]; 	/* File Descriptor Table */
-  unsigned char process_state;  /* State of process */
+  uint8_t process_state;  /* State of process */
 	uint8_t args[BUF_LENGTH];     /* Commands passed in */
 	int32_t vidmem;
 } pcb_t;

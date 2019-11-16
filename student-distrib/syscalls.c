@@ -44,8 +44,7 @@ int32_t halt(uint8_t status){
   /* If shell tries to halt, just launch shell again */
   if(process_num == 1){
     process_num = 0;
-    uint8_t sh[] = "shell";
-    execute((uint8_t*)sh);
+    execute((uint8_t*)"shell");
   }
   //else we are in a child process
   int i; /* Loop variable */
@@ -56,8 +55,12 @@ int32_t halt(uint8_t status){
 
   process_num--; /* Decrement process number */
 
+  pcb_t* cur_pcb = get_pcb_add();   /* Get the current process pcb */
+  cur_pcb->process_state = STOPPED; /* Set process state to stopped */
+  tss.esp0 = cur_pcb->parent_esp;   /* Set TSS esp0 back to parent stack pointer */
+
   /* Remap user program paging back to parent program */
-  set_page_dir_entry(USER_PROG, EIGHT_MB + (process_num - 1)*FOUR_MB);
+  set_page_dir_entry(USER_PROG, EIGHT_MB + (cur_pcb->parent_pid - 1)*FOUR_MB);
 
   /* Flush tlb */
   asm volatile ("      \n\
@@ -67,10 +70,6 @@ int32_t halt(uint8_t status){
      :
      : "eax"
   );
-
-  pcb_t* cur_pcb = get_pcb_add();   /* Get the current process pcb */
-  cur_pcb->process_state = STOPPED; /* Set process state to stopped */
-  tss.esp0 = cur_pcb->parent_esp;   /* Set TSS esp0 back to parent stack pointer */
 
   /* Check if program was using video memory */
   if(cur_pcb->vidmem){
@@ -89,9 +88,10 @@ int32_t halt(uint8_t status){
      leave             \n\
      ret"
      :
-     : "r"(cur_pcb->parent_ebp)
+     : "r" (cur_pcb->parent_ebp)
      : "ebp","eax"
   );
+
   return 0;
 }
 
@@ -194,12 +194,13 @@ int32_t execute(const uint8_t* command){
   /* Create pcb */
   pcb_t pcb;
   pcb.pid = process_num;
+  pcb.parent_pid = get_pcb_add()->pid;
   /* Load stdin and stdout jump table and mark as in use */
   pcb.fdt[0].jump_ptr = &stdin_table;
   pcb.fdt[1].jump_ptr = &stdout_table;
   pcb.fdt[0].flags = 1;
   pcb.fdt[1].flags = 1;
-  pcb.process_state = 0;
+  pcb.process_state = RUNNING;
   pcb.vidmem = 0;
   /* Copy arguments to the pcb */
   strncpy((int8_t*)pcb.args, (const int8_t*)args, BUF_LENGTH);
