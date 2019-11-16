@@ -38,7 +38,8 @@ dentry_t* find_dentry(const uint8_t* filename){
   /* Go through all dentries */
   for(i = 0; i < boot_block->num_dentries; i++){
     /* Check if dentry matches the filename */
-    if(strncmp((const int8_t*)(boot_block->dentries[i].file_name), (const int8_t*)filename, NAME_LENGTH) == 0){
+    if(strncmp((const int8_t*)(boot_block->dentries[i].file_name), (const int8_t*)filename, strlen((int8_t*)filename)) == 0
+   && strncmp((const int8_t*)(boot_block->dentries[i].file_name), (const int8_t*)filename, NAME_LENGTH) == 0){
       /* Return address of the dentry */
       return &(boot_block->dentries[i]);
     }
@@ -63,6 +64,7 @@ int32_t read_dentry_by_name(const uint8_t* filename, dentry_t* dentry){
 
   /* Check if filename was valid */
   if(file_dentry == NULL){
+    /* Return failure */
     return -1;
   }
 

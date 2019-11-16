@@ -1610,7 +1610,7 @@ void pcb_overflow(){
 	} else{
 		TEST_OUTPUT("Opening file 6", PASS);
 	}
-	if(-1 == open((uint8_t*)"verylargetextwithverylongname.txt")){
+	if(-1 == open((uint8_t*)"verylargetextwithverylongname.tx")){
 		TEST_OUTPUT("Opening file 7", FAIL);
 	} else{
 		TEST_OUTPUT("Opening file 7", PASS);
@@ -1657,7 +1657,7 @@ void launch_tests(){
 	//read_file_test(name);
 	//uint8_t name[] = "frame1.txt";
 	//read_file_test(name);
-	//uint8_t name[] = "verylargetextwithverylongname.txt";
+	//uint8_t name[] = "verylargetextwithverylongname.tx";
 	//read_file_test(name);
 	//uint8_t name[] = "cat";
 	//read_file_test(name);
