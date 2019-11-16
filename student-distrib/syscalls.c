@@ -13,6 +13,7 @@
 #define MAX_PROG_SIZE   FOUR_MB - PROG_OFFSET
 #define EIGHT_KB        0x2000
 #define MAX_PROGS       2
+
 /* Function pointers for rtc */
 jump_table rtc_table = {rtc_write, rtc_read, rtc_open, rtc_close};
 
@@ -25,10 +26,10 @@ jump_table dir_table = {dir_write, dir_read, dir_open, dir_close};
 /* Function pointers for stdin (only has terminal read) */
 jump_table stdin_table = {invalid_write, terminal_read, terminal_open, terminal_close};
 
-/* function pointers for stdout(only has terminal write) */
+/* Function pointers for stdout(only has terminal write) */
 jump_table stdout_table = {terminal_write, invalid_read, terminal_open, terminal_close};
 
-/* process number: 1st process has pid 1, 0 means no processes have been launched */
+/* Process number: 1st process has pid 1, 0 means no processes have been launched */
 int32_t process_num = 0;
 
 /*
@@ -103,8 +104,13 @@ int32_t halt(uint8_t status){
  *    SIDE EFFECTS: Copies executable program and pcb into memory
  */
 int32_t execute(const uint8_t* command){
-  if(process_num>=MAX_PROGS)return -1;
-	uint8_t filename[NAME_LENGTH+1]; /* Name of the file, with null terminate*/
+  /* Limit number of programs */
+  if(process_num >= MAX_PROGS){
+    /* Return failure */
+    return -1;
+  }
+
+	uint8_t filename[NAME_LENGTH + 1]; /* Name of the file, with null terminate */
   int i = 0; /* Loop variable */
 
   /* Mask interrupts */
@@ -115,8 +121,6 @@ int32_t execute(const uint8_t* command){
     filename[i] = command[i];
     i++;
   }
-
-   // store command in pcb
 
   filename[i] = '\0';
   dentry_t file_dentry;
@@ -145,23 +149,29 @@ int32_t execute(const uint8_t* command){
   }
 
   uint8_t args[BUF_LENGTH];
-  args[0]='\0'; //default args is empty string
+  args[0] = '\0'; /* Default args is empty string */
 
-  /* TODO: set pcb.args directly */
-  const uint8_t* command_args= &(command[i]); //start of args
-  i=0;
-  int j=0;
-  while(command_args[i]==' '){  //get rid of leading spaces in arguments
+  /* Set pcb.args directly */
+  const uint8_t* command_args = &(command[i]); //start of args
+  i = 0;
+  int32_t j = 0;
+
+  /* Get rid of leading spaces in arguments */
+  while(command_args[i] == ' '){
     i++;
   }
-  while(j<BUF_LENGTH && command_args[i+j]!='\0'){
-    args[j]=command_args[i+j];//copy character over
+
+  /* Copy character over */
+  while(j < BUF_LENGTH && command_args[i+j] != '\0'){
+    args[j] = command_args[i+j];
     j++;
   }
-  if(j<BUF_LENGTH){
-    args[j]='\0';
+
+  /* Null terminate the arguments */
+  if(j < BUF_LENGTH){
+    args[j] = '\0';
   }
-  args[BUF_LENGTH-1]='\0';
+  args[BUF_LENGTH-1] = '\0';
 
   /* Set up user page */
   set_page_dir_entry(USER_PROG, EIGHT_MB + (process_num++)*FOUR_MB);
@@ -191,7 +201,8 @@ int32_t execute(const uint8_t* command){
   pcb.fdt[1].flags = 1;
   pcb.process_state = 0;
   pcb.vidmem = 0;
-  strncpy((int8_t*)pcb.args,(const int8_t*)args,BUF_LENGTH);
+  /* Copy arguments to the pcb */
+  strncpy((int8_t*)pcb.args, (const int8_t*)args, BUF_LENGTH);
   /* Mark remaining file descriptors as not in use */
   for(i = 2; i <= MAX_FD_NUM; i++){
     pcb.fdt[i].flags = -1;
