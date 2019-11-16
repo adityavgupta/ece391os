@@ -338,9 +338,10 @@ int32_t open(const uint8_t* filename){
 
 
 	dentry_t temp_dentry;
-	int temp = read_dentry_by_name((uint8_t*)filename, &temp_dentry);
 
-	if(temp == -1){
+  /* Get the dentry of the file */
+	if(read_dentry_by_name((uint8_t*)filename, &temp_dentry) == -1){
+    /* Return failure */
 		return -1;
 	}
 
