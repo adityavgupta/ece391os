@@ -554,7 +554,6 @@ int32_t invalid_write(int32_t fd, const void* buf, int32_t nbytes){
  */
 pcb_t* get_pcb_add(){
   int32_t esp; /* esp value */
-  pcb_t* pcb_add; /* address of the pcb */
 
   /* Get current esp value */
   asm volatile("\n\
@@ -563,8 +562,5 @@ pcb_t* get_pcb_add(){
   );
 
   /* 8kB = 2^13, so mask everything below 13th bit */
-  pcb_add = (pcb_t*)(esp & 0xFFFFE000);
-
-  /* Return pointer */
-  return pcb_add;
+  return (pcb_t*)(esp & (EIGHT_MB - EIGHT_KB));
 }
