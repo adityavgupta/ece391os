@@ -151,7 +151,7 @@ int32_t execute(const uint8_t* command){
   uint8_t args[BUF_LENGTH];
   args[0] = '\0'; /* Default args is empty string */
 
-  /* Set pcb.args directly */
+  /* Get argument */
   const uint8_t* command_args = &(command[i]); //start of args
   i = 0;
   int32_t j = 0;
@@ -160,10 +160,11 @@ int32_t execute(const uint8_t* command){
   while(command_args[i] == ' '){
     i++;
   }
+  command_args+=i; //start of arg without leading spaces
 
-  /* Copy character over */
-  while(j < BUF_LENGTH && command_args[i+j] != '\0'){
-    args[j] = command_args[i+j];
+  /* Copy characters over */
+  while(j < BUF_LENGTH && command_args[j] != '\0'){
+    args[j] = command_args[j];
     j++;
   }
 
