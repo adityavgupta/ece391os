@@ -1628,6 +1628,57 @@ void pcb_overflow(){
 }
 
 /* Checkpoint 4 tests */
+#define USER_PROG  0x8000000
+#define FOUR_MB    0x400000
+/*
+* Description- Test whats happens with an address less than 128 MB for vidmap
+* Inputs- None
+* Outputs- None
+* Return Value- None
+* Side Effects- None
+*/
+void vidmap_test_1(void){
+	int ret_val=vidmap((uint8_t**)USER_PROG-0x1000);
+	if(ret_val==-1){
+		TEST_OUTPUT("vidmap test 1",PASS);
+	} else{
+		TEST_OUTPUT("vidmap test 1",FAIL);
+	}
+}
+
+/*
+* Description- Tests what happens when the adress is greater than 124 MB (the program executable)
+* Inputs- None
+* Outputs- None
+* Return Value- None
+* Side Effects- None
+*/
+void vidmap_test_2(void){
+	int ret_val= vidmap((uint8_t**)USER_PROG+FOUR_MB+1);
+	if(ret_val==-1){
+		TEST_OUTPUT("vidmap test 2",PASS);
+	} else{
+		TEST_OUTPUT("vidmap test 2",FAIL);
+	}
+}
+/*
+* Description- Tests what happens when getargs is passed a NULL pointer
+* Inputs- None
+* Outputs- None
+* Return Value- None
+* Side Effects- None
+*/
+
+void getargs_test_1(void){
+	int ret_val=getargs(NULL,69);
+	if(ret_val==-1){
+		TEST_OUTPUT("getargs test 1",PASS);
+	} else{
+		TEST_OUTPUT("getargs test 1",FAIL);
+	}
+}
+
+
 /* Checkpoint 5 tests */
 
 
@@ -1689,7 +1740,7 @@ void launch_tests(){
 	//read_test();
 
 	/* checkpoint 3 tests */
-
+	/*
 	open_null_test();
 	open_test_fail();
 	execute_fail_test();
@@ -1710,9 +1761,13 @@ void launch_tests(){
 	close_fail_2();
 	close_fail_3();
 	close_fail_4();
-	close_fail_5();
+	close_fail_5(); */
 	// fd_file_read_test();
 	// fd_dir_read_test();
 	// rtc_system_call_test();
 	// pcb_overflow();
+	
+	vidmap_test_1();
+	vidmap_test_2();
+	getargs_test_1();
 }
