@@ -12,7 +12,7 @@
 #define STOPPED         1
 #define MAX_PROG_SIZE   FOUR_MB - PROG_OFFSET
 #define EIGHT_KB        0x2000
-
+#define MAX_PROGS       2
 /* Function pointers for rtc */
 jump_table rtc_table = {rtc_write, rtc_read, rtc_open, rtc_close};
 
@@ -103,6 +103,7 @@ int32_t halt(uint8_t status){
  *    SIDE EFFECTS: Copies executable program and pcb into memory
  */
 int32_t execute(const uint8_t* command){
+  if(process_num>=MAX_PROGS)return -1;
 	uint8_t filename[NAME_LENGTH+1]; /* Name of the file, with null terminate*/
   int i = 0; /* Loop variable */
 
