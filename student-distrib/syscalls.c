@@ -167,7 +167,11 @@ int32_t execute(const uint8_t* command){
     args[j] = command_args[j];
     j++;
   }
-
+  int k=j-1;  //index of last character copied
+  while(k>=0 && args[k]=' '){ //remove trailing white spaces
+    args[k]='\0';
+    k--;
+  }
   /* Null terminate the arguments */
   if(j < BUF_LENGTH){
     args[j] = '\0';
