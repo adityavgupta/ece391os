@@ -160,7 +160,7 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
   /* Loop until the end point is reached */
   while(cur != end){
     /* Amount copied per iteration: either the of the dblock or the set end point */
-    uint32_t copyLength = (end - cur) > FOUR_KB ? FOUR_KB - (cur % FOUR_KB) : (end - cur);
+    uint32_t copyLength = FOUR_KB - (cur % FOUR_KB) > (end - cur) ? (end - cur) : FOUR_KB - (cur % FOUR_KB);
 
     /* Copy to the buffer */
     memcpy(buf + copied_length, dblock_addr + (cur % FOUR_KB), copyLength);
@@ -223,6 +223,7 @@ int32_t file_read(int32_t fd, void* buf, int32_t num_bytes){
   /* Check if a file is open */
   pcb_t* pcb = get_pcb_add();
   if(pcb->fdt[fd].inode == -1){
+    /* Return failure */
     return -1;
   }
 
@@ -236,7 +237,7 @@ int32_t file_read(int32_t fd, void* buf, int32_t num_bytes){
   }
 
   /* Update point in file */
-  pcb->fdt[fd].file_position += num_bytes;
+  pcb->fdt[fd].file_position += read_ret;
 
   /* Number of bytes read */
 	return read_ret;
