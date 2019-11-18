@@ -42,3 +42,8 @@ Checkpoint 3:
 -> Clear-L would not print 391OS. We had to create another helper function to use instead of our current implementation of clear(). (30 minutes)
 
 -> close would try to close stdin and stdout. Changed the if statement to prevent this from being written to. (1 minutes)
+
+Checkpoint 4:
+
+->Grep was reading fish executable incorrectly(finding |/\_ in fish when it shouldn’t). We had an issue with our read_data implementation so that when we were reading the fish executable, we accidentally read the wrong data block(of frame0.txt) as well. (45 minutes)
+
