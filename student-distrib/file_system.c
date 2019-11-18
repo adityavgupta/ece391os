@@ -223,6 +223,7 @@ int32_t file_read(int32_t fd, void* buf, int32_t num_bytes){
   /* Check if a file is open */
   pcb_t* pcb = get_pcb_add();
   if(pcb->fdt[fd].inode == -1){
+    /* Return failure */
     return -1;
   }
 
@@ -236,7 +237,7 @@ int32_t file_read(int32_t fd, void* buf, int32_t num_bytes){
   }
 
   /* Update point in file */
-  pcb->fdt[fd].file_position += num_bytes;
+  pcb->fdt[fd].file_position += read_ret;
 
   /* Number of bytes read */
 	return read_ret;
