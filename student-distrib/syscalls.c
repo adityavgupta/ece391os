@@ -62,6 +62,11 @@ int32_t halt(uint8_t status){
   /* Remap user program paging back to parent program */
   set_page_dir_entry(USER_PROG, EIGHT_MB + (cur_pcb->parent_pid - 1)*FOUR_MB);
 
+  /* Check if program was using video memory */
+  if(cur_pcb->vidmem){
+    disable_page_entry(USER_VIDEO_MEM);
+  }
+
   /* Flush tlb */
   asm volatile ("      \n\
      movl %%cr3, %%eax \n\
@@ -70,11 +75,6 @@ int32_t halt(uint8_t status){
      :
      : "eax"
   );
-
-  /* Check if program was using video memory */
-  if(cur_pcb->vidmem){
-    disable_page_entry(USER_VIDEO_MEM);
-  }
 
   /*
   inline assembly:

@@ -11,8 +11,11 @@
 #define USER_MODE      0x07
 #define KERNEL_ADDR    0x400000
 #define PT_OFFSET      12
+#define PD_OFFSET      22
 #define PAGE_SIZE      4096
 #define FOUR_MB        0x400000
+#define PAGE_INDEX     0x3FF
+#define NOT_PRESENT    0xFFFFFFFE
 
 /* Page directory array */
 static uint32_t page_directory[TABLE_ENTRIES]  __attribute__((aligned (PAGE_SIZE)));
@@ -32,7 +35,7 @@ static uint32_t second_page_table[TABLE_ENTRIES] __attribute__((aligned (PAGE_SI
  */
 int32_t set_page_dir_entry(int32_t virtual, int32_t physical){
   /* Create entry */
-  page_directory[virtual >> 22] = physical | 0x087;
+  page_directory[virtual >> PD_OFFSET] = physical | 0x087;
 
   /* Return success */
   return 0;
@@ -41,21 +44,32 @@ int32_t set_page_dir_entry(int32_t virtual, int32_t physical){
 /*
  * set_page_table_entry
  *    DESCRIPTION: Enables a page in the page table
- *    INPUTS: none
+ *    INPUTS: int32_t virtual - virtual address
+ *            int32_t physical - physical address to map to
  *    OUTPUTS: none
- *    RETURN VALUE: 0
+ *    RETURN VALUE: 0 for success
  *    SIDE EFFECTS: none
  */
 int32_t set_page_table_entry(int32_t virtual, int32_t physical){
-  second_page_table[(virtual >> 12) & 0x3FF] = (physical) | USER_MODE;
+  second_page_table[(virtual >> PT_OFFSET) & PAGE_INDEX] = physical | USER_MODE;
 
   /* Return success */
   return 0;
 }
 
+/*
+ * disable_page_entry
+ *    DESCRIPTION: Disables a page in the page table
+ *    INPUTS: int32_t virtual - address of page to close
+ *    OUTPUTS: none
+ *    RETURN VALUE: 0 for success
+ *    SIDE EFFECTS: none
+ */
 int32_t disable_page_entry(int32_t virtual){
-  second_page_table[(virtual >> 12) & 0x3FF] &= 0xFFFFFFFE;
+  /* Mark page as not present */
+  second_page_table[(virtual >> PT_OFFSET) & PAGE_INDEX] &= NOT_PRESENT;
 
+  /* Return success */
   return 0;
 }
 
@@ -126,10 +140,10 @@ void init_page_directory(void){
      * Set the second entry to the address of the kernel (4 MB). The page size bit must be
      * enabled. The entry is marked as present as well.
      */
-    page_directory[KERNEL_ADDR >> 22] = (KERNEL_ADDR | 0x083);
+    page_directory[KERNEL_ADDR >> PD_OFFSET] = (KERNEL_ADDR | 0x083);
 
     /* Enable the second page table */
-    page_directory[USER_VIDEO_MEM >> 22] = ((unsigned int)second_page_table) | USER_MODE;
+    page_directory[USER_VIDEO_MEM >> PD_OFFSET] = ((unsigned int)second_page_table) | USER_MODE;
 }
 
 /*
