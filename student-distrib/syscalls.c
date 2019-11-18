@@ -140,9 +140,8 @@ int32_t execute(const uint8_t* command){
     return -1;
   }
 
-  uint8_t elf[] = "ELF"; /* ELF string to compare */
   /* Check if file is an executable */
-  if(!(ELF_buf[0] == 0x7F && !strncmp((int8_t*)(ELF_buf + 1), (int8_t*)elf, 3))){
+  if(ELF_buf[0] != 0x7F || ELF_buf[1] != 0x45 || ELF_buf[2] != 0x4C || ELF_buf[3] != 0x46){
     /* Return failure */
     sti();
     return -1;
@@ -160,18 +159,20 @@ int32_t execute(const uint8_t* command){
   while(command_args[i] == ' '){
     i++;
   }
-  command_args+=i; //start of arg without leading spaces
+  command_args += i; /* Start of arg without leading spaces */
 
   /* Copy characters over */
   while(j < BUF_LENGTH && command_args[j] != '\0'){
     args[j] = command_args[j];
     j++;
   }
-  int k=j-1;  //index of last character copied
-  while(k>=0 && args[k]=' '){ //remove trailing white spaces
+  int32_t k = j - 1;  /* Index of last character copied */
+  /* Remove trailing white spaces */
+  while(k >= 0 && args[k] == ' '){
     args[k]='\0';
     k--;
   }
+
   /* Null terminate the arguments */
   if(j < BUF_LENGTH){
     args[j] = '\0';
