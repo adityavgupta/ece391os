@@ -47,7 +47,7 @@ int32_t halt(uint8_t status){
     process_num = 0;
     execute((uint8_t*)"shell");
   }
-  //else we are in a child process
+
   int i; /* Loop variable */
   /* Close all files in the pcb */
   for(i = 0; i <= MAX_FD_NUM; i++){
@@ -111,8 +111,14 @@ int32_t execute(const uint8_t* command){
     return -1;
   }
 
+  /* Check for a user level command */
+  if(process_num > 0 && (command < (const uint8_t*)(USER_PROG) || command >= (const uint8_t*)(USER_PROG + FOUR_MB))){
+    /* Return failure */
+    return -1;
+  }
+
 	uint8_t filename[NAME_LENGTH + 1]; /* Name of the file, with null terminate */
-  int i = 0; /* Loop variable */
+  int32_t i = 0; /* Loop variable */
 
   /* Mask interrupts */
   cli();
@@ -219,9 +225,10 @@ int32_t execute(const uint8_t* command){
   /* Set parent esp and ebp for child processes */
   if(process_num >= 2){
     pcb.parent_esp = EIGHT_MB - (process_num-2)*EIGHT_KB;
+
     asm volatile("  \n\
-    movl %%ebp, %0"
-    : "=r"(pcb.parent_ebp)
+       movl %%ebp, %0"
+       : "=r"(pcb.parent_ebp)
     );
   }
 
@@ -279,12 +286,10 @@ int32_t read(int32_t fd, void* buf, int32_t nbytes){
 		return -1;
 	}
 
-  sti();
+  sti(); /* Restore interrupts */
+
   /* Jump to read */
 	return curr_file.jump_ptr->read(fd, buf, nbytes);
-
-  /* Return failure */
-	return -1;
 }
 
 /*
@@ -317,14 +322,10 @@ int32_t write(int32_t fd, const void* buf, int32_t nbytes){
 		return -1;
 	}
 
+  sti(); /* Restore interrupts */
+
   /* Jump to write */
 	return curr_file.jump_ptr->write(fd, buf, nbytes);
-
-
-	sti(); /* Restore interrupts */
-
-  /* Return failure */
-	return -1;
 }
 
 /*
@@ -355,7 +356,6 @@ int32_t open(const uint8_t* filename){
     /* Return fd */
 		return 1;
 	}
-
 
 	dentry_t dentry;
 
@@ -447,10 +447,11 @@ int32_t close(int32_t fd){
  *    SIDE EFFECTS: none
  */
 int32_t getargs(uint8_t* buf, int32_t nbytes){
-  /* Check for valid command */
+  /* Get pcb */
   pcb_t* cur_pcb = get_pcb_add();
-  // +1 is for null terminator
-  if(strlen((const int8_t*)cur_pcb->args)+1 > nbytes || buf == NULL || (cur_pcb->args)[0] == '\0'){
+
+  /* Check for valid input, +1 is for null terminator */
+  if(strlen((const int8_t*)cur_pcb->args)+1 > nbytes || buf == NULL || (cur_pcb->args)[0] == '\0' || buf < (uint8_t*)(USER_PROG) || buf >= (uint8_t*)(USER_PROG + FOUR_MB)){
     /* Return failure */
     return -1;
   }
@@ -535,6 +536,7 @@ int32_t sigreturn(){
  *    SIDE EFFECTS: none
  */
 int32_t invalid_read(int32_t fd, void* buf, int32_t nbytes){
+  /* Return failure */
   return -1;
 }
 
@@ -547,6 +549,7 @@ int32_t invalid_read(int32_t fd, void* buf, int32_t nbytes){
  *    SIDE EFFECTS: none
  */
 int32_t invalid_write(int32_t fd, const void* buf, int32_t nbytes){
+  /* Return failure */
   return -1;
 }
 
