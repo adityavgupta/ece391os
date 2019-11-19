@@ -13,7 +13,8 @@
 #define MAX_PROG_SIZE   FOUR_MB - PROG_OFFSET
 #define EIGHT_KB        0x2000
 #define MAX_PROGS       2
-
+#define RTC_FILE_TYPE   0
+#define DIR_FILE_TYPE   1
 /* Function pointers for rtc */
 jump_table rtc_table = {rtc_write, rtc_read, rtc_open, rtc_close};
 
