@@ -13,7 +13,8 @@
 #define MAX_PROG_SIZE   FOUR_MB - PROG_OFFSET
 #define EIGHT_KB        0x2000
 #define MAX_PROGS       2
-
+#define RTC_FILE_TYPE   0
+#define DIR_FILE_TYPE   1
 /* Function pointers for rtc */
 jump_table rtc_table = {rtc_write, rtc_read, rtc_open, rtc_close};
 
@@ -373,15 +374,16 @@ int32_t open(const uint8_t* filename){
     /* Find file descriptor not in use */
 		if(pcb_start->fdt[i].flags == -1){
       /* Load rtc jump table */
-			if(strncmp((int8_t*)filename, (int8_t*)"rtc", strlen((int8_t*)filename)) == 0){
+			if(temp_dentry.file_type==RTC_FILE_TYPE){
 				pcb_start->fdt[i].jump_ptr = &rtc_table;
 				rtc_open((uint8_t*) filename);
 
 			} /* Load directory jump table */
-      else if(strncmp((int8_t*)filename, (int8_t*)".", strlen((int8_t*)filename)) == 0){
+      else if(temp_dentry.file_type==DIR_FILE_TYPE){
 				pcb_start->fdt[i].jump_ptr = &dir_table;
 				dir_open((uint8_t*) filename);
-			} /* Load file jump table */
+			}
+      /* Load file jump table */
       else{
 				pcb_start->fdt[i].jump_ptr = &file_table;
 				file_open((uint8_t*) filename);
