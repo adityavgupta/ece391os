@@ -376,12 +376,15 @@ int32_t open(const uint8_t* filename){
 			switch(dentry.file_type){
         case 0: pcb_start->fdt[i].jump_ptr = &rtc_table;
                 pcb_start->fdt[i].inode = 0;
+                rtc_open((int8_t*)filename);
                 break;
         case 1: pcb_start->fdt[i].jump_ptr = &dir_table;
                 pcb_start->fdt[i].inode = 0;
+                dir_open((int8_t*)filename);
                 break;
         case 2: pcb_start->fdt[i].jump_ptr = &file_table;
                 pcb_start->fdt[i].inode = dentry.inode_num;
+                file_open((int8_t*)filename);
                 break;
         default: return -1;
       }
