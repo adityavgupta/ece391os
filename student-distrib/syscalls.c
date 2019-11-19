@@ -356,10 +356,10 @@ int32_t open(const uint8_t* filename){
 	}
 
 
-	dentry_t temp_dentry;
+	dentry_t dentry;
 
   /* Get the dentry of the file */
-	if(read_dentry_by_name((uint8_t*)filename, &temp_dentry) == -1){
+	if(read_dentry_by_name((uint8_t*)filename, &dentry) == -1){
     /* Return failure */
 		return -1;
 	}
@@ -372,23 +372,21 @@ int32_t open(const uint8_t* filename){
 	for(i = 2; i <= MAX_FD_NUM; i++){
     /* Find file descriptor not in use */
 		if(pcb_start->fdt[i].flags == -1){
-      /* Load rtc jump table */
-			if(strncmp((int8_t*)filename, (int8_t*)"rtc", strlen((int8_t*)filename)) == 0){
-				pcb_start->fdt[i].jump_ptr = &rtc_table;
-				rtc_open((uint8_t*) filename);
-
-			} /* Load directory jump table */
-      else if(strncmp((int8_t*)filename, (int8_t*)".", strlen((int8_t*)filename)) == 0){
-				pcb_start->fdt[i].jump_ptr = &dir_table;
-				dir_open((uint8_t*) filename);
-			} /* Load file jump table */
-      else{
-				pcb_start->fdt[i].jump_ptr = &file_table;
-				file_open((uint8_t*) filename);
-			}
-      /* Mark file descriptor as in use and intialize contents */
+      /* Load jump table and set inode number */
+			switch(dentry.file_type){
+        case 0: pcb_start->fdt[i].jump_ptr = &rtc_table;
+                pcb_start->fdt[i].inode = 0;
+                break;
+        case 1: pcb_start->fdt[i].jump_ptr = &dir_table;
+                pcb_start->fdt[i].inode = 0;
+                break;
+        case 2: pcb_start->fdt[i].jump_ptr = &file_table;
+                pcb_start->fdt[i].inode = dentry.inode_num;
+                break;
+        default: return -1;
+      }
+      /* Mark file descriptor as in use and intialize file position */
       pcb_start->fdt[i].flags = 1;
-      pcb_start->fdt[i].inode = temp_dentry.inode_num;
       pcb_start->fdt[i].file_position = 0;
 
       /* Return index */
