@@ -100,7 +100,7 @@ int32_t get_rate(int32_t freq){
   }
 
   /* Rate begins at 15, so must subtract */
-  return (15 - rate);
+  return (16 - rate);
 }
 
 /*
@@ -166,7 +166,7 @@ int32_t rtc_read(int32_t fd, void* buf, int32_t nbytes){
   if(rtc_read_test_flag) printf("Waiting for interrupt\n");
   /* Block until an RTC interrupt occurs */
   while(!rtc_interrupt){
-    
+
   }
   if(rtc_read_test_flag) printf("Interrupt occurred\n");
   /* Return success */
