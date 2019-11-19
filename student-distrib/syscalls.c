@@ -375,18 +375,22 @@ int32_t open(const uint8_t* filename){
 		if(pcb_start->fdt[i].flags == -1){
       /* Load jump table and set inode number */
 			switch(dentry.file_type){
+        /* RTC */
         case 0: pcb_start->fdt[i].jump_ptr = &rtc_table;
                 pcb_start->fdt[i].inode = 0;
                 rtc_open((uint8_t*)filename);
                 break;
+        /* Directory */
         case 1: pcb_start->fdt[i].jump_ptr = &dir_table;
                 pcb_start->fdt[i].inode = 0;
                 dir_open((uint8_t*)filename);
                 break;
+        /* File */
         case 2: pcb_start->fdt[i].jump_ptr = &file_table;
                 pcb_start->fdt[i].inode = dentry.inode_num;
                 file_open((uint8_t*)filename);
                 break;
+        /* Invalid file type */
         default: return -1;
       }
       /* Mark file descriptor as in use and intialize file position */
