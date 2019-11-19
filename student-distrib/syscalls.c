@@ -450,7 +450,7 @@ int32_t getargs(uint8_t* buf, int32_t nbytes){
   /* Check for valid command */
   pcb_t* cur_pcb = get_pcb_add();
   // +1 is for null terminator
-  if(strlen((const int8_t*)cur_pcb->args)+1 > nbytes || buf == NULL || (cur_pcb->args)[0]=='\0'){
+  if(strlen((const int8_t*)cur_pcb->args)+1 > nbytes || buf == NULL || (cur_pcb->args)[0] == '\0'){
     /* Return failure */
     return -1;
   }
@@ -472,13 +472,7 @@ int32_t getargs(uint8_t* buf, int32_t nbytes){
  */
 int32_t vidmap(uint8_t** screen_start){
   /* Check for a valid pointer */
-  if(screen_start == NULL){
-    /* Return failure */
-    return -1;
-  }
-
-  /* Check for a user level pointer */
-  if(screen_start < (uint8_t**)(USER_PROG) || screen_start >= (uint8_t**)(USER_PROG + FOUR_MB)){
+  if(screen_start == NULL || screen_start < (uint8_t**)(USER_PROG) || screen_start >= (uint8_t**)(USER_PROG + FOUR_MB)){
     /* Return failure */
     return -1;
   }
@@ -501,6 +495,7 @@ int32_t vidmap(uint8_t** screen_start){
   /* Return virtual address of page */
   *screen_start = (uint8_t *)USER_VIDEO_MEM;
 
+  /* Return success */
   return 0;
 }
 
