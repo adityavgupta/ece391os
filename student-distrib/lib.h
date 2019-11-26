@@ -29,10 +29,11 @@ void reset_screen(void);
 void move_cursor(int screen_x, int screen_y);
 
 void init_shell(void);
-int32_t change_shell(int32_t shell_num,uint8_t* kb_buf,unsigned long flags);
+int32_t change_shell(int32_t shell_num,uint8_t* kb_buf,int32_t* buf_ptr,unsigned long flags);
 
 typedef struct shell{
 	char running;
+	int32_t buf_index;
 	char* vid_mem;
 	char buf[BUF_LENGTH];
 	int32_t esp;

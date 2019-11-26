@@ -33,22 +33,25 @@ static int current_shell=0;
 
 void init_shell(void){
 
-	shells[0].running=FALSE;
+	shells[0].running=TRUE;
+	shells[0].buf_index=0;
 	shells[0].position_x=0;
 	shells[0].position_y=0;
 	shells[0].vid_mem=(char*)FIRST_SHELL;
 
 	shells[1].running=FALSE;
+	shells[1].buf_index=0;
 	shells[1].position_x=0;
 	shells[1].position_y=0;
 	shells[1].vid_mem=(char*)SECOND_SHELL;
 
 	shells[2].running=FALSE;
+	shells[2].buf_index=0;
 	shells[2].position_x=0;
 	shells[2].position_y=0;
 	shells[2].vid_mem=(char*)THIRD_SHELL;
 }
-int32_t change_shell(int32_t shell_num,uint8_t* kb_buf,unsigned long flags){
+int32_t change_shell(int32_t shell_num,uint8_t* kb_buf,int32_t* buf_ptr,unsigned long flags){
 	
 	if(shell_num<0 || shell_num>=3){
 		return -1;
@@ -68,6 +71,7 @@ int32_t change_shell(int32_t shell_num,uint8_t* kb_buf,unsigned long flags){
 	
 	cur_shell.position_x=screen_x;
 	cur_shell.position_y=screen_y;
+	cur_shell.buf_index= *buf_ptr;
 	
 	asm volatile("  \n\
        movl %%ebp, %0"
@@ -81,25 +85,32 @@ int32_t change_shell(int32_t shell_num,uint8_t* kb_buf,unsigned long flags){
 	
 	shells[current_shell]=cur_shell;
 	shell next_shell =shells[shell_num];
-	
 	if(next_shell.running==FALSE){
 			current_shell=shell_num;
 			next_shell.running=TRUE;
 			memset(next_shell.buf,0,BUF_LENGTH);
+			*buf_ptr=0;
 			shells[shell_num]=next_shell;
-
+			
 			/* Allow interrupts again */
 			restore_flags(flags);
 			/* Unmask the IRQ1 on the PIC */
 			enable_irq(IRQ_NUM);
 
 			execute((uint8_t*)"shell"); //may need to change this is the future
+			
+			clear_l();
+			int i;
+			for(i=0;i<cur_shell.buf_index;i++){
+				back_space();
+			}
 	} else{
 		current_shell=shell_num;
 		memcpy(video_mem,next_shell.vid_mem,PAGE_SIZE);
 		memcpy(kb_buf,next_shell.buf,BUF_LENGTH);
 		screen_x=next_shell.position_x;
 		screen_y=next_shell.position_y;
+		move_cursor(screen_x, screen_y);
 		asm volatile(" \n\
 		movl %0,%%ebp"
 		:
@@ -112,7 +123,7 @@ int32_t change_shell(int32_t shell_num,uint8_t* kb_buf,unsigned long flags){
 		:"r"(next_shell.esp)
 		);
 		
-		
+		*buf_ptr=next_shell.buf_index;
 		shells[shell_num]=next_shell;
 		
 		/* Allow interrupts again */	
