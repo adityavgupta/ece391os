@@ -2,10 +2,12 @@
  * vim:ts=4 noexpandtab */
 
 #include "lib.h"
+#include "syscalls.h"
+#include "x86_desc.h"
+#include "i8259.h"
 
 #define VIDEO       0xB8000
-#define NUM_COLS    80
-#define NUM_ROWS    25
+#define PAGE_SIZE	4096
 #define ATTRIB      0xE
 
 /* Some helpful constants for the terminal driver*/
@@ -13,11 +15,116 @@
 #define PORT_3D4		0x3D4
 #define PORT_3D5    0x3D5
 #define L_SHIFT     1
+#define BUF_LENGTH 128
+#define TRUE 1
+#define FALSE 0
+#define VIDEO_MEM_ADDR 0xB8000
+#define PAGE_SIZE      4096
+#define FIRST_SHELL    VIDEO_MEM_ADDR+PAGE_SIZE
+#define SECOND_SHELL   VIDEO_MEM_ADDR+2*PAGE_SIZE
+#define THIRD_SHELL    VIDEO_MEM_ADDR+3*PAGE_SIZE
+#define IRQ_NUM           1
 
 static int screen_x;
 static int screen_y;
 static int current_line = 0;
 static char* video_mem = (char *)VIDEO;
+static int current_shell=0;
+
+void init_shell(void){
+
+	shells[0].running=FALSE;
+	shells[0].position_x=0;
+	shells[0].position_y=0;
+	shells[0].vid_mem=(char*)FIRST_SHELL;
+
+	shells[1].running=FALSE;
+	shells[1].position_x=0;
+	shells[1].position_y=0;
+	shells[1].vid_mem=(char*)SECOND_SHELL;
+
+	shells[2].running=FALSE;
+	shells[2].position_x=0;
+	shells[2].position_y=0;
+	shells[2].vid_mem=(char*)THIRD_SHELL;
+}
+int32_t change_shell(int32_t shell_num,uint8_t* kb_buf,unsigned long flags){
+	
+	if(shell_num<0 || shell_num>=3){
+		return -1;
+	}
+	
+	if(shell_num==current_shell){
+		return 0;
+	}
+	
+	
+	shell cur_shell= shells[current_shell];
+	memcpy(cur_shell.vid_mem,video_mem,PAGE_SIZE);
+	
+	
+	memcpy(cur_shell.buf,kb_buf,BUF_LENGTH);
+
+	
+	cur_shell.position_x=screen_x;
+	cur_shell.position_y=screen_y;
+	
+	asm volatile("  \n\
+       movl %%ebp, %0"
+       : "=r"(cur_shell.ebp)
+    );
+	
+	asm volatile("  \n\
+       movl %%esp, %0"
+       : "=r"(cur_shell.esp)
+    );
+	
+	shells[current_shell]=cur_shell;
+	shell next_shell =shells[shell_num];
+	
+	if(next_shell.running==FALSE){
+			current_shell=shell_num;
+			next_shell.running=TRUE;
+			memset(next_shell.buf,0,BUF_LENGTH);
+			shells[shell_num]=next_shell;
+
+			/* Allow interrupts again */
+			restore_flags(flags);
+			/* Unmask the IRQ1 on the PIC */
+			enable_irq(IRQ_NUM);
+
+			execute((uint8_t*)"shell"); //may need to change this is the future
+	} else{
+		current_shell=shell_num;
+		memcpy(video_mem,next_shell.vid_mem,PAGE_SIZE);
+		memcpy(kb_buf,next_shell.buf,BUF_LENGTH);
+		screen_x=next_shell.position_x;
+		screen_y=next_shell.position_y;
+		asm volatile(" \n\
+		movl %0,%%ebp"
+		:
+		:"r"(next_shell.ebp)
+		);
+		
+		asm volatile(" \n\
+		movl %0,%%esp"
+		:
+		:"r"(next_shell.esp)
+		);
+		
+		
+		shells[shell_num]=next_shell;
+		
+		/* Allow interrupts again */	
+		restore_flags(flags);
+		/* Unmask the IRQ1 on the PIC */
+		enable_irq(IRQ_NUM);
+		
+	}
+	return 0;
+	
+	
+}
 
 /* void clear(void);
  * Inputs: void

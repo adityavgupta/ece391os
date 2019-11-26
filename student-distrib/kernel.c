@@ -14,7 +14,7 @@
 #include "file_system.h"
 #include "syscalls.h"
 
-#define RUN_TESTS 0
+#define RUN_TESTS
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
@@ -158,6 +158,8 @@ void entry(unsigned long magic, unsigned long addr) {
 
     /* Initialize RTC */
     rtc_init();
+	/*Initialize Shells*/
+	init_shell();
 
     /* Initialize keyboard */
     keyboard_init();
@@ -175,10 +177,10 @@ void entry(unsigned long magic, unsigned long addr) {
 #ifdef RUN_TESTS
   reset_screen();
     /* Run tests */
-  //launch_tests();
+  launch_tests();
 #endif
     /* Execute the first program ("shell") ... */
-    execute((uint8_t*)"shell");
+    //execute((uint8_t*)"shell");
 
     /* Spin (nicely, so we don't chew up cycles) */
     asm volatile (".1: hlt; jmp .1;");

@@ -16,7 +16,9 @@
 #define FOUR_MB        0x400000
 #define PAGE_INDEX     0x3FF
 #define NOT_PRESENT    0xFFFFFFFE
-
+#define FIRST_SHELL    VIDEO_MEM_ADDR+PAGE_SIZE
+#define SECOND_SHELL   VIDEO_MEM_ADDR+2*PAGE_SIZE
+#define THIRD_SHELL    VIDEO_MEM_ADDR+3*PAGE_SIZE
 /* Page directory array */
 static uint32_t page_directory[TABLE_ENTRIES]  __attribute__((aligned (PAGE_SIZE)));
 /* First page table array */
@@ -166,6 +168,11 @@ void init_page_table(void){
 
     /* Set video memory page to present, read/write, and supervisor mode */
     first_page_table[VIDEO_MEM_ADDR >> PT_OFFSET] |= RW_PRESENT;
+
+    /*Sets up temporary buffers for when the process is not the visible process*/
+    first_page_table[FIRST_SHELL>>PT_OFFSET] |= RW_PRESENT;
+    first_page_table[SECOND_SHELL>>PT_OFFSET] |= RW_PRESENT;
+    first_page_table[THIRD_SHELL>>PT_OFFSET] |= RW_PRESENT;
 }
 
 /*

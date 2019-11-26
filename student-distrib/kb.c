@@ -23,6 +23,9 @@
 
 #define CAP_OFFSET        90
 #define UP_BOUND          128
+#define ALT_CHAR 		  56
+#define ALT_RELEASE 	  184
+
 
 unsigned long flags; /* Hold current flags */
 
@@ -37,6 +40,7 @@ static volatile int32_t buf_index = 0; //Index of the current element in the buf
 uint8_t shift_pressed = 0;
 uint8_t caps_lock = 0;
 uint8_t ctrl_pressed = 0;
+uint8_t alt_pressed=0;
 
 // Table to map the scan_code not actualy 256 character in length
 uint8_t kbdus[256] =
@@ -277,6 +281,26 @@ int caps_no_shift (void) {
 void recent_release_exec (uint8_t scan_code) {
   if(scan_code == CTRL){ //If the CTRL button is pressed
     ctrl_pressed = 1;
+  } else if(alt_pressed==1 && (scan_code==32 || scan_code==46 || scan_code==48)){
+	int terminal;
+	switch(scan_code){
+		case 32:
+			terminal=0;
+			//printf("I love Srijan");
+			break;
+		case 46:
+			terminal=1;
+			//printf("Aditya is gay for Theodore");
+			break;
+		case 48:
+			terminal=2;
+			//printf("MeChAnIcAl EnGiNeErInG Is A rEsPecTaBlE fIeLd");
+			break;
+	}
+	
+		change_shell(terminal,kb_buf,flags);
+	
+	
   }
   else if(scan_code == L_CHAR && ctrl_pressed == 1) {
     clear_l();
@@ -288,6 +312,8 @@ void recent_release_exec (uint8_t scan_code) {
     }
     buf_index--;
     back_space();
+  } else if(scan_code==ALT_CHAR){
+	  alt_pressed=1;
   }
   else if(scan_code == NEW_LINE){
     print_scancode(scan_code);
@@ -333,6 +359,9 @@ void after_release_exec (uint8_t scan_code) {
   }
   else if(scan_code == CTRL + RECENT_RELEASE){
     ctrl_pressed = 0;
+  } 
+  else if(scan_code==ALT_RELEASE){
+	  alt_pressed=0;
   }
 }
 
@@ -356,7 +385,9 @@ void keyboard_interrupt_handler(void){
 
     /* Read the keyboard data buffer to get the current character */
 		uint8_t scan_code = inb(0x60);
-
+		
+		//printf("\n%d\n",scan_code);
+		
 		if((scan_code >= CAP_OFFSET && scan_code <= UP_BOUND) || (scan_code >= (CAP_OFFSET + UP_BOUND))){
 			return;
 		}

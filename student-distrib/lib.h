@@ -9,6 +9,11 @@
 
 #ifndef ASM
 
+#define NUM_COLS    80
+#define NUM_ROWS    25
+#define BUF_LENGTH 128
+#define SHELL_NUM 3
+
 void test_interrupts(void);
 int32_t printf(int8_t *format, ...);
 void putc(uint8_t c);
@@ -22,6 +27,23 @@ void new_line(void);
 void back_space(void);
 void reset_screen(void);
 void move_cursor(int screen_x, int screen_y);
+
+void init_shell(void);
+int32_t change_shell(int32_t shell_num,uint8_t* kb_buf,unsigned long flags);
+
+typedef struct shell{
+	char running;
+	char* vid_mem;
+	char buf[BUF_LENGTH];
+	int32_t esp;
+	int32_t	ebp;
+	int position_x;
+	int position_y;
+	
+}shell;
+
+shell shells[SHELL_NUM];
+
 
 void* memset(void* s, int32_t c, uint32_t n);
 void* memset_word(void* s, int32_t c, uint32_t n);
