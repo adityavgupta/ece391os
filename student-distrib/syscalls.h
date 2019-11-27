@@ -7,6 +7,7 @@
 #include "rtc.h"
 #include "linkage.h"
 #include "lib.h"
+#include "paging.h"
 
 /* Maximum number of file descriptor indexes */
 #define MAX_FD_NUM 7
@@ -45,6 +46,8 @@ typedef struct{
 	int32_t vidmem;
 } pcb_t;
 
+/*Gets the current process number*/
+int32_t get_process_num(void);
 /* Halt system call, stop a process */
 int32_t halt(uint8_t status);
 

@@ -26,6 +26,9 @@ static uint32_t first_page_table[TABLE_ENTRIES]  __attribute__((aligned (PAGE_SI
 /* Second page table array */
 static uint32_t second_page_table[TABLE_ENTRIES] __attribute__((aligned (PAGE_SIZE)));
 
+
+
+
 /*
  * set_page_dir_entry
  *    DESCRIPTION: Creates an entry in the page directory

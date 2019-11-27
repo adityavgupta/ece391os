@@ -36,6 +36,7 @@ typedef struct shell{
 	int32_t buf_index;
 	char* vid_mem;
 	char buf[BUF_LENGTH];
+	int32_t process_num;
 	int32_t esp;
 	int32_t	ebp;
 	int position_x;

@@ -24,6 +24,11 @@
 #define SECOND_SHELL   VIDEO_MEM_ADDR+2*PAGE_SIZE
 #define THIRD_SHELL    VIDEO_MEM_ADDR+3*PAGE_SIZE
 #define IRQ_NUM           1
+#define USER_PROG       0x8000000
+#define PROG_OFFSET     0x00048000
+#define EIGHT_MB        0x800000
+#define EIGHT_KB        0x2000
+#define FOUR_MB         0x400000
 
 static int screen_x;
 static int screen_y;
@@ -37,6 +42,7 @@ void init_shell(void){
 	shells[0].buf_index=0;
 	shells[0].position_x=0;
 	shells[0].position_y=0;
+	shells[0].process_num=0;
 	shells[0].vid_mem=(char*)FIRST_SHELL;
 
 	shells[1].running=FALSE;
@@ -96,14 +102,16 @@ int32_t change_shell(int32_t shell_num,uint8_t* kb_buf,int32_t* buf_ptr,unsigned
 			restore_flags(flags);
 			/* Unmask the IRQ1 on the PIC */
 			enable_irq(IRQ_NUM);
-
+			next_shell.process_num=get_process_num();
+			
 			execute((uint8_t*)"shell"); //may need to change this is the future
 			
-			clear_l();
+			clear_shell();
 			int i;
 			for(i=0;i<cur_shell.buf_index;i++){
 				back_space();
 			}
+			
 	} else{
 		current_shell=shell_num;
 		memcpy(video_mem,next_shell.vid_mem,PAGE_SIZE);
@@ -124,6 +132,9 @@ int32_t change_shell(int32_t shell_num,uint8_t* kb_buf,int32_t* buf_ptr,unsigned
 		);
 		
 		*buf_ptr=next_shell.buf_index;
+		set_page_dir_entry(USER_PROG, EIGHT_MB + next_shell.process_num*FOUR_MB);
+		//tss.esp0 = EIGHT_MB - (next_shell.process_num - 1)*EIGHT_KB;
+		//tss.ss0 = KERNEL_DS;
 		shells[shell_num]=next_shell;
 		
 		/* Allow interrupts again */	
@@ -177,6 +188,28 @@ void clear_l(void){
   /* Move cursor to new position */
   move_cursor(screen_x, screen_y);
 }
+
+void clear_shell(void){
+	int32_t diff, i, x; /* Loop variable and value holders */
+  x = screen_x; /* Store current screen_x value */
+
+  /* Difference between the beginning of the typing and the current screen position */
+  diff = screen_y - current_line;
+
+  /* Add newlines to force the screen upwards */
+  for(i = 0; i < (NUM_ROWS - (1 + diff))-1; i++){
+    new_line();
+  }
+
+  /* Set new values */
+  current_line = 0;
+  screen_y = 1;
+  screen_x = x;
+
+  /* Move cursor to new position */
+  move_cursor(screen_x, screen_y);
+}
+
 
 /* scroll_up
  * Inputs: void

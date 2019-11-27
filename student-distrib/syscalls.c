@@ -12,7 +12,7 @@
 #define STOPPED         1
 #define MAX_PROG_SIZE   FOUR_MB - PROG_OFFSET
 #define EIGHT_KB        0x2000
-#define MAX_PROGS       2
+#define MAX_PROGS       6
 #define RTC_FILE_TYPE   0
 #define DIR_FILE_TYPE   1
 /* Function pointers for rtc */
@@ -32,6 +32,17 @@ jump_table stdout_table = {terminal_write, invalid_read, terminal_open, terminal
 
 /* Process number: 1st process has pid 1, 0 means no processes have been launched */
 int32_t process_num = 0;
+/*
+ * get_process_num
+ *		Description: Allows an other files to get the processnum
+ *		Inputs-None
+ *		Outputs- The process number
+ *		Return Value: Same as Outputs
+ *		Side Effects- None	
+ */
+int32_t get_process_num(void){
+	return process_num;
+}
 
 /*
  * halt
