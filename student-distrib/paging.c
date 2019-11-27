@@ -16,9 +16,9 @@
 #define FOUR_MB        0x400000
 #define PAGE_INDEX     0x3FF
 #define NOT_PRESENT    0xFFFFFFFE
-#define FIRST_SHELL    VIDEO_MEM_ADDR+PAGE_SIZE
-#define SECOND_SHELL   VIDEO_MEM_ADDR+2*PAGE_SIZE
-#define THIRD_SHELL    VIDEO_MEM_ADDR+3*PAGE_SIZE
+#define FIRST_SHELL    (VIDEO_MEM_ADDR+PAGE_SIZE)
+#define SECOND_SHELL   (VIDEO_MEM_ADDR+2*PAGE_SIZE)
+#define THIRD_SHELL    (VIDEO_MEM_ADDR+3*PAGE_SIZE)
 /* Page directory array */
 static uint32_t page_directory[TABLE_ENTRIES]  __attribute__((aligned (PAGE_SIZE)));
 /* First page table array */

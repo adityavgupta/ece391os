@@ -23,6 +23,7 @@ int8_t *strrev(int8_t* s);
 uint32_t strlen(const int8_t* s);
 void clear(void);
 void clear_l(void);
+void clear_shell(void);
 void new_line(void);
 void back_space(void);
 void reset_screen(void);

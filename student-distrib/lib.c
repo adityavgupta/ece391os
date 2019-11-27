@@ -57,6 +57,28 @@ void init_shell(void){
 	shells[2].position_y=0;
 	shells[2].vid_mem=(char*)THIRD_SHELL;
 }
+
+void clear_shell(void){
+	int32_t diff, i, x; /* Loop variable and value holders */
+  x = screen_x; /* Store current screen_x value */
+
+  /* Difference between the beginning of the typing and the current screen position */
+  diff = screen_y - current_line;
+
+  /* Add newlines to force the screen upwards */
+  for(i = 0; i < (NUM_ROWS - (1 + diff))-1; i++){
+    new_line();
+  }
+
+  /* Set new values */
+  current_line = 0;
+  screen_y = 1;
+  screen_x = x;
+
+  /* Move cursor to new position */
+  move_cursor(screen_x, screen_y);
+}
+
 int32_t change_shell(int32_t shell_num,uint8_t* kb_buf,int32_t* buf_ptr,unsigned long flags){
 	
 	if(shell_num<0 || shell_num>=3){
@@ -189,26 +211,6 @@ void clear_l(void){
   move_cursor(screen_x, screen_y);
 }
 
-void clear_shell(void){
-	int32_t diff, i, x; /* Loop variable and value holders */
-  x = screen_x; /* Store current screen_x value */
-
-  /* Difference between the beginning of the typing and the current screen position */
-  diff = screen_y - current_line;
-
-  /* Add newlines to force the screen upwards */
-  for(i = 0; i < (NUM_ROWS - (1 + diff))-1; i++){
-    new_line();
-  }
-
-  /* Set new values */
-  current_line = 0;
-  screen_y = 1;
-  screen_x = x;
-
-  /* Move cursor to new position */
-  move_cursor(screen_x, screen_y);
-}
 
 
 /* scroll_up
