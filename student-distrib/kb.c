@@ -298,7 +298,7 @@ void recent_release_exec (uint8_t scan_code) {
 			break;
 	}
 	
-		change_shell(terminal,kb_buf,&buf_index,flags);
+		change_shell(terminal,(uint8_t*)kb_buf,(int32_t*)&buf_index,flags);
 	
 	
   }
