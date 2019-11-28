@@ -123,11 +123,11 @@ int32_t execute(const uint8_t* command){
   }
 
   /* Check for a user level command */
-  if(process_num > 0 && (command < (const uint8_t*)(USER_PROG) || command >= (const uint8_t*)(USER_PROG + FOUR_MB))){
-    /* Return failure */
+  /*
+  if(process_num > 0 && (command < (const uint8_t*)(USER_PROG) || command >= (const uint8_t*)(USER_PROG + FOUR_MB))){*/
+    /* Return failure */ /*
     return -1;
-  }
-
+  } */
 	uint8_t filename[NAME_LENGTH + 1]; /* Name of the file, with null terminate */
   int32_t i = 0; /* Loop variable */
 

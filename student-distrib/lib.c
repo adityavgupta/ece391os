@@ -100,7 +100,7 @@ int32_t change_shell(int32_t shell_num,uint8_t* kb_buf,int32_t* buf_ptr,unsigned
 	cur_shell.position_x=screen_x;
 	cur_shell.position_y=screen_y;
 	cur_shell.buf_index= *buf_ptr;
-	
+	/*
 	asm volatile("  \n\
        movl %%ebp, %0"
        : "=r"(cur_shell.ebp)
@@ -110,7 +110,7 @@ int32_t change_shell(int32_t shell_num,uint8_t* kb_buf,int32_t* buf_ptr,unsigned
        movl %%esp, %0"
        : "=r"(cur_shell.esp)
     );
-	
+	*/
 	shells[current_shell]=cur_shell;
 	shell next_shell =shells[shell_num];
 	if(next_shell.running==FALSE){
@@ -125,14 +125,14 @@ int32_t change_shell(int32_t shell_num,uint8_t* kb_buf,int32_t* buf_ptr,unsigned
 			/* Unmask the IRQ1 on the PIC */
 			enable_irq(IRQ_NUM);
 			next_shell.process_num=get_process_num();
-			
-			execute((uint8_t*)"shell"); //may need to change this is the future
-			
-			clear_shell();
+						clear();
 			int i;
 			for(i=0;i<cur_shell.buf_index;i++){
 				back_space();
 			}
+			screen_x=0;
+			screen_y=0;
+			execute((uint8_t*)"shell"); //may need to change this is the future
 			
 	} else{
 		current_shell=shell_num;
@@ -141,6 +141,7 @@ int32_t change_shell(int32_t shell_num,uint8_t* kb_buf,int32_t* buf_ptr,unsigned
 		screen_x=next_shell.position_x;
 		screen_y=next_shell.position_y;
 		move_cursor(screen_x, screen_y);
+		/*
 		asm volatile(" \n\
 		movl %0,%%ebp"
 		:
@@ -151,12 +152,22 @@ int32_t change_shell(int32_t shell_num,uint8_t* kb_buf,int32_t* buf_ptr,unsigned
 		movl %0,%%esp"
 		:
 		:"r"(next_shell.esp)
-		);
+		);*/
 		
 		*buf_ptr=next_shell.buf_index;
+		/*
 		set_page_dir_entry(USER_PROG, EIGHT_MB + next_shell.process_num*FOUR_MB);
-		//tss.esp0 = EIGHT_MB - (next_shell.process_num - 1)*EIGHT_KB;
-		//tss.ss0 = KERNEL_DS;
+		
+		asm volatile ("      \n\
+			movl %%cr3, %%eax \n\
+			movl %%eax, %%cr3"
+			:
+			:
+			: "eax"
+		);
+		tss.esp0 = EIGHT_MB - (next_shell.process_num - 1)*EIGHT_KB;
+		tss.ss0 = KERNEL_DS;
+		*/
 		shells[shell_num]=next_shell;
 		
 		/* Allow interrupts again */	
