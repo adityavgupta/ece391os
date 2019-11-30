@@ -20,6 +20,9 @@
 #define L_CHAR            38
 #define Z_CHAR            44
 #define M_CHAR            50
+#define F1_CHAR           59
+#define F2_CHAR           60
+#define F3_CHAR           61
 
 #define CAP_OFFSET        90
 #define UP_BOUND          128
@@ -143,11 +146,11 @@ void clear_kb_flags(shell* curr_shell){
 }
 
 uint8_t* get_kb_buf(void){
-	return kb_buf;
+	return (uint8_t*)kb_buf;
 }
 
 int32_t* get_buf_ptr(void){
-	return &buf_index;
+	return (int32_t*)&buf_index;
 }
 
 unsigned long get_flags(void){
@@ -316,20 +319,17 @@ int caps_no_shift (void) {
 void recent_release_exec (uint8_t scan_code) {
   if(scan_code == CTRL){ //If the CTRL button is pressed
     ctrl_pressed = 1;
-  } else if(alt_pressed==1 && (scan_code==32 || scan_code==46 || scan_code==48)){
+  } else if(alt_pressed==1 && (scan_code==F1_CHAR || scan_code==F2_CHAR || scan_code==F3_CHAR)){
 	int terminal;
 	switch(scan_code){
-		case 32:
+		case F1_CHAR:
 			terminal=0;
-			//printf("I love Srijan");
 			break;
-		case 46:
+		case F2_CHAR:
 			terminal=1;
-			//printf("Aditya is gay for Theodore");
 			break;
-		case 48:
+		case F3_CHAR:
 			terminal=2;
-			//printf("MeChAnIcAl EnGiNeErInG Is A rEsPecTaBlE fIeLd");
 			break;
 	}
 	

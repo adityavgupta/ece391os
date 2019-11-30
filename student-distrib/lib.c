@@ -36,7 +36,7 @@ static int screen_y;
 static int current_line = 0;
 static char* video_mem = (char *)VIDEO;
 static int current_shell=0;
-static shell_running=0;
+static int shell_running=0;
 void exit_shell(int32_t* proc_ptr){
 	
 	shells[current_shell].running=FALSE;
