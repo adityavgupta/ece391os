@@ -119,6 +119,28 @@ uint8_t kbdus[256] =
     0,	/* All other keys are undefined */
 };
 
+void get_kb_flags(shell* curr_shell){
+	curr_shell->shift_pressed=shift_pressed;
+	curr_shell->caps_lock=caps_lock;
+	curr_shell->ctrl_pressed=ctrl_pressed;
+	curr_shell->alt_pressed=alt_pressed;
+}
+
+void set_kb_flags(shell* curr_shell){
+	shift_pressed=curr_shell->shift_pressed;
+	caps_lock= curr_shell->caps_lock;
+	ctrl_pressed= curr_shell->ctrl_pressed;
+	alt_pressed=curr_shell->alt_pressed;
+}
+
+void clear_kb_flags(shell* curr_shell){
+	shift_pressed=0;
+	caps_lock=0;
+	ctrl_pressed=0;
+	alt_pressed=0;
+	
+	get_kb_flags(curr_shell);
+}
 
 uint8_t* get_kb_buf(void){
 	return kb_buf;

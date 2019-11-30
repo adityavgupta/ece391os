@@ -111,6 +111,7 @@ int32_t change_shell(int32_t shell_num){
 		return 0;
 	}
 	
+	get_kb_flags(&shells[current_shell]);
 	
 	shell cur_shell= shells[current_shell];
 	memcpy(cur_shell.vid_mem,video_mem,PAGE_SIZE);
@@ -141,6 +142,8 @@ int32_t change_shell(int32_t shell_num){
 			memset(next_shell.buf,0,BUF_LENGTH);
 			*buf_ptr=0;
 			shells[shell_num]=next_shell;
+			
+			clear_kb_flags(&shells[shell_num]);
 			
 			/* Allow interrupts again */
 			restore_flags(flags);
@@ -192,7 +195,7 @@ int32_t change_shell(int32_t shell_num){
 		tss.ss0 = KERNEL_DS;
 		*/
 		shells[shell_num]=next_shell;
-		
+		set_kb_flags(&shells[shell_num]);
 		/* Allow interrupts again */	
 		restore_flags(flags);
 		/* Unmask the IRQ1 on the PIC */

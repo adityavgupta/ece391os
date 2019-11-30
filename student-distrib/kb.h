@@ -4,6 +4,7 @@
 #define _KB_H
 
 #include "types.h"
+#include "lib.h"
 
 #define BUF_LENGTH 128
 
@@ -55,6 +56,15 @@ int32_t* get_buf_ptr(void);
 
 /*Helper function to the the flags*/
 unsigned long get_flags(void);
+
+/*Helper function to save keyboard flags*/
+void get_kb_flags(shell* curr_shell);
+
+/*Helper function to set the keyboard flags*/
+void set_kb_flags(shell* curr_shell);
+
+/*Sets the flags to 0*/
+void clear_kb_flags(shell* curr_shell);
 
 
 

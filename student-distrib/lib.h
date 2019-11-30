@@ -43,6 +43,10 @@ typedef struct shell{
 	int32_t	ebp;
 	int position_x;
 	int position_y;
+	uint8_t shift_pressed;
+	uint8_t caps_lock;
+	uint8_t ctrl_pressed;
+	uint8_t alt_pressed;
 	
 }shell;
 
