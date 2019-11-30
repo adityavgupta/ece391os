@@ -2,6 +2,7 @@
  * vim:ts=4 noexpandtab */
 
 #include "lib.h"
+#include "kb.h"
 #include "syscalls.h"
 #include "x86_desc.h"
 #include "i8259.h"
@@ -35,6 +36,19 @@ static int screen_y;
 static int current_line = 0;
 static char* video_mem = (char *)VIDEO;
 static int current_shell=0;
+static shell_running=0;
+void exit_shell(int32_t* proc_ptr){
+	
+	shells[current_shell].running=FALSE;
+	proc_ptr[current_shell]=-1;
+	int j;
+	for(j=0;j<3;j++){
+		if(proc_ptr[j]!=-1){
+				  change_shell(j);
+				  break;
+		}
+	}
+}
 
 void init_shell(void){
 
@@ -79,13 +93,21 @@ void clear_shell(void){
   move_cursor(screen_x, screen_y);
 }
 
-int32_t change_shell(int32_t shell_num,uint8_t* kb_buf,int32_t* buf_ptr,unsigned long flags){
+
+int32_t change_shell(int32_t shell_num){
+	cli();
+	
+	uint8_t* kb_buf=get_kb_buf();
+	int32_t* buf_ptr=get_buf_ptr();
+	unsigned long flags=get_flags();
 	
 	if(shell_num<0 || shell_num>=3){
+		sti();
 		return -1;
 	}
 	
 	if(shell_num==current_shell){
+		sti();
 		return 0;
 	}
 	
@@ -135,6 +157,7 @@ int32_t change_shell(int32_t shell_num,uint8_t* kb_buf,int32_t* buf_ptr,unsigned
 			execute((uint8_t*)"shell"); //may need to change this is the future
 			
 	} else{
+		shell_running++;
 		current_shell=shell_num;
 		memcpy(video_mem,next_shell.vid_mem,PAGE_SIZE);
 		memcpy(kb_buf,next_shell.buf,BUF_LENGTH);
@@ -176,6 +199,7 @@ int32_t change_shell(int32_t shell_num,uint8_t* kb_buf,int32_t* buf_ptr,unsigned
 		enable_irq(IRQ_NUM);
 		
 	}
+	sti();
 	return 0;
 	
 	

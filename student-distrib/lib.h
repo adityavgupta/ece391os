@@ -24,13 +24,14 @@ uint32_t strlen(const int8_t* s);
 void clear(void);
 void clear_l(void);
 void clear_shell(void);
+void exit_shell(int32_t* proc_ptr);
 void new_line(void);
 void back_space(void);
 void reset_screen(void);
 void move_cursor(int screen_x, int screen_y);
 
 void init_shell(void);
-int32_t change_shell(int32_t shell_num,uint8_t* kb_buf,int32_t* buf_ptr,unsigned long flags);
+int32_t change_shell(int32_t shell_num);
 
 typedef struct shell{
 	char running;

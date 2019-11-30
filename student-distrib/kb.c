@@ -119,6 +119,19 @@ uint8_t kbdus[256] =
     0,	/* All other keys are undefined */
 };
 
+
+uint8_t* get_kb_buf(void){
+	return kb_buf;
+}
+
+int32_t* get_buf_ptr(void){
+	return &buf_index;
+}
+
+unsigned long get_flags(void){
+		return flags;
+}
+
 /*
  * terminal_open
  *    DESCRIPTION: Function to be called to open the terminal driver
@@ -298,7 +311,7 @@ void recent_release_exec (uint8_t scan_code) {
 			break;
 	}
 	
-		change_shell(terminal,(uint8_t*)kb_buf,(int32_t*)&buf_index,flags);
+		change_shell(terminal);
 	
 	
   }

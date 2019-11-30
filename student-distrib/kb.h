@@ -48,6 +48,16 @@ void after_release_exec (uint8_t scan_code);
 /* Handler for keyboard interrupts */
 void keyboard_interrupt_handler(void);
 
+/*Return the kb_buf tot he calling program*/
+uint8_t* get_kb_buf(void);
+/*Helper function to get the pointer to the buffer*/
+int32_t* get_buf_ptr(void);
+
+/*Helper function to the the flags*/
+unsigned long get_flags(void);
+
+
+
 #endif /* ASM */
 
 #endif /* _KB_H */

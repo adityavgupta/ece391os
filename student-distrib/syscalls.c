@@ -3,7 +3,6 @@
 #include "paging.h"
 #include "lib.h"
 #include "kb.h"
-
 #define EIGHT_MB        0x800000
 #define FOUR_MB         0x400000
 #define USER_PROG       0x8000000
@@ -32,6 +31,12 @@ jump_table stdout_table = {terminal_write, invalid_read, terminal_open, terminal
 
 /* Process number: 1st process has pid 1, 0 means no processes have been launched */
 int32_t process_num = 0;
+/*Keeps track of the number of shells current;y running for the case where exit is called*/
+int32_t shell_num=0;
+/*Keeps track of the process numbers of the shells*/
+int32_t proc_shell[3]={-1,-1,-1};
+
+
 /*
  * get_process_num
  *		Description: Allows an other files to get the processnum
@@ -58,8 +63,18 @@ int32_t halt(uint8_t status){
     process_num = 0;
     execute((uint8_t*)"shell");
   }
-
+  
   int i; /* Loop variable */
+  for(i=0;i<3;i++){
+	  if((process_num == proc_shell[i]) && (shell_num>1)){
+		  exit_shell(proc_shell);	
+		  shell_num--;
+		  break;
+	  }
+	 
+  }  
+  
+
   /* Close all files in the pcb */
   for(i = 0; i <= MAX_FD_NUM; i++){
     close(i);
@@ -141,6 +156,20 @@ int32_t execute(const uint8_t* command){
   }
 
   filename[i] = '\0';
+  
+  if(strncmp((int8_t*)filename,"shell",strlen((int8_t*)filename))==0){
+	int i;
+	for(i=0;i<3;i++){
+		if(proc_shell[i]==-1){
+			proc_shell[i]=process_num+1;
+			break;
+		}
+	}
+	shell_num++;
+  }
+  
+  
+  
   dentry_t file_dentry;
   /* Check for a valid file name */
   if(read_dentry_by_name(filename, &file_dentry) == -1){
