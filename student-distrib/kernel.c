@@ -9,6 +9,7 @@
 #include "debug.h"
 #include "tests.h"
 #include "rtc.h"
+#include "pit.h"
 #include "kb.h"
 #include "paging.h"
 #include "file_system.h"
@@ -158,8 +159,13 @@ void entry(unsigned long magic, unsigned long addr) {
 
     /* Initialize RTC */
     rtc_init();
-	/*Initialize Shells*/
-	init_shell();
+
+    /* Initialize PIT */
+    pit_init();
+
+  	/*Initialize Shells*/
+  	init_shell();
+
 
     /* Initialize keyboard */
     keyboard_init();

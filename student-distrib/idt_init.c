@@ -4,6 +4,7 @@
 #include "x86_desc.h"
 #include "rtc.h"
 #include "lib.h"
+#include "pit.h"
 #include "i8259.h"
 #include "kb.h"
 #include "linkage.h"
@@ -19,15 +20,6 @@
 #define PROG_OFFSET 0x00048000
 #define RUNNING 0
 #define STOPPED 1
-/*
- * irq0_handler
- *    DESCRIPTION: Handles IRQ0 interrupts
- *    OUTPUTS: Prints IRQ number to screen, and sends EOI for IRQ0
- */
-void irq0_handler(void){
-  send_eoi(0);
-  printf("timer chip interrupt\n");
-}
 
 /*
  * irq1_handler
@@ -345,7 +337,7 @@ void initialize_idt(void){
     /* Set IRQ entries in the IDT */
     SET_IDT_ENTRY(idt[0x28], rtc_linkage);
     SET_IDT_ENTRY(idt[0x21], keyboard_linkage);
-  	SET_IDT_ENTRY(idt[0x20], irq0_handler);
+  	SET_IDT_ENTRY(idt[0x20], pit_linkage);
     SET_IDT_ENTRY(idt[0x22], irq2_handler);
     SET_IDT_ENTRY(idt[0x23], irq3_handler);
   	SET_IDT_ENTRY(idt[0x24], irq4_handler);
