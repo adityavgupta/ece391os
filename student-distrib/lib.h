@@ -47,6 +47,7 @@ typedef struct shell{
 	uint8_t caps_lock;
 	uint8_t ctrl_pressed;
 	uint8_t alt_pressed;
+	uint8_t line_buffer_flag;
 	
 }shell;
 

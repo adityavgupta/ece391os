@@ -127,6 +127,7 @@ void get_kb_flags(shell* curr_shell){
 	curr_shell->caps_lock=caps_lock;
 	curr_shell->ctrl_pressed=ctrl_pressed;
 	curr_shell->alt_pressed=alt_pressed;
+	curr_shell->line_buffer_flag=line_buffer_flag;
 }
 
 void set_kb_flags(shell* curr_shell){
@@ -134,6 +135,7 @@ void set_kb_flags(shell* curr_shell){
 	caps_lock= curr_shell->caps_lock;
 	ctrl_pressed= curr_shell->ctrl_pressed;
 	alt_pressed=curr_shell->alt_pressed;
+	line_buffer_flag=curr_shell->line_buffer_flag;
 }
 
 void clear_kb_flags(shell* curr_shell){
