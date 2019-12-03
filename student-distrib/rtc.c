@@ -172,6 +172,7 @@ int32_t rtc_read(int32_t fd, void* buf, int32_t nbytes){
   /* Return success */
   return 0;
 }
+
 /*
  * rtc_write
  *    DESCRIPTION: Change the RTC rate

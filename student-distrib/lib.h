@@ -34,22 +34,21 @@ void init_shell(void);
 int32_t change_shell(int32_t shell_num);
 
 typedef struct shell{
-	char running;
+	int8_t running;
 	int32_t buf_index;
-	char* vid_mem;
-	char buf[BUF_LENGTH];
+	int8_t* vid_mem;
+	int8_t buf[BUF_LENGTH];
 	int32_t process_num;
 	int32_t esp;
 	int32_t	ebp;
-	int position_x;
-	int position_y;
+	int32_t position_x;
+	int32_t position_y;
 	uint8_t shift_pressed;
 	uint8_t caps_lock;
 	uint8_t ctrl_pressed;
 	uint8_t alt_pressed;
 	uint8_t line_buffer_flag;
-	
-}shell;
+} shell;
 
 shell shells[SHELL_NUM];
 

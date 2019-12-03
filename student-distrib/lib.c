@@ -8,7 +8,7 @@
 #include "i8259.h"
 
 #define VIDEO       0xB8000
-#define PAGE_SIZE	4096
+#define PAGE_SIZE	  4096
 #define ATTRIB      0xE
 
 /* Some helpful constants for the terminal driver*/
@@ -24,52 +24,53 @@
 #define FIRST_SHELL    VIDEO_MEM_ADDR+PAGE_SIZE
 #define SECOND_SHELL   VIDEO_MEM_ADDR+2*PAGE_SIZE
 #define THIRD_SHELL    VIDEO_MEM_ADDR+3*PAGE_SIZE
-#define IRQ_NUM           1
-#define USER_PROG       0x8000000
-#define PROG_OFFSET     0x00048000
-#define EIGHT_MB        0x800000
-#define EIGHT_KB        0x2000
-#define FOUR_MB         0x400000
+#define IRQ_NUM        1
+#define USER_PROG      0x8000000
+#define PROG_OFFSET    0x00048000
+#define EIGHT_MB       0x800000
+#define EIGHT_KB       0x2000
+#define FOUR_MB        0x400000
 
 static int screen_x;
 static int screen_y;
 static int current_line = 0;
 static char* video_mem = (char *)VIDEO;
-static int current_shell=0;
-static int shell_running=0;
+static int current_shell = 0;
+static int shell_running = 0;
+
 void exit_shell(int32_t* proc_ptr){
-	
-	shells[current_shell].running=FALSE;
-	proc_ptr[current_shell]=-1;
+
+	shells[current_shell].running = FALSE;
+	proc_ptr[current_shell] = -1;
 	int j;
-	for(j=0;j<3;j++){
-		if(proc_ptr[j]!=-1){
-				  change_shell(j);
-				  break;
+	for(j = 0; j < 3; j++){
+		if(proc_ptr[j] != -1){
+		  change_shell(j);
+		  break;
 		}
 	}
 }
 
 void init_shell(void){
 
-	shells[0].running=TRUE;
-	shells[0].buf_index=0;
-	shells[0].position_x=0;
-	shells[0].position_y=0;
-	shells[0].process_num=0;
-	shells[0].vid_mem=(char*)FIRST_SHELL;
+	shells[0].running = TRUE;
+	shells[0].buf_index = 0;
+	shells[0].position_x = 0;
+	shells[0].position_y = 0;
+	shells[0].process_num = 0;
+	shells[0].vid_mem = (char*)FIRST_SHELL;
 
-	shells[1].running=FALSE;
-	shells[1].buf_index=0;
-	shells[1].position_x=0;
-	shells[1].position_y=0;
-	shells[1].vid_mem=(char*)SECOND_SHELL;
+	shells[1].running = FALSE;
+	shells[1].buf_index = 0;
+	shells[1].position_x = 0;
+	shells[1].position_y = 0;
+	shells[1].vid_mem = (char*)SECOND_SHELL;
 
-	shells[2].running=FALSE;
-	shells[2].buf_index=0;
-	shells[2].position_x=0;
-	shells[2].position_y=0;
-	shells[2].vid_mem=(char*)THIRD_SHELL;
+	shells[2].running = FALSE;
+	shells[2].buf_index = 0;
+	shells[2].position_x = 0;
+	shells[2].position_y = 0;
+	shells[2].vid_mem = (char*)THIRD_SHELL;
 }
 
 void clear_shell(void){
@@ -96,76 +97,76 @@ void clear_shell(void){
 
 int32_t change_shell(int32_t shell_num){
 	cli();
-	
+
 	uint8_t* kb_buf=get_kb_buf();
 	int32_t* buf_ptr=get_buf_ptr();
 	unsigned long flags=get_flags();
-	
-	if(shell_num<0 || shell_num>=3){
+
+	if(shell_num < 0 || shell_num >= 3){
 		sti();
 		return -1;
 	}
-	
-	if(shell_num==current_shell){
+
+	if(shell_num == current_shell){
 		sti();
 		return 0;
 	}
-	
-	get_kb_flags(&shells[current_shell]);
-	
-	shell cur_shell= shells[current_shell];
-	memcpy(cur_shell.vid_mem,video_mem,PAGE_SIZE);
-	
-	
-	memcpy(cur_shell.buf,kb_buf,BUF_LENGTH);
 
-	
-	cur_shell.position_x=screen_x;
-	cur_shell.position_y=screen_y;
-	cur_shell.buf_index= *buf_ptr;
+	get_kb_flags(&shells[current_shell]);
+
+	shell cur_shell = shells[current_shell];
+	memcpy(cur_shell.vid_mem, video_mem, PAGE_SIZE);
+
+
+	memcpy(cur_shell.buf, kb_buf, BUF_LENGTH);
+
+
+	cur_shell.position_x = screen_x;
+	cur_shell.position_y = screen_y;
+	cur_shell.buf_index = *buf_ptr;
 	/*
 	asm volatile("  \n\
        movl %%ebp, %0"
        : "=r"(cur_shell.ebp)
     );
-	
+
 	asm volatile("  \n\
        movl %%esp, %0"
        : "=r"(cur_shell.esp)
     );
 	*/
-	shells[current_shell]=cur_shell;
-	shell next_shell =shells[shell_num];
-	if(next_shell.running==FALSE){
-			current_shell=shell_num;
-			next_shell.running=TRUE;
-			memset(next_shell.buf,0,BUF_LENGTH);
-			*buf_ptr=0;
-			shells[shell_num]=next_shell;
-			
+	shells[current_shell] = cur_shell;
+	shell next_shell = shells[shell_num];
+	if(next_shell.running == FALSE){
+			current_shell = shell_num;
+			next_shell.running = TRUE;
+			memset(next_shell.buf, 0, BUF_LENGTH);
+			*buf_ptr = 0;
+			shells[shell_num] = next_shell;
+
 			clear_kb_flags(&shells[shell_num]);
-			
+
 			/* Allow interrupts again */
 			restore_flags(flags);
 			/* Unmask the IRQ1 on the PIC */
 			enable_irq(IRQ_NUM);
-			next_shell.process_num=get_process_num();
+			next_shell.process_num = get_process_num();
 						clear();
 			int i;
-			for(i=0;i<cur_shell.buf_index;i++){
+			for(i = 0; i < cur_shell.buf_index; i++){
 				back_space();
 			}
-			screen_x=0;
-			screen_y=0;
+			screen_x = 0;
+			screen_y = 0;
 			execute((uint8_t*)"shell"); //may need to change this is the future
-			
+
 	} else{
 		shell_running++;
-		current_shell=shell_num;
-		memcpy(video_mem,next_shell.vid_mem,PAGE_SIZE);
-		memcpy(kb_buf,next_shell.buf,BUF_LENGTH);
-		screen_x=next_shell.position_x;
-		screen_y=next_shell.position_y;
+		current_shell = shell_num;
+		memcpy(video_mem,next_shell.vid_mem, PAGE_SIZE);
+		memcpy(kb_buf,next_shell.buf, BUF_LENGTH);
+		screen_x = next_shell.position_x;
+		screen_y = next_shell.position_y;
 		move_cursor(screen_x, screen_y);
 		/*
 		asm volatile(" \n\
@@ -173,17 +174,17 @@ int32_t change_shell(int32_t shell_num){
 		:
 		:"r"(next_shell.ebp)
 		);
-		
+
 		asm volatile(" \n\
 		movl %0,%%esp"
 		:
 		:"r"(next_shell.esp)
 		);*/
-		
-		*buf_ptr=next_shell.buf_index;
+
+		*buf_ptr = next_shell.buf_index;
 		/*
 		set_page_dir_entry(USER_PROG, EIGHT_MB + next_shell.process_num*FOUR_MB);
-		
+
 		asm volatile ("      \n\
 			movl %%cr3, %%eax \n\
 			movl %%eax, %%cr3"
@@ -194,18 +195,16 @@ int32_t change_shell(int32_t shell_num){
 		tss.esp0 = EIGHT_MB - (next_shell.process_num - 1)*EIGHT_KB;
 		tss.ss0 = KERNEL_DS;
 		*/
-		shells[shell_num]=next_shell;
+		shells[shell_num] = next_shell;
 		set_kb_flags(&shells[shell_num]);
-		/* Allow interrupts again */	
+		/* Allow interrupts again */
 		restore_flags(flags);
 		/* Unmask the IRQ1 on the PIC */
 		enable_irq(IRQ_NUM);
-		
+
 	}
 	sti();
 	return 0;
-	
-	
 }
 
 /* void clear(void);
