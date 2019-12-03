@@ -38,16 +38,10 @@ static char* video_mem = (char *)VIDEO;
 static int current_shell=0;
 static int shell_running=0;
 void exit_shell(int32_t* proc_ptr){
-	
+
 	shells[current_shell].running=FALSE;
 	proc_ptr[current_shell]=-1;
-	int j;
-	for(j=0;j<3;j++){
-		if(proc_ptr[j]!=-1){
-				  change_shell(j);
-				  break;
-		}
-	}
+	change_shell(current_shell);
 }
 
 void init_shell(void){
@@ -56,7 +50,7 @@ void init_shell(void){
 	shells[0].buf_index=0;
 	shells[0].position_x=0;
 	shells[0].position_y=0;
-	shells[0].process_num=0;
+	shells[0].process_num=1;
 	shells[0].vid_mem=(char*)FIRST_SHELL;
 
 	shells[1].running=FALSE;
@@ -96,30 +90,30 @@ void clear_shell(void){
 
 int32_t change_shell(int32_t shell_num){
 	cli();
-	
+
 	uint8_t* kb_buf=get_kb_buf();
 	int32_t* buf_ptr=get_buf_ptr();
 	unsigned long flags=get_flags();
-	
+
 	if(shell_num<0 || shell_num>=3){
 		sti();
 		return -1;
 	}
-	
-	if(shell_num==current_shell){
+
+	if(shell_num==current_shell&&shells[shell_num].running){
 		sti();
 		return 0;
 	}
-	
+
 	get_kb_flags(&shells[current_shell]);
-	
+
 	shell cur_shell= shells[current_shell];
 	memcpy(cur_shell.vid_mem,video_mem,PAGE_SIZE);
-	
-	
+
+
 	memcpy(cur_shell.buf,kb_buf,BUF_LENGTH);
 
-	
+
 	cur_shell.position_x=screen_x;
 	cur_shell.position_y=screen_y;
 	cur_shell.buf_index= *buf_ptr;
@@ -128,7 +122,7 @@ int32_t change_shell(int32_t shell_num){
        movl %%ebp, %0"
        : "=r"(cur_shell.ebp)
     );
-	
+
 	asm volatile("  \n\
        movl %%esp, %0"
        : "=r"(cur_shell.esp)
@@ -142,14 +136,16 @@ int32_t change_shell(int32_t shell_num){
 			memset(next_shell.buf,0,BUF_LENGTH);
 			*buf_ptr=0;
 			shells[shell_num]=next_shell;
-			
+
 			clear_kb_flags(&shells[shell_num]);
-			
+
 			/* Allow interrupts again */
 			restore_flags(flags);
 			/* Unmask the IRQ1 on the PIC */
 			enable_irq(IRQ_NUM);
-			next_shell.process_num=get_process_num();
+			int32_t process_num = get_process_num()+1;
+			if(process_num==0)return -1;
+			next_shell.process_num=process_num;
 						clear();
 			int i;
 			for(i=0;i<cur_shell.buf_index;i++){
@@ -158,7 +154,7 @@ int32_t change_shell(int32_t shell_num){
 			screen_x=0;
 			screen_y=0;
 			execute((uint8_t*)"shell"); //may need to change this is the future
-			
+
 	} else{
 		shell_running++;
 		current_shell=shell_num;
@@ -173,17 +169,17 @@ int32_t change_shell(int32_t shell_num){
 		:
 		:"r"(next_shell.ebp)
 		);
-		
+
 		asm volatile(" \n\
 		movl %0,%%esp"
 		:
 		:"r"(next_shell.esp)
 		);*/
-		
+
 		*buf_ptr=next_shell.buf_index;
 		/*
 		set_page_dir_entry(USER_PROG, EIGHT_MB + next_shell.process_num*FOUR_MB);
-		
+
 		asm volatile ("      \n\
 			movl %%cr3, %%eax \n\
 			movl %%eax, %%cr3"
@@ -196,16 +192,16 @@ int32_t change_shell(int32_t shell_num){
 		*/
 		shells[shell_num]=next_shell;
 		set_kb_flags(&shells[shell_num]);
-		/* Allow interrupts again */	
+		/* Allow interrupts again */
 		restore_flags(flags);
 		/* Unmask the IRQ1 on the PIC */
 		enable_irq(IRQ_NUM);
-		
+
 	}
 	sti();
 	return 0;
-	
-	
+
+
 }
 
 /* void clear(void);

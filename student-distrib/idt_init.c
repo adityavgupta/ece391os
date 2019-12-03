@@ -198,7 +198,7 @@ void test_interrupt(void){
 	void x(void){ \
     cli(); \
 		printf("Exception: %s\n",msg); \
-      process_num--; \
+      close_process(); \
       set_page_dir_entry(USER_PROG, EIGHT_MB);\
       asm volatile ("      \n\
          movl %%cr3, %%eax \n\

@@ -87,6 +87,9 @@ int32_t invalid_write(int32_t fd, const void* buf, int32_t nbytes);
 /* Gets the address of the current pcb */
 pcb_t* get_pcb_add(void);
 
+/* frees the current process */
+void close_process(void);
+
 #endif /* ASM */
 
 #endif /* _SYSCALLS_H */

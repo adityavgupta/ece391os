@@ -36,18 +36,30 @@ int32_t shell_num=0;
 /*Keeps track of the process numbers of the shells*/
 int32_t proc_shell[3]={-1,-1,-1};
 
+/* keeps track of which process numbers are available:  0=available,1=unavailable*/
+int32_t processes[MAX_PROGS]={0,0,0,0,0,0};
+
+void close_process(void){
+	pcb_t* cur_pcb = get_pcb_add();   /* Get the current process pcb */
+	processes[(cur_pcb->pid)-1]=0;	/* set process to free */
+}
 
 /*
  * get_process_num
- *		Description: Allows an other files to get the processnum
+ *		Description: Get the pid of first free process slot in processes array
  *		Inputs-None
  *		Outputs- The process number
  *		Return Value: Same as Outputs
- *		Side Effects- None	
+ *		Side Effects- None
  */
 int32_t get_process_num(void){
-	return process_num;
+	int i;
+	for(i=0;i<MAX_PROGS;i++){
+		if(!processes[i])return i;
+	}
+	return -1;
 }
+
 
 /*
  * halt
@@ -59,30 +71,25 @@ int32_t get_process_num(void){
  */
 int32_t halt(uint8_t status){
   /* If shell tries to halt, just launch shell again */
-  if(process_num == 1){
-    process_num = 0;
-    execute((uint8_t*)"shell");
-  }
-  
   int i; /* Loop variable */
+	pcb_t* cur_pcb = get_pcb_add();   /* Get the current process pcb */
   for(i=0;i<3;i++){
-	  if((process_num == proc_shell[i]) && (shell_num>1)){
-		  exit_shell(proc_shell);	
+	  if(((cur_pcb->pid) == proc_shell[i])){
+			close_process();
+		  exit_shell(proc_shell);
 		  shell_num--;
 		  break;
 	  }
-	 
-  }  
-  
+
+  }
+
 
   /* Close all files in the pcb */
   for(i = 0; i <= MAX_FD_NUM; i++){
     close(i);
   }
+	processes[(cur_pcb->pid)-1]=0;
 
-  process_num--; /* Decrement process number */
-
-  pcb_t* cur_pcb = get_pcb_add();   /* Get the current process pcb */
   cur_pcb->process_state = STOPPED; /* Set process state to stopped */
   tss.esp0 = cur_pcb->parent_esp;   /* Set TSS esp0 back to parent stack pointer */
 
@@ -132,11 +139,12 @@ int32_t halt(uint8_t status){
  */
 int32_t execute(const uint8_t* command){
   /* Limit number of programs */
-  if(process_num >= MAX_PROGS){
-    /* Return failure */
-    return -1;
-  }
-
+	int z;
+	int b=1;
+	for(z=0;z<MAX_PROGS;z++){
+		b=b&&processes[z];
+	}
+	if(b)return -1;
   /* Check for a user level command */
   /*
   if(process_num > 0 && (command < (const uint8_t*)(USER_PROG) || command >= (const uint8_t*)(USER_PROG + FOUR_MB))){*/
@@ -156,20 +164,20 @@ int32_t execute(const uint8_t* command){
   }
 
   filename[i] = '\0';
-  
+
   if(strncmp((int8_t*)filename,"shell",strlen((int8_t*)filename))==0){
 	int i;
 	for(i=0;i<3;i++){
 		if(proc_shell[i]==-1){
-			proc_shell[i]=process_num+1;
+			proc_shell[i]=get_process_num()+1;
 			break;
 		}
 	}
 	shell_num++;
   }
-  
-  
-  
+
+
+
   dentry_t file_dentry;
   /* Check for a valid file name */
   if(read_dentry_by_name(filename, &file_dentry) == -1){
@@ -226,8 +234,9 @@ int32_t execute(const uint8_t* command){
   }
   args[BUF_LENGTH-1] = '\0';
 
+	int cur_pid=get_process_num();
   /* Set up user page */
-  set_page_dir_entry(USER_PROG, EIGHT_MB + (process_num++)*FOUR_MB);
+  set_page_dir_entry(USER_PROG, EIGHT_MB + (cur_pid++)*FOUR_MB);
 
   /* Flush tlb */
   asm volatile ("      \n\
@@ -246,7 +255,7 @@ int32_t execute(const uint8_t* command){
 
   /* Create pcb */
   pcb_t pcb;
-  pcb.pid = process_num;
+  pcb.pid = cur_pid;
   pcb.parent_pid = get_pcb_add()->pid;
   /* Load stdin and stdout jump table and mark as in use */
   pcb.fdt[0].jump_ptr = &stdin_table;
@@ -263,20 +272,20 @@ int32_t execute(const uint8_t* command){
   }
 
   /* Set parent esp and ebp for child processes */
-  if(process_num >= 2){
-    pcb.parent_esp = EIGHT_MB - (process_num-2)*EIGHT_KB;
+  if(cur_pid >= 2){		/* should change condition to just check not base shell */
+    pcb.parent_esp = EIGHT_MB - (cur_pid-2)*EIGHT_KB;
 
     asm volatile("  \n\
        movl %%ebp, %0"
        : "=r"(pcb.parent_ebp)
     );
   }
-
+	processes[cur_pid-1]=1;
   /* Place pcb in kernel memory */
-  memcpy((void *)(EIGHT_MB - process_num*EIGHT_KB), &pcb, sizeof(pcb));
+  memcpy((void *)(EIGHT_MB - cur_pid*EIGHT_KB), &pcb, sizeof(pcb));
 
   /* Set TSS to point to kernel stack */
-  tss.esp0 = EIGHT_MB - (process_num - 1)*EIGHT_KB;
+  tss.esp0 = EIGHT_MB - (cur_pid - 1)*EIGHT_KB;
   tss.ss0 = KERNEL_DS;
 
 
