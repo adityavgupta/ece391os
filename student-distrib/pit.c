@@ -56,11 +56,11 @@ void pit_interrupt_handler(void){
 
   /* Re-enable interrupts and restores flags */
 
-  count=(count+1)%SCHED_SIZE
-  while(sched_arr[count].process_num==-1){
-	  count=(count+1)%SCHED_SIZE;
-  }
-  process_switch(sched_arr[count]);
+  // count=(count+1)%SCHED_SIZE;
+  // while(sched_arr[count].process_num==-1){
+	//   count=(count+1)%SCHED_SIZE;
+  // }
+  // process_switch(sched_arr[count]);
 
   restore_flags(flags);
 

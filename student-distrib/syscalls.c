@@ -52,7 +52,7 @@ void process_switch(int32_t next){
        : "=r"(cur_pcb->current_esp)
     );
 
-	pcb_t* next_pcb= (pcb_t*) (EIGHT_MB - EIGHT_KB*next);
+	pcb_t* next_pcb= get_pcb(next);
 
 	tss.esp0= next_pcb->current_esp;
 	tss.ss0=KERNEL_DS;
@@ -285,7 +285,10 @@ int32_t execute(const uint8_t* command){
   /* Create pcb */
   pcb_t pcb;
   pcb.pid = process_num;
-  pcb.parent_pid = get_pcb_add()->pid; //To change
+  pcb.parent_pid = get_pcb_add()->pid;
+
+	// pcb.parent_pid = get_pcb(sched_arr[count].process_num)->pid; //maybe?
+
   /* Load stdin and stdout jump table and mark as in use */
   pcb.fdt[0].jump_ptr = &stdin_table;
   pcb.fdt[1].jump_ptr = &stdout_table;
@@ -631,6 +634,18 @@ int32_t invalid_write(int32_t fd, const void* buf, int32_t nbytes){
   return -1;
 }
 
+/*
+ * get_pcb
+ *    DESCRIPTION: Get pcb pointer of process number
+ *    INPUTS:
+ 				pid: process number whose pcb we want
+ *    OUTPUTS: none
+ *    RETURN VALUE: pcb_t pointer
+ *    SIDE EFFECTS: none
+ */
+pcb_t* get_pcb(int32_t pid){
+	return (pcb_t*)(EIGHT_MB - pid*EIGHT_KB);
+}
 /*
  * get_pcb_add
  *    DESCRIPTION: Gets a pointer of the current process' pcb

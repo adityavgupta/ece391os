@@ -74,6 +74,7 @@ int32_t getargs(uint8_t* buf, int32_t nbytes);
 /* Map video memory to userspace */
 int32_t vidmap(uint8_t** screen_start);
 
+
 /* */
 int32_t set_handler(int32_t signum, void* handler_address);
 
@@ -88,6 +89,9 @@ int32_t invalid_write(int32_t fd, const void* buf, int32_t nbytes);
 
 /* Gets the address of the current pcb */
 pcb_t* get_pcb_add(void);
+
+/* Gets the address of the pid's pcb */
+pcb_t* get_pcb(int32_t pid);
 
 #endif /* ASM */
 
