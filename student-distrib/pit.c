@@ -17,6 +17,7 @@ void enqueue(int32_t num){
 	tail=(tail+1)%SCHED_SIZE;
 }
 */
+sched_node sched_arr[SCHED_SIZE];
 
 void pit_init(void){
   uint32_t divisor= OSCILLATOR_FREQ / INTERRUPT_INTERVAL; /* frequency divisor of PIT */

@@ -14,8 +14,8 @@
 #define BUF_LENGTH 128
 #define SHELL_NUM 3
 
-extern static int current_shell=0;
-extern int32_t count=0;
+extern int current_shell;
+extern int32_t count;
 
 void test_interrupts(void);
 int32_t printf(int8_t *format, ...);

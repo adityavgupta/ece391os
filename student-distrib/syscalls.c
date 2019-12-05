@@ -3,6 +3,8 @@
 #include "paging.h"
 #include "lib.h"
 #include "kb.h"
+#include "pit.h"
+
 #define EIGHT_MB        0x800000
 #define FOUR_MB         0x400000
 #define USER_PROG       0x8000000
@@ -37,7 +39,7 @@ int32_t shell_num=0;
 int32_t proc_shell[3]={-1,-1,-1};
 
 
-int process_switch(int32_t next){
+void process_switch(int32_t next){
 	pcb_t* cur_pcb= get_pcb_add();
 
 	asm volatile("  \n\
@@ -50,11 +52,11 @@ int process_switch(int32_t next){
        : "=r"(cur_pcb->current_esp)
     );
 
-	pcb_t* next_pcb= (pcb_t*) (EIGHT_MB - EIGHT_KB*next)
+	pcb_t* next_pcb= (pcb_t*) (EIGHT_MB - EIGHT_KB*next);
 
 	tss.esp0= next_pcb->current_esp;
 	tss.ss0=KERNEL_DS;
-	set_page_dir_entry(USER_PROG, EIGHT_MB + (next*FOUR_MB);
+	set_page_dir_entry(USER_PROG, EIGHT_MB + (next*FOUR_MB));
 
 	asm volatile ("      \n\
      movl %%cr3, %%eax \n\
@@ -189,26 +191,22 @@ int32_t execute(const uint8_t* command){
   filename[i] = '\0';
 
   if(strncmp((int8_t*)filename,"shell",strlen((int8_t*)filename))==0){
-	int i;
-	for(i=0;i<3;i++){
-		if(proc_shell[i]==-1){
-			proc_shell[i]=process_num+1;
+		if(proc_shell[current_shell]==-1){
+			proc_shell[current_shell]=process_num+1;
 			int j=0;
-			while(sched_arr[j].process_num==-1 && i<SCHED_SIZE){
+			while(sched_arr[j].process_num!=-1 && j<SCHED_SIZE){
 				j++;
 			}
-			sched_arr[count].process_num=proc_shell[i];
-			sched_arr[count].terminal_num=i;
-			break;
+			sched_arr[j].process_num=proc_shell[current_shell];
+			sched_arr[j].terminal_num=current_shell;
 		}
-	}
-	shell_num++;
+		shell_num++;
   }
-	i=0;
-  while(sched_arr[i].terminal_num!=current_shell && i<SCHED_SIZE){
-		i++;
+	int t=0;
+  while(sched_arr[t].terminal_num!=current_shell && t<SCHED_SIZE){
+		t++;
 	}
-	sched_arr[i].process_num=process_num+1;
+	sched_arr[t].process_num=process_num+1;
 
   dentry_t file_dentry;
   /* Check for a valid file name */

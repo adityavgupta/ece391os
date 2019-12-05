@@ -36,6 +36,9 @@ static int screen_y;
 static int current_line = 0;
 static char* video_mem = (char *)VIDEO;
 static int shell_running=0;
+int current_shell=0;
+int32_t count=0;
+
 void exit_shell(int32_t* proc_ptr){
 
 	shells[current_shell].running=FALSE;
@@ -156,15 +159,15 @@ int32_t change_shell(int32_t shell_num){
 			}
 			screen_x=0;
 			screen_y=0;
-			pcb_t cur_pcb= get_pcb_add();
+			pcb_t* cur_pcb= get_pcb_add();
 			asm volatile("  \n\
 				movl %%ebp, %0"
-				: "=r"(cur_pcb.current_ebp)
+				: "=r"(cur_pcb->current_ebp)
 			);
 
 			asm volatile("  \n\
 				movl %%esp, %0"
-				: "=r"(cur_pcb.current_esp)
+				: "=r"(cur_pcb->current_esp)
 			);
 
 			execute((uint8_t*)"shell"); //may need to change this is the future
