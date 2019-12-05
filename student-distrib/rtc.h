@@ -14,6 +14,17 @@
 #define SLAVE_PIN 2
 #define RTC_IRQ_NUM 8
 
+#define FREQ_2    0x0F
+#define FREQ_4    0x0E
+#define FREQ_8    0x0D
+#define FREQ_16   0x0C
+#define FREQ_32   0x0B
+#define FREQ_64   0x0A
+#define FREQ_256  0x09
+#define FREQ_128  0x08
+#define FREQ_512  0x07
+#define FREQ_1024 0x06
+
 #ifndef ASM
 
 /* Flag to allow prints for test cases */
@@ -38,8 +49,6 @@ int32_t rtc_read(int32_t fd, void* buf, int32_t nbytes);
 /* Set the frequency of the RTC */
 int32_t rtc_write(int32_t fd, const void* buf, int32_t nbytes);
 
-/* Get rtc rate needed for desired frequency*/
-int32_t get_rate(int32_t freq);
 
 #endif /* ASM */
 
