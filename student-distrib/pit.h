@@ -10,6 +10,15 @@
 
 #ifndef ASM
 
+typedef struct sched{
+	int32_t process_num
+	uint8_t is_running;
+	int32_t terminal_num;
+}sched_node;
+
+//void enqueue(int32_t num);
+//int32_t dequeue(void);
+
 /* initialize the pit */
 void pit_init(void);
 

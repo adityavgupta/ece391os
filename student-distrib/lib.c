@@ -157,6 +157,17 @@ int32_t change_shell(int32_t shell_num){
 			}
 			screen_x=0;
 			screen_y=0;
+			pcb_t cur_pcb= get_pcb_add();
+			asm volatile("  \n\
+				movl %%ebp, %0"
+				: "=r"(cur_pcb.current_ebp)
+			);
+	
+			asm volatile("  \n\
+				movl %%esp, %0"
+				: "=r"(cur_pcb.current_esp)
+			);
+			
 			execute((uint8_t*)"shell"); //may need to change this is the future
 			
 	} else{
