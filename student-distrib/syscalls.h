@@ -37,7 +37,9 @@ typedef struct file_desc{
 typedef struct{
   int32_t pid; 									/* Process identification number */
   int32_t parent_pid; 					/* Parent process identification number */
-  int32_t current_esp; 					/* Current esp */
+  int32_t current_esp;
+  int32_t current_ebp;
+  /* Current esp */
   int32_t parent_esp; 					/* Parent's esp */
   int32_t parent_ebp; 					/* Parent's ebp */
   file_desc fdt[MAX_FD_NUM+1]; 	/* File Descriptor Table */

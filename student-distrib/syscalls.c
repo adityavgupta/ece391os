@@ -37,6 +37,36 @@ int32_t shell_num=0;
 int32_t proc_shell[3]={-1,-1,-1};
 
 
+int process_switch(int32_t next){
+	pcb_t* cur_pcb= get_pcb_add();
+	
+	asm volatile("  \n\
+       movl %%ebp, %0"
+       : "=r"(cur_pcb->current_ebp)
+    );
+	
+	asm volatile("  \n\
+       movl %%esp, %0"
+       : "=r"(cur_pcb->current_esp)
+    );
+	
+	pcb_t* next_pcb= (pcb_t*) (EIGHT_MB - EIGHT_KB*next)
+	
+	tss.esp0= next_pcb->current_esp;
+	tss.ss0=KERNEL_DS;
+	set_page_dir_entry(USER_PROG, EIGHT_MB + (next*FOUR_MB);
+	
+	asm volatile ("      \n\
+     movl %%cr3, %%eax \n\
+     movl %%eax, %%cr3"
+     :
+     :
+     : "eax"
+	);
+	
+}
+
+
 /*
  * get_process_num
  *		Description: Allows an other files to get the processnum
@@ -247,7 +277,7 @@ int32_t execute(const uint8_t* command){
   /* Create pcb */
   pcb_t pcb;
   pcb.pid = process_num;
-  pcb.parent_pid = get_pcb_add()->pid;
+  pcb.parent_pid = get_pcb_add()->pid; //To change
   /* Load stdin and stdout jump table and mark as in use */
   pcb.fdt[0].jump_ptr = &stdin_table;
   pcb.fdt[1].jump_ptr = &stdout_table;
