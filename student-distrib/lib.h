@@ -14,6 +14,9 @@
 #define BUF_LENGTH 128
 #define SHELL_NUM 3
 
+extern static int current_shell=0;
+extern int32_t count=0;
+
 void test_interrupts(void);
 int32_t printf(int8_t *format, ...);
 void putc(uint8_t c);
@@ -48,7 +51,7 @@ typedef struct shell{
 	uint8_t ctrl_pressed;
 	uint8_t alt_pressed;
 	uint8_t line_buffer_flag;
-	
+
 }shell;
 
 shell shells[SHELL_NUM];

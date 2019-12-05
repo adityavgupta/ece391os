@@ -39,23 +39,23 @@ int32_t proc_shell[3]={-1,-1,-1};
 
 int process_switch(int32_t next){
 	pcb_t* cur_pcb= get_pcb_add();
-	
+
 	asm volatile("  \n\
        movl %%ebp, %0"
        : "=r"(cur_pcb->current_ebp)
     );
-	
+
 	asm volatile("  \n\
        movl %%esp, %0"
        : "=r"(cur_pcb->current_esp)
     );
-	
+
 	pcb_t* next_pcb= (pcb_t*) (EIGHT_MB - EIGHT_KB*next)
-	
+
 	tss.esp0= next_pcb->current_esp;
 	tss.ss0=KERNEL_DS;
 	set_page_dir_entry(USER_PROG, EIGHT_MB + (next*FOUR_MB);
-	
+
 	asm volatile ("      \n\
      movl %%cr3, %%eax \n\
      movl %%eax, %%cr3"
@@ -63,7 +63,7 @@ int process_switch(int32_t next){
      :
      : "eax"
 	);
-	
+
 }
 
 
@@ -73,7 +73,7 @@ int process_switch(int32_t next){
  *		Inputs-None
  *		Outputs- The process number
  *		Return Value: Same as Outputs
- *		Side Effects- None	
+ *		Side Effects- None
  */
 int32_t get_process_num(void){
 	return process_num;
@@ -93,17 +93,16 @@ int32_t halt(uint8_t status){
     process_num = 0;
     execute((uint8_t*)"shell");
   }
-  
+
   int i; /* Loop variable */
   for(i=0;i<3;i++){
 	  if((process_num == proc_shell[i]) && (shell_num>1)){
-		  exit_shell(proc_shell);	
+		  exit_shell(proc_shell);
 		  shell_num--;
 		  break;
 	  }
-	 
-  }  
-  
+
+  }
 
   /* Close all files in the pcb */
   for(i = 0; i <= MAX_FD_NUM; i++){
@@ -118,6 +117,8 @@ int32_t halt(uint8_t status){
 
   /* Remap user program paging back to parent program */
   set_page_dir_entry(USER_PROG, EIGHT_MB + (cur_pcb->parent_pid - 1)*FOUR_MB);
+
+	sched_arr[count].process_num=cur_pcb->parent_pid; /* set scheduler back to the parent */
 
   /* Check if program was using video memory */
   if(cur_pcb->vidmem){
@@ -186,20 +187,29 @@ int32_t execute(const uint8_t* command){
   }
 
   filename[i] = '\0';
-  
+
   if(strncmp((int8_t*)filename,"shell",strlen((int8_t*)filename))==0){
 	int i;
 	for(i=0;i<3;i++){
 		if(proc_shell[i]==-1){
 			proc_shell[i]=process_num+1;
+			int j=0;
+			while(sched_arr[j].process_num==-1 && i<SCHED_SIZE){
+				j++;
+			}
+			sched_arr[count].process_num=proc_shell[i];
+			sched_arr[count].terminal_num=i;
 			break;
 		}
 	}
 	shell_num++;
   }
-  
-  
-  
+	i=0;
+  while(sched_arr[i].terminal_num!=current_shell && i<SCHED_SIZE){
+		i++;
+	}
+	sched_arr[i].process_num=process_num+1;
+
   dentry_t file_dentry;
   /* Check for a valid file name */
   if(read_dentry_by_name(filename, &file_dentry) == -1){

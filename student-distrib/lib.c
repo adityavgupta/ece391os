@@ -35,10 +35,9 @@ static int screen_x;
 static int screen_y;
 static int current_line = 0;
 static char* video_mem = (char *)VIDEO;
-static int current_shell=0;
 static int shell_running=0;
 void exit_shell(int32_t* proc_ptr){
-	
+
 	shells[current_shell].running=FALSE;
 	proc_ptr[current_shell]=-1;
 	int j;
@@ -96,30 +95,30 @@ void clear_shell(void){
 
 int32_t change_shell(int32_t shell_num){
 	cli();
-	
+
 	uint8_t* kb_buf=get_kb_buf();
 	int32_t* buf_ptr=get_buf_ptr();
 	unsigned long flags=get_flags();
-	
+
 	if(shell_num<0 || shell_num>=3){
 		sti();
 		return -1;
 	}
-	
+
 	if(shell_num==current_shell){
 		sti();
 		return 0;
 	}
-	
+
 	get_kb_flags(&shells[current_shell]);
-	
+
 	shell cur_shell= shells[current_shell];
 	memcpy(cur_shell.vid_mem,video_mem,PAGE_SIZE);
-	
-	
+
+
 	memcpy(cur_shell.buf,kb_buf,BUF_LENGTH);
 
-	
+
 	cur_shell.position_x=screen_x;
 	cur_shell.position_y=screen_y;
 	cur_shell.buf_index= *buf_ptr;
@@ -128,7 +127,7 @@ int32_t change_shell(int32_t shell_num){
        movl %%ebp, %0"
        : "=r"(cur_shell.ebp)
     );
-	
+
 	asm volatile("  \n\
        movl %%esp, %0"
        : "=r"(cur_shell.esp)
@@ -142,9 +141,9 @@ int32_t change_shell(int32_t shell_num){
 			memset(next_shell.buf,0,BUF_LENGTH);
 			*buf_ptr=0;
 			shells[shell_num]=next_shell;
-			
+
 			clear_kb_flags(&shells[shell_num]);
-			
+
 			/* Allow interrupts again */
 			restore_flags(flags);
 			/* Unmask the IRQ1 on the PIC */
@@ -162,14 +161,14 @@ int32_t change_shell(int32_t shell_num){
 				movl %%ebp, %0"
 				: "=r"(cur_pcb.current_ebp)
 			);
-	
+
 			asm volatile("  \n\
 				movl %%esp, %0"
 				: "=r"(cur_pcb.current_esp)
 			);
-			
+
 			execute((uint8_t*)"shell"); //may need to change this is the future
-			
+
 	} else{
 		shell_running++;
 		current_shell=shell_num;
@@ -184,17 +183,17 @@ int32_t change_shell(int32_t shell_num){
 		:
 		:"r"(next_shell.ebp)
 		);
-		
+
 		asm volatile(" \n\
 		movl %0,%%esp"
 		:
 		:"r"(next_shell.esp)
 		);*/
-		
+
 		*buf_ptr=next_shell.buf_index;
 		/*
 		set_page_dir_entry(USER_PROG, EIGHT_MB + next_shell.process_num*FOUR_MB);
-		
+
 		asm volatile ("      \n\
 			movl %%cr3, %%eax \n\
 			movl %%eax, %%cr3"
@@ -207,16 +206,16 @@ int32_t change_shell(int32_t shell_num){
 		*/
 		shells[shell_num]=next_shell;
 		set_kb_flags(&shells[shell_num]);
-		/* Allow interrupts again */	
+		/* Allow interrupts again */
 		restore_flags(flags);
 		/* Unmask the IRQ1 on the PIC */
 		enable_irq(IRQ_NUM);
-		
+
 	}
 	sti();
 	return 0;
-	
-	
+
+
 }
 
 /* void clear(void);
