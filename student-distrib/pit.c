@@ -53,7 +53,7 @@ void pit_interrupt_handler(void){
   send_eoi(PIT_IRQ_NUM);
 
   // printf("PIT > RTC dont @ me\n");
-
+  count=(count+1)%SCHED_SIZE;
   int32_t init_count=count;
   while(sched_arr[count].process_num==-1){
 	   count=(count+1)%SCHED_SIZE;

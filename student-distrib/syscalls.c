@@ -198,7 +198,6 @@ int32_t execute(const uint8_t* command){
 			}
 			sched_arr[j].process_num=proc_shell[current_shell];
 			sched_arr[j].terminal_num=current_shell;
-			count=(count+1)%SCHED_SIZE;
 		}
 		shell_num++;
   }
