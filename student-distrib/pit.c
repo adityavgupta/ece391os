@@ -1,7 +1,7 @@
 #include "lib.h"
 #include "pit.h"
 #include "i8259.h"
-
+#include "syscalls.h"
 #define OSCILLATOR_FREQ 1193182      /* PIT oscillator runs at approximately 1.193182 MHz */
 #define INTERRUPT_INTERVAL 100    /* we want PIT interrupts every 100Hz = 10ms */
 
@@ -54,16 +54,24 @@ void pit_interrupt_handler(void){
 
   // printf("PIT > RTC dont @ me\n");
 
+  int32_t init_count=count;
+  while(sched_arr[count].process_num==-1){
+	   count=(count+1)%SCHED_SIZE;
+	   if(count==init_count){
+       /* Re-enable interrupts and restores flags */
+       restore_flags(flags);
+
+       /* Unmask PIC interrupts*/
+       enable_irq(PIT_IRQ_NUM);
+		   return;
+	   }
+   }
+  process_switch(sched_arr[count]);
+
   /* Re-enable interrupts and restores flags */
-
-  // count=(count+1)%SCHED_SIZE;
-  // while(sched_arr[count].process_num==-1){
-	//   count=(count+1)%SCHED_SIZE;
-  // }
-  // process_switch(sched_arr[count]);
-
   restore_flags(flags);
 
   /* Unmask PIC interrupts*/
   enable_irq(PIT_IRQ_NUM);
+
 }

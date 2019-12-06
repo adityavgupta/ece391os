@@ -15,6 +15,7 @@ typedef struct sched{
 	int32_t terminal_num;
 }sched_node;
 
+extern int32_t count;
 extern sched_node sched_arr[SCHED_SIZE];
 
 //void enqueue(int32_t num);

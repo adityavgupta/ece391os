@@ -8,6 +8,7 @@
 #include "linkage.h"
 #include "lib.h"
 #include "paging.h"
+#include "pit.h"
 
 /* Maximum number of file descriptor indexes */
 #define MAX_FD_NUM 7
@@ -46,6 +47,7 @@ typedef struct{
   uint8_t process_state;  /* State of process */
 	uint8_t args[BUF_LENGTH];     /* Commands passed in */
 	int32_t vidmem;
+	int32_t terminal_num;
 } pcb_t;
 
 /*Gets the current process number*/
@@ -93,6 +95,7 @@ pcb_t* get_pcb_add(void);
 /* Gets the address of the pid's pcb */
 pcb_t* get_pcb(int32_t pid);
 
+void process_switch(sched_node next);
 #endif /* ASM */
 
 #endif /* _SYSCALLS_H */

@@ -3,7 +3,6 @@
 #include "paging.h"
 #include "lib.h"
 #include "kb.h"
-#include "pit.h"
 
 #define EIGHT_MB        0x800000
 #define FOUR_MB         0x400000
@@ -39,9 +38,9 @@ int32_t shell_num=0;
 int32_t proc_shell[3]={-1,-1,-1};
 
 
-void process_switch(int32_t next){
+void process_switch(sched_node next){
 	pcb_t* cur_pcb= get_pcb_add();
-
+	if(next.terminal_num==cur_pcb->terminal_num)return;
 	asm volatile("  \n\
        movl %%ebp, %0"
        : "=r"(cur_pcb->current_ebp)
@@ -52,11 +51,11 @@ void process_switch(int32_t next){
        : "=r"(cur_pcb->current_esp)
     );
 
-	pcb_t* next_pcb= get_pcb(next);
+	pcb_t* next_pcb= get_pcb(next.process_num);
 
 	tss.esp0= next_pcb->current_esp;
 	tss.ss0=KERNEL_DS;
-	set_page_dir_entry(USER_PROG, EIGHT_MB + (next*FOUR_MB));
+	set_page_dir_entry(USER_PROG, EIGHT_MB + (next.process_num*FOUR_MB));
 
 	asm volatile ("      \n\
      movl %%cr3, %%eax \n\
@@ -296,6 +295,7 @@ int32_t execute(const uint8_t* command){
   pcb.fdt[1].flags = 1;
   pcb.process_state = RUNNING;
   pcb.vidmem = 0;
+	pcb.terminal_num=current_shell;
   /* Copy arguments to the pcb */
   strncpy((int8_t*)pcb.args, (const int8_t*)args, BUF_LENGTH);
   /* Mark remaining file descriptors as not in use */

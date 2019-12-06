@@ -15,7 +15,6 @@
 #define SHELL_NUM 3
 
 extern int current_shell;
-extern int32_t count;
 
 void test_interrupts(void);
 int32_t printf(int8_t *format, ...);
