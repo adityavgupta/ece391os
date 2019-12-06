@@ -51,7 +51,7 @@ void process_switch(sched_node next){
        : "=r"(cur_pcb->current_esp)
     );
 
-	pcb_t* next_pcb= get_pcb(next.process_num);
+	// pcb_t* next_pcb= get_pcb(next.process_num);
 
 	tss.esp0=EIGHT_MB - (next.process_num - 1)*EIGHT_KB;
 	tss.ss0=KERNEL_DS;
@@ -96,14 +96,14 @@ int32_t halt(uint8_t status){
   }
 
   int i; /* Loop variable */
-  for(i=0;i<3;i++){
-	  if((process_num == proc_shell[i]) && (shell_num>1)){
-		  exit_shell(proc_shell);
-		  shell_num--;
-		  break;
-	  }
-
-  }
+  // for(i=0;i<3;i++){
+	//   if((process_num == proc_shell[i]) && (shell_num>1)){
+	// 	  exit_shell(proc_shell);
+	// 	  shell_num--;
+	// 	  break;
+	//   }
+  //
+  // }
 
   /* Close all files in the pcb */
   for(i = 0; i <= MAX_FD_NUM; i++){
@@ -229,7 +229,6 @@ int32_t execute(const uint8_t* command){
 	while(sched_arr[t].terminal_num!=current_shell && t<SCHED_SIZE){
 		t++;
 	}
-	int32_t parent_proc_num = sched_arr[t].process_num;
 	sched_arr[t].process_num=process_num+1;
 
   uint8_t args[BUF_LENGTH];
@@ -285,9 +284,9 @@ int32_t execute(const uint8_t* command){
   /* Create pcb */
   pcb_t pcb;
   pcb.pid = process_num;
-	pcb.parent_pid = get_pcb_add()->pid;
-	// if(pcb.pid==proc_shell[current_shell])pcb.parent_pid=pcb.pid;
-	// else pcb.parent_pid = get_pcb(proc_shell[current_shell])->pid;
+	// pcb.parent_pid = get_pcb_add()->pid;
+	if(pcb.pid==proc_shell[current_shell])pcb.parent_pid=pcb.pid;
+	else pcb.parent_pid = get_pcb(proc_shell[current_shell])->pid;
   /* Load stdin and stdout jump table and mark as in use */
   pcb.fdt[0].jump_ptr = &stdin_table;
   pcb.fdt[1].jump_ptr = &stdout_table;
@@ -303,14 +302,11 @@ int32_t execute(const uint8_t* command){
     pcb.fdt[i].flags = -1;
   }
 
+  pcb.parent_esp = EIGHT_MB - (pcb.parent_pid-1)*EIGHT_KB;
   /* Set parent esp and ebp */
   asm volatile("  \n\
      movl %%ebp, %0"
      : "=r"(pcb.parent_ebp)
-  );
-	asm volatile("  \n\
-     movl %%esp, %0"
-     : "=r"(pcb.parent_esp)
   );
 
 
