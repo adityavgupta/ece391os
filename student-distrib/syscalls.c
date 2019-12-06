@@ -198,6 +198,7 @@ int32_t execute(const uint8_t* command){
 			}
 			sched_arr[j].process_num=proc_shell[current_shell];
 			sched_arr[j].terminal_num=current_shell;
+			count=(count+1)%SCHED_SIZE;
 		}
 		shell_num++;
   }
@@ -284,10 +285,10 @@ int32_t execute(const uint8_t* command){
   /* Create pcb */
   pcb_t pcb;
   pcb.pid = process_num;
-  pcb.parent_pid = get_pcb_add()->pid;
+  // pcb.parent_pid = get_pcb_add()->pid;
 
 	// pcb.parent_pid = get_pcb(sched_arr[count].process_num)->pid; //maybe?
-
+	pcb.parent_pid = get_pcb(proc_shell[current_shell])->pid;
   /* Load stdin and stdout jump table and mark as in use */
   pcb.fdt[0].jump_ptr = &stdin_table;
   pcb.fdt[1].jump_ptr = &stdout_table;

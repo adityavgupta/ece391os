@@ -60,7 +60,6 @@ void pit_interrupt_handler(void){
 	   if(count==init_count){
        /* Re-enable interrupts and restores flags */
        restore_flags(flags);
-
        /* Unmask PIC interrupts*/
        enable_irq(PIT_IRQ_NUM);
 		   return;
