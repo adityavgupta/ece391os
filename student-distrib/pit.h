@@ -2,7 +2,7 @@
 #define _PIT_H
 
 #include "types.h"
-
+#include "syscalls.h"
 #define PIT_IRQ_NUM 0
 #define PIT_CHANNEL0 0x40
 #define PIT_COMMAND_PORT 0x43

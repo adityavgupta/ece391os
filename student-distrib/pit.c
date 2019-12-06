@@ -18,7 +18,7 @@ void enqueue(int32_t num){
 }
 */
 sched_node sched_arr[SCHED_SIZE];
-
+int count1=0;
 void pit_init(void){
   uint32_t divisor= OSCILLATOR_FREQ / INTERRUPT_INTERVAL; /* frequency divisor of PIT */
   uint32_t divisor_low = divisor & 0xFF; /* low byte of divisor */
@@ -52,15 +52,21 @@ void pit_interrupt_handler(void){
   /* Send EOI signal */
   send_eoi(PIT_IRQ_NUM);
 
+	
   // printf("PIT > RTC dont @ me\n");
 
   /* Re-enable interrupts and restores flags */
 
-  // count=(count+1)%SCHED_SIZE;
-  // while(sched_arr[count].process_num==-1){
-	//   count=(count+1)%SCHED_SIZE;
-  // }
-  // process_switch(sched_arr[count]);
+  count1=(count1+1)%SCHED_SIZE;
+  int32_t init_count=count1;
+  while(sched_arr[count1].process_num==-1){
+	   count1=(count1+1)%SCHED_SIZE;
+	   if(count1==init_count){
+		   return;
+	   }
+   }
+  printf("%d",sched_arr[count1].process_num);
+  process_switch(sched_arr[count1].process_num);
 
   restore_flags(flags);
 

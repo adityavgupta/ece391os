@@ -321,16 +321,16 @@ int caps_no_shift (void) {
 void recent_release_exec (uint8_t scan_code) {
   if(scan_code == CTRL){ //If the CTRL button is pressed
     ctrl_pressed = 1;
-  } else if(alt_pressed==1 && (scan_code==F1_CHAR || scan_code==F2_CHAR || scan_code==F3_CHAR)){
+  } else if(alt_pressed==1 && (scan_code==32 || scan_code== 46 || scan_code==48)){
 	int terminal;
 	switch(scan_code){
-		case F1_CHAR:
+		case 32:
 			terminal=0;
 			break;
-		case F2_CHAR:
+		case 46:
 			terminal=1;
 			break;
-		case F3_CHAR:
+		case 48:
 			terminal=2;
 			break;
 	}
