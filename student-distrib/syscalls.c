@@ -53,9 +53,9 @@ void process_switch(sched_node next){
 
 	pcb_t* next_pcb= get_pcb(next.process_num);
 
-	tss.esp0= next_pcb->current_esp;
+	tss.esp0=EIGHT_MB - (next.process_num - 1)*EIGHT_KB;
 	tss.ss0=KERNEL_DS;
-	set_page_dir_entry(USER_PROG, EIGHT_MB + (next.process_num*FOUR_MB));
+	set_page_dir_entry(USER_PROG, EIGHT_MB + (next.process_num-1)*FOUR_MB);
 
 	asm volatile ("      \n\
      movl %%cr3, %%eax \n\
@@ -201,12 +201,6 @@ int32_t execute(const uint8_t* command){
 		}
 		shell_num++;
   }
-	int t=0;
-  while(sched_arr[t].terminal_num!=current_shell && t<SCHED_SIZE){
-		t++;
-	}
-	sched_arr[t].process_num=process_num+1;
-
   dentry_t file_dentry;
   /* Check for a valid file name */
   if(read_dentry_by_name(filename, &file_dentry) == -1){
@@ -230,6 +224,13 @@ int32_t execute(const uint8_t* command){
     sti();
     return -1;
   }
+
+	int t=0;
+	while(sched_arr[t].terminal_num!=current_shell && t<SCHED_SIZE){
+		t++;
+	}
+	int32_t parent_proc_num = sched_arr[t].process_num;
+	sched_arr[t].process_num=process_num+1;
 
   uint8_t args[BUF_LENGTH];
   args[0] = '\0'; /* Default args is empty string */
@@ -284,10 +285,9 @@ int32_t execute(const uint8_t* command){
   /* Create pcb */
   pcb_t pcb;
   pcb.pid = process_num;
-  // pcb.parent_pid = get_pcb_add()->pid;
-
-	// pcb.parent_pid = get_pcb(sched_arr[count].process_num)->pid; //maybe?
-	pcb.parent_pid = get_pcb(proc_shell[current_shell])->pid;
+	pcb.parent_pid = get_pcb_add()->pid;
+	// if(pcb.pid==proc_shell[current_shell])pcb.parent_pid=pcb.pid;
+	// else pcb.parent_pid = get_pcb(proc_shell[current_shell])->pid;
   /* Load stdin and stdout jump table and mark as in use */
   pcb.fdt[0].jump_ptr = &stdin_table;
   pcb.fdt[1].jump_ptr = &stdout_table;
@@ -303,15 +303,16 @@ int32_t execute(const uint8_t* command){
     pcb.fdt[i].flags = -1;
   }
 
-  /* Set parent esp and ebp for child processes */
-  if(process_num >= 2){
-    pcb.parent_esp = EIGHT_MB - (process_num-2)*EIGHT_KB;
+  /* Set parent esp and ebp */
+  asm volatile("  \n\
+     movl %%ebp, %0"
+     : "=r"(pcb.parent_ebp)
+  );
+	asm volatile("  \n\
+     movl %%esp, %0"
+     : "=r"(pcb.parent_esp)
+  );
 
-    asm volatile("  \n\
-       movl %%ebp, %0"
-       : "=r"(pcb.parent_ebp)
-    );
-  }
 
   /* Place pcb in kernel memory */
   memcpy((void *)(EIGHT_MB - process_num*EIGHT_KB), &pcb, sizeof(pcb));
