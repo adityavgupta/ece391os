@@ -33,6 +33,8 @@ void move_cursor(int screen_x, int screen_y);
 void init_shell(void);
 int32_t change_shell(int32_t shell_num);
 
+extern int current_shell;
+
 typedef struct shell{
 	int8_t running;
 	int32_t buf_index;

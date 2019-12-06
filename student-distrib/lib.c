@@ -35,7 +35,7 @@ static int screen_x;
 static int screen_y;
 static int current_line = 0;
 static char* video_mem = (char *)VIDEO;
-static int current_shell = 0;
+int current_shell = 0;
 static int shell_running = 0;
 
 void exit_shell(int32_t* proc_ptr){
@@ -182,9 +182,9 @@ int32_t change_shell(int32_t shell_num){
 		);*/
 
 		*buf_ptr = next_shell.buf_index;
-		/*
-		set_page_dir_entry(USER_PROG, EIGHT_MB + next_shell.process_num*FOUR_MB);
 
+		set_page_dir_entry(USER_PROG, EIGHT_MB + next_shell.process_num*FOUR_MB);
+/*
 		asm volatile ("      \n\
 			movl %%cr3, %%eax \n\
 			movl %%eax, %%cr3"
@@ -203,6 +203,7 @@ int32_t change_shell(int32_t shell_num){
 		enable_irq(IRQ_NUM);
 
 	}
+	
 	sti();
 	return 0;
 }

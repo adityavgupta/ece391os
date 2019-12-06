@@ -36,6 +36,7 @@ int32_t shell_num = 0;
 /* Keeps track of the process numbers of the shells */
 int32_t proc_shell[3] = {-1, -1, -1};
 
+uint32_t program_addr_test[3];
 
 /*
  * get_process_num
@@ -59,20 +60,17 @@ int32_t get_process_num(void){
  */
 int32_t halt(uint8_t status){
   /* If shell tries to halt, just launch shell again */
-  if(process_num == 1){
-    process_num = 0;
-    execute((uint8_t*)"shell");
+  if(process_num == proc_shell[current_shell]){
+    asm volatile("       \n\
+      movl %0, %%ecx     \n\
+      jmp context_switch"
+      :
+      : "r" (program_addr_test[current_shell])
+      : "ecx"
+    );
   }
 
   int i; /* Loop variable */
-  for(i = 0; i < 3; i++){
-	  if((process_num == proc_shell[i]) && (shell_num > 1)){
-		  exit_shell(proc_shell);
-		  shell_num--;
-		  break;
-	  }
-  }
-
 
   /* Close all files in the pcb */
   for(i = 0; i <= MAX_FD_NUM; i++){
@@ -155,19 +153,6 @@ int32_t execute(const uint8_t* command){
   }
 
   filename[i] = '\0';
-
-  if(strncmp((int8_t*)filename, "shell", strlen((int8_t*)filename)) == 0){
-  	int i;
-  	for(i = 0; i < 3; i++){
-  		if(proc_shell[i] == -1){
-  			proc_shell[i] = process_num + 1;
-  			break;
-  		}
-  	}
-	  shell_num++;
-  }
-
-
 
   dentry_t file_dentry;
   /* Check for a valid file name */
@@ -281,6 +266,12 @@ int32_t execute(const uint8_t* command){
 
   /* Get address of first instruction */
   uint32_t program_addr = *(uint32_t*)(ELF_buf + 24);
+
+  if(strncmp((int8_t*)filename, "shell", strlen((int8_t*)filename)) == 0 && proc_shell[current_shell] == -1){
+  	proc_shell[current_shell] = process_num;
+	  shell_num++;
+    program_addr_test[current_shell] = program_addr;
+  }
 
   /* Put program_addr into ecx and jump to the context switch */
   asm volatile("       \n\
