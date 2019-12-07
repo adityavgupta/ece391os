@@ -19,11 +19,10 @@
 #define BUF_LENGTH 128
 #define TRUE 1
 #define FALSE 0
-#define VIDEO_MEM_ADDR 0xB8000
 #define PAGE_SIZE      4096
-#define FIRST_SHELL    VIDEO_MEM_ADDR+PAGE_SIZE
-#define SECOND_SHELL   VIDEO_MEM_ADDR+2*PAGE_SIZE
-#define THIRD_SHELL    VIDEO_MEM_ADDR+3*PAGE_SIZE
+#define FIRST_SHELL    VIDEO+PAGE_SIZE
+#define SECOND_SHELL   VIDEO+2*PAGE_SIZE
+#define THIRD_SHELL    VIDEO+3*PAGE_SIZE
 #define IRQ_NUM        1
 #define USER_PROG      0x8000000
 #define PROG_OFFSET    0x00048000
@@ -31,180 +30,105 @@
 #define EIGHT_KB       0x2000
 #define FOUR_MB        0x400000
 
-static int screen_x;
-static int screen_y;
-static int current_line = 0;
+static int32_t screen_x;
+static int32_t screen_y;
+static int32_t current_line = 0;
 static char* video_mem = (char *)VIDEO;
-int current_shell = 0;
-static int shell_running = 0;
-
-void exit_shell(int32_t* proc_ptr){
-
-	shells[current_shell].running = FALSE;
-	proc_ptr[current_shell] = -1;
-	int j;
-	for(j = 0; j < 3; j++){
-		if(proc_ptr[j] != -1){
-		  change_shell(j);
-		  break;
-		}
-	}
-}
+int32_t cur_terminal = 0;
 
 void init_shell(void){
+	terminals[0].running = TRUE;
+	terminals[0].x = 0;
+	terminals[0].y = 0;
+	terminals[0].cur_pid = 1;
+	terminals[0].vid_mem = (char*)FIRST_SHELL;
+	terminals[0].line_buffer_flag = 0;
+	terminals[0].buf_index = 0;
+	terminals[0].shift_pressed = 0;
+	terminals[0].caps_lock = 0;
+	terminals[0].ctrl_pressed = 0;
+	terminals[0].alt_pressed = 0;
 
-	shells[0].running = TRUE;
-	shells[0].buf_index = 0;
-	shells[0].position_x = 0;
-	shells[0].position_y = 0;
-	shells[0].process_num = 0;
-	shells[0].vid_mem = (char*)FIRST_SHELL;
+	terminals[1].running = FALSE;
+	terminals[1].x = 0;
+	terminals[1].y = 0;
+	terminals[1].vid_mem = (char*)SECOND_SHELL;
+	terminals[1].line_buffer_flag = 0;
+	terminals[1].buf_index = 0;
+	terminals[1].shift_pressed = 0;
+	terminals[1].caps_lock = 0;
+	terminals[1].ctrl_pressed = 0;
+	terminals[1].alt_pressed = 0;
 
-	shells[1].running = FALSE;
-	shells[1].buf_index = 0;
-	shells[1].position_x = 0;
-	shells[1].position_y = 0;
-	shells[1].vid_mem = (char*)SECOND_SHELL;
-
-	shells[2].running = FALSE;
-	shells[2].buf_index = 0;
-	shells[2].position_x = 0;
-	shells[2].position_y = 0;
-	shells[2].vid_mem = (char*)THIRD_SHELL;
+	terminals[2].running = FALSE;
+	terminals[2].x = 0;
+	terminals[2].y = 0;
+	terminals[2].vid_mem = (char*)THIRD_SHELL;
+	terminals[2].line_buffer_flag = 0;
+	terminals[2].buf_index = 0;
+	terminals[2].shift_pressed = 0;
+	terminals[2].caps_lock = 0;
+	terminals[2].ctrl_pressed = 0;
+	terminals[2].alt_pressed = 0;
 }
-
-void clear_shell(void){
-	int32_t diff, i, x; /* Loop variable and value holders */
-  x = screen_x; /* Store current screen_x value */
-
-  /* Difference between the beginning of the typing and the current screen position */
-  diff = screen_y - current_line;
-
-  /* Add newlines to force the screen upwards */
-  for(i = 0; i < (NUM_ROWS - (1 + diff))-1; i++){
-    new_line();
-  }
-
-  /* Set new values */
-  current_line = 0;
-  screen_y = 1;
-  screen_x = x;
-
-  /* Move cursor to new position */
-  move_cursor(screen_x, screen_y);
-}
-
 
 int32_t change_shell(int32_t shell_num){
-	cli();
-
-	uint8_t* kb_buf=get_kb_buf();
-	int32_t* buf_ptr=get_buf_ptr();
-	unsigned long flags=get_flags();
-
 	if(shell_num < 0 || shell_num >= 3){
-		sti();
 		return -1;
 	}
 
-	if(shell_num == current_shell){
-		sti();
+	if(shell_num == cur_terminal){
 		return 0;
 	}
 
-	get_kb_flags(&shells[current_shell]);
+	memcpy(terminals[cur_terminal].vid_mem, video_mem, PAGE_SIZE);
 
-	shell cur_shell = shells[current_shell];
-	memcpy(cur_shell.vid_mem, video_mem, PAGE_SIZE);
+	terminals[cur_terminal].x = screen_x;
+	terminals[cur_terminal].y = screen_y;
 
+	asm volatile("    \n\
+     movl %%esp, %0 \n\
+		 movl %%ebp, %1"
+     : "=r"(terminals[cur_terminal].esp), "=r"(terminals[cur_terminal].ebp)
+  );
 
-	memcpy(cur_shell.buf, kb_buf, BUF_LENGTH);
+	if(terminals[shell_num].running == FALSE){
+		cur_terminal = shell_num;
+		terminals[shell_num].running = TRUE;
 
-
-	cur_shell.position_x = screen_x;
-	cur_shell.position_y = screen_y;
-	cur_shell.buf_index = *buf_ptr;
-	/*
-	asm volatile("  \n\
-       movl %%ebp, %0"
-       : "=r"(cur_shell.ebp)
-    );
-
-	asm volatile("  \n\
-       movl %%esp, %0"
-       : "=r"(cur_shell.esp)
-    );
-	*/
-	shells[current_shell] = cur_shell;
-	shell next_shell = shells[shell_num];
-	if(next_shell.running == FALSE){
-			current_shell = shell_num;
-			next_shell.running = TRUE;
-			memset(next_shell.buf, 0, BUF_LENGTH);
-			*buf_ptr = 0;
-			shells[shell_num] = next_shell;
-
-			clear_kb_flags(&shells[shell_num]);
-
-			/* Allow interrupts again */
-			restore_flags(flags);
-			/* Unmask the IRQ1 on the PIC */
-			enable_irq(IRQ_NUM);
-			next_shell.process_num = get_process_num();
-						clear();
-			int i;
-			for(i = 0; i < cur_shell.buf_index; i++){
-				back_space();
-			}
-			screen_x = 0;
-			screen_y = 0;
-			execute((uint8_t*)"shell"); //may need to change this is the future
-
+		clear();
+		screen_x = 0;
+		screen_y = 0;
+    /* Unmask the IRQ1 on the PIC */
+		enable_irq(IRQ_NUM);
+		execute((uint8_t*)"shell"); //may need to change this is the future
 	} else{
-		shell_running++;
-		current_shell = shell_num;
-		memcpy(video_mem,next_shell.vid_mem, PAGE_SIZE);
-		memcpy(kb_buf,next_shell.buf, BUF_LENGTH);
-		screen_x = next_shell.position_x;
-		screen_y = next_shell.position_y;
+		cur_terminal = shell_num;
+		memcpy(video_mem, terminals[shell_num].vid_mem, PAGE_SIZE);
+		screen_x = terminals[shell_num].x;
+		screen_y = terminals[shell_num].y;
 		move_cursor(screen_x, screen_y);
-		/*
-		asm volatile(" \n\
-		movl %0,%%ebp"
-		:
-		:"r"(next_shell.ebp)
-		);
 
-		asm volatile(" \n\
-		movl %0,%%esp"
-		:
-		:"r"(next_shell.esp)
-		);*/
+		set_page_dir_entry(USER_PROG, EIGHT_MB + (terminals[shell_num].cur_pid - 1)*FOUR_MB);
 
-		*buf_ptr = next_shell.buf_index;
-
-		set_page_dir_entry(USER_PROG, EIGHT_MB + next_shell.process_num*FOUR_MB);
-/*
-		asm volatile ("      \n\
+		asm volatile ("     \n\
 			movl %%cr3, %%eax \n\
 			movl %%eax, %%cr3"
 			:
 			:
 			: "eax"
 		);
-		tss.esp0 = EIGHT_MB - (next_shell.process_num - 1)*EIGHT_KB;
-		tss.ss0 = KERNEL_DS;
-		*/
-		shells[shell_num] = next_shell;
-		set_kb_flags(&shells[shell_num]);
-		/* Allow interrupts again */
-		restore_flags(flags);
-		/* Unmask the IRQ1 on the PIC */
-		enable_irq(IRQ_NUM);
 
+		tss.esp0 = EIGHT_MB - (terminals[shell_num].cur_pid - 1)*EIGHT_KB;
+
+		asm volatile ("  \n\
+		  movl %0, %%esp \n\
+			movl %1, %%ebp"
+			:
+			: "r" (terminals[shell_num].esp), "r" (terminals[shell_num].ebp)
+		);
 	}
-	
-	sti();
+
 	return 0;
 }
 

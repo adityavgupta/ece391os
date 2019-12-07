@@ -46,9 +46,6 @@ typedef struct{
 	int32_t vidmem;
 } pcb_t;
 
-/* Gets the current process number */
-int32_t get_process_num(void);
-
 /* Halt system call, stop a process */
 int32_t halt(uint8_t status);
 

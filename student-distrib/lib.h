@@ -23,8 +23,6 @@ int8_t *strrev(int8_t* s);
 uint32_t strlen(const int8_t* s);
 void clear(void);
 void clear_l(void);
-void clear_shell(void);
-void exit_shell(int32_t* proc_ptr);
 void new_line(void);
 void back_space(void);
 void reset_screen(void);
@@ -33,26 +31,26 @@ void move_cursor(int screen_x, int screen_y);
 void init_shell(void);
 int32_t change_shell(int32_t shell_num);
 
-extern int current_shell;
+extern int32_t cur_terminal;
 
 typedef struct shell{
 	int8_t running;
-	int32_t buf_index;
 	int8_t* vid_mem;
-	int8_t buf[BUF_LENGTH];
-	int32_t process_num;
+	int32_t cur_pid;
 	int32_t esp;
 	int32_t	ebp;
-	int32_t position_x;
-	int32_t position_y;
+	int32_t x;
+	int32_t y;
+	uint8_t kb_buf[BUF_LENGTH]; // Buffer of size that is 128;
+	volatile int32_t line_buffer_flag;
+	int32_t buf_index; //Index of the current element in the buffer
 	uint8_t shift_pressed;
 	uint8_t caps_lock;
 	uint8_t ctrl_pressed;
 	uint8_t alt_pressed;
-	uint8_t line_buffer_flag;
-} shell;
+} shell_t;
 
-shell shells[SHELL_NUM];
+shell_t terminals[SHELL_NUM];
 
 
 void* memset(void* s, int32_t c, uint32_t n);

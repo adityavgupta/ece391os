@@ -26,24 +26,11 @@
 
 #define CAP_OFFSET        90
 #define UP_BOUND          128
-#define ALT_CHAR 		  56
-#define ALT_RELEASE 	  184
+#define ALT_CHAR 		      56
+#define ALT_RELEASE 	    184
 
 
 unsigned long flags; /* Hold current flags */
-
-// Flag whether or not the line buffer can be written to the screen or not
-static volatile int32_t line_buffer_flag = 0;
-
-volatile uint8_t kb_buf[BUF_LENGTH]; // Buffer of size that is 128;
-
-static volatile int32_t buf_index = 0; //Index of the current element in the buffer
-
-// Flags to indacte if shift, ctrl or caps lock is pressed
-uint8_t shift_pressed = 0;
-uint8_t caps_lock = 0;
-uint8_t ctrl_pressed = 0;
-uint8_t alt_pressed=0;
 
 // Table to map the scan_code not actualy 256 character in length
 uint8_t kbdus[256] =
@@ -122,43 +109,6 @@ uint8_t kbdus[256] =
     0,	/* All other keys are undefined */
 };
 
-void get_kb_flags(shell* curr_shell){
-	curr_shell->shift_pressed=shift_pressed;
-	curr_shell->caps_lock=caps_lock;
-	curr_shell->ctrl_pressed=ctrl_pressed;
-	curr_shell->alt_pressed=alt_pressed;
-	curr_shell->line_buffer_flag=line_buffer_flag;
-}
-
-void set_kb_flags(shell* curr_shell){
-	shift_pressed=curr_shell->shift_pressed;
-	caps_lock= curr_shell->caps_lock;
-	ctrl_pressed= curr_shell->ctrl_pressed;
-	alt_pressed=curr_shell->alt_pressed;
-	line_buffer_flag=curr_shell->line_buffer_flag;
-}
-
-void clear_kb_flags(shell* curr_shell){
-	shift_pressed=0;
-	caps_lock=0;
-	ctrl_pressed=0;
-	alt_pressed=0;
-	
-	get_kb_flags(curr_shell);
-}
-
-uint8_t* get_kb_buf(void){
-	return (uint8_t*)kb_buf;
-}
-
-int32_t* get_buf_ptr(void){
-	return (int32_t*)&buf_index;
-}
-
-unsigned long get_flags(void){
-		return flags;
-}
-
 /*
  * terminal_open
  *    DESCRIPTION: Function to be called to open the terminal driver
@@ -168,7 +118,7 @@ unsigned long get_flags(void){
  *    SIDE EFFECTS: Initializes some of the global variables to 0
  */
 int32_t terminal_open(const uint8_t* filename){
-		buf_index = 0;
+		terminals[cur_terminal].buf_index = 0;
     return 0;
 }
 
@@ -214,7 +164,7 @@ int terminal_write(int32_t fd, const void* buf, int32_t nbytes){
  *    SIDE EFFECTS: None
  */
 int32_t terminal_close(int32_t fd){
-		buf_index = 0; // Sets the index back to 0
+		terminals[cur_terminal].buf_index = 0; // Sets the index back to 0
     return 0;
 }
 
@@ -229,7 +179,7 @@ int32_t terminal_close(int32_t fd){
  */
 int terminal_read(int32_t fd, void* buf, int32_t nbytes){
     int32_t bytes_read = 0; /* Number of bytes read */
-		line_buffer_flag = 0; /* Sets the flag for determining whether enter is pressed */
+		terminals[cur_terminal].line_buffer_flag = 0; /* Sets the flag for determining whether enter is pressed */
 
 		if(buf == NULL || nbytes < 0){
       /* Return failure */
@@ -237,14 +187,14 @@ int terminal_read(int32_t fd, void* buf, int32_t nbytes){
 		}
 
     /* Wait until the line is finsied */
-		while(!line_buffer_flag){
+		while(!terminals[cur_terminal].line_buffer_flag){
 		}
 
     /* Print the number of bytes desired or the number of bytes typed */
-    bytes_read = nbytes < buf_index ? nbytes : buf_index;
-    memcpy(buf, (void*)kb_buf, bytes_read);
+    bytes_read = nbytes < terminals[cur_terminal].buf_index ? nbytes : terminals[cur_terminal].buf_index;
+    memcpy(buf, (void*)terminals[cur_terminal].kb_buf, bytes_read);
 
-    buf_index = 0;
+    terminals[cur_terminal].buf_index = 0;
 
     return bytes_read;
 }
@@ -271,7 +221,7 @@ void keyboard_init(void){
  * output: 1 or 0
  */
 int32_t caps_and_shift (void) {
-  return ((caps_lock == 1) && (shift_pressed == 1));
+  return ((terminals[cur_terminal].caps_lock == 1) && (terminals[cur_terminal].shift_pressed == 1));
 }
 
 /* in_char_range
@@ -292,13 +242,13 @@ int32_t in_char_range (uint8_t scan_code) {
  *    SIDE EFFECTS: prints the matching characters of the scan_code
  */
 void print_scancode (uint8_t scan_code) {
-  if((buf_index >= (BUF_LENGTH - 1) && scan_code != NEW_LINE) || line_buffer_flag){
+  if((terminals[cur_terminal].buf_index >= (BUF_LENGTH - 1) && scan_code != NEW_LINE) || terminals[cur_terminal].line_buffer_flag){
     return;
   }
 
   putc(kbdus[scan_code]); // Prints this scan code to the screen
-  kb_buf[buf_index] = kbdus[scan_code];
-  buf_index++;
+  terminals[cur_terminal].kb_buf[terminals[cur_terminal].buf_index] = kbdus[scan_code];
+  terminals[cur_terminal].buf_index++;
 }
 
 /* caps_no_shift
@@ -307,7 +257,7 @@ void print_scancode (uint8_t scan_code) {
  * output: 1 or 0
  */
 int caps_no_shift (void) {
-  return ((caps_lock == 1) && (shift_pressed != 1));
+  return ((terminals[cur_terminal].caps_lock == 1) && (terminals[cur_terminal].shift_pressed != 1));
 }
 
 /*
@@ -320,49 +270,48 @@ int caps_no_shift (void) {
  */
 void recent_release_exec (uint8_t scan_code) {
   if(scan_code == CTRL){ //If the CTRL button is pressed
-    ctrl_pressed = 1;
-  } else if(alt_pressed==1 && (scan_code==F1_CHAR || scan_code==F2_CHAR || scan_code==F3_CHAR)){
-	int terminal;
+    terminals[cur_terminal].ctrl_pressed = 1;
+  } else if(terminals[cur_terminal].alt_pressed == 1 && (scan_code == F1_CHAR || scan_code == F2_CHAR || scan_code == F3_CHAR)){
+	int32_t terminal;
 	switch(scan_code){
 		case F1_CHAR:
-			terminal=0;
+			terminal = 0;
 			break;
 		case F2_CHAR:
-			terminal=1;
+			terminal = 1;
 			break;
 		case F3_CHAR:
-			terminal=2;
+			terminal = 2;
 			break;
 	}
-	
+
 		change_shell(terminal);
-	
-	
+
   }
-  else if(scan_code == L_CHAR && ctrl_pressed == 1) {
+  else if(scan_code == L_CHAR && terminals[cur_terminal].ctrl_pressed == 1) {
     clear_l();
   }
   else if(scan_code == BACK_SPACE){
     /* Deletes a buffer character if it is allowed */
-    if(buf_index <= 0){
+    if(terminals[cur_terminal].buf_index <= 0){
       return;
     }
-    buf_index--;
+    terminals[cur_terminal].buf_index--;
     back_space();
-  } else if(scan_code==ALT_CHAR){
-	  alt_pressed=1;
+  } else if(scan_code == ALT_CHAR){
+	  terminals[cur_terminal].alt_pressed = 1;
   }
   else if(scan_code == NEW_LINE){
     print_scancode(scan_code);
-    line_buffer_flag = 1;
+    terminals[cur_terminal].line_buffer_flag = 1;
   }
   else if(scan_code == (LEFT_SHIFT) || scan_code == (RIGHT_SHIFT)){
     /* Sets shift_pressed to 1. Used ot indicate an on state */
-    shift_pressed = 1;
+    terminals[cur_terminal].shift_pressed = 1;
   }
   else if(scan_code == CAPS_LOCK){
     // Mod 2 is so the values of capslock flip between 0 or 1
-    caps_lock = (caps_lock + 1) % 2;
+    terminals[cur_terminal].caps_lock = (terminals[cur_terminal].caps_lock + 1) % 2;
   }
   // Caps and shift are pressed and it is a letter
   else if(caps_and_shift() && in_char_range(scan_code)){
@@ -372,7 +321,7 @@ void recent_release_exec (uint8_t scan_code) {
   else if(caps_no_shift() && in_char_range(scan_code)){
     print_scancode(scan_code + CAP_OFFSET);
   }
-  else if(shift_pressed == 1){
+  else if(terminals[cur_terminal].shift_pressed == 1){
     print_scancode(scan_code + CAP_OFFSET);
   }
   else{
@@ -392,13 +341,13 @@ void after_release_exec (uint8_t scan_code) {
   /* If the key is recently released, gets rid of the shift_pressed flag */
   if(scan_code == LEFT_SHIFT + RECENT_RELEASE || scan_code == RIGHT_SHIFT + RECENT_RELEASE){
     /* 0 is used to indicate a off state */
-    shift_pressed = 0;
+    terminals[cur_terminal].shift_pressed = 0;
   }
   else if(scan_code == CTRL + RECENT_RELEASE){
-    ctrl_pressed = 0;
-  } 
-  else if(scan_code==ALT_RELEASE){
-	  alt_pressed=0;
+    terminals[cur_terminal].ctrl_pressed = 0;
+  }
+  else if(scan_code == ALT_RELEASE){
+	  terminals[cur_terminal].alt_pressed = 0;
   }
 }
 
@@ -422,10 +371,14 @@ void keyboard_interrupt_handler(void){
 
     /* Read the keyboard data buffer to get the current character */
 		uint8_t scan_code = inb(0x60);
-		
+
 		//printf("\n%d\n",scan_code);
-		
+
 		if((scan_code >= CAP_OFFSET && scan_code <= UP_BOUND) || (scan_code >= (CAP_OFFSET + UP_BOUND))){
+      /* Allow interrupts again */
+  		restore_flags(flags);
+      /* Unmask the IRQ1 on the PIC */
+  		enable_irq(IRQ_NUM);
 			return;
 		}
 

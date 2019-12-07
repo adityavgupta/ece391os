@@ -31,24 +31,13 @@ jump_table stdout_table = {terminal_write, invalid_read, terminal_open, terminal
 
 /* Process number: 1st process has pid 1, 0 means no processes have been launched */
 int32_t process_num = 0;
-/* Keeps track of the number of shells currently running for the case where exit is called */
-int32_t shell_num = 0;
-/* Keeps track of the process numbers of the shells */
+
+/* Keeps track of the process numbers of the terminals */
 int32_t proc_shell[3] = {-1, -1, -1};
 
 uint32_t program_addr_test[3];
 
-/*
- * get_process_num
- *		Description: Allows an other files to get the processnum
- *		Inputs: None
- *		Outputs: none
- *		Return Value: The process number
- *		Side Effects: None
- */
-int32_t get_process_num(void){
-	return process_num;
-}
+int32_t process_array[MAX_PROGS];
 
 /*
  * halt
@@ -60,12 +49,14 @@ int32_t get_process_num(void){
  */
 int32_t halt(uint8_t status){
   /* If shell tries to halt, just launch shell again */
-  if(process_num == proc_shell[current_shell]){
+  pcb_t* cur_pcb = get_pcb_add();   /* Get the current process pcb */
+
+  if(cur_pcb->pid == proc_shell[cur_terminal]){
     asm volatile("       \n\
       movl %0, %%ecx     \n\
       jmp context_switch"
       :
-      : "r" (program_addr_test[current_shell])
+      : "r" (program_addr_test[cur_terminal])
       : "ecx"
     );
   }
@@ -78,8 +69,9 @@ int32_t halt(uint8_t status){
   }
 
   process_num--; /* Decrement process number */
+  process_array[cur_pcb->pid - 1] = -1;
 
-  pcb_t* cur_pcb = get_pcb_add();   /* Get the current process pcb */
+  terminals[cur_terminal].cur_pid = cur_pcb->parent_pid; /* Update current running process on the terminal */
   cur_pcb->process_state = STOPPED; /* Set process state to stopped */
   tss.esp0 = cur_pcb->parent_esp;   /* Set TSS esp0 back to parent stack pointer */
 
@@ -142,6 +134,12 @@ int32_t execute(const uint8_t* command){
   } */
 	uint8_t filename[NAME_LENGTH + 1]; /* Name of the file, with null terminate */
   int32_t i = 0; /* Loop variable */
+
+  if(process_num == 0){
+    for(i = 0; i < MAX_PROGS; i++) process_array[i] = -1;
+  }
+
+  i = 0;
 
   /* Mask interrupts */
   cli();
@@ -210,8 +208,19 @@ int32_t execute(const uint8_t* command){
   }
   args[BUF_LENGTH-1] = '\0';
 
+  /* Create pcb */
+  pcb_t pcb;
+  /* Find a free process slot */
+  for(i = 0; i < MAX_PROGS; i++){
+    if(process_array[i] == -1){
+      pcb.pid = i;
+      process_array[i] = 1; /* Mark process slot as in use */
+      break;
+    }
+  }
+
   /* Set up user page */
-  set_page_dir_entry(USER_PROG, EIGHT_MB + (process_num++)*FOUR_MB);
+  set_page_dir_entry(USER_PROG, EIGHT_MB + (pcb.pid++)*FOUR_MB);
 
   /* Flush tlb */
   asm volatile ("      \n\
@@ -228,10 +237,7 @@ int32_t execute(const uint8_t* command){
     return -1;
   }
 
-  /* Create pcb */
-  pcb_t pcb;
-  pcb.pid = process_num;
-  pcb.parent_pid = get_pcb_add()->pid;
+  pcb.parent_pid = terminals[cur_terminal].cur_pid;
   /* Load stdin and stdout jump table and mark as in use */
   pcb.fdt[0].jump_ptr = &stdin_table;
   pcb.fdt[1].jump_ptr = &stdout_table;
@@ -246,9 +252,11 @@ int32_t execute(const uint8_t* command){
     pcb.fdt[i].flags = -1;
   }
 
+  process_num++;
+
   /* Set parent esp and ebp for child processes */
   if(process_num >= 2){
-    pcb.parent_esp = EIGHT_MB - (process_num-2)*EIGHT_KB;
+    pcb.parent_esp = EIGHT_MB - (terminals[cur_terminal].cur_pid-1)*EIGHT_KB;
 
     asm volatile("  \n\
        movl %%ebp, %0"
@@ -256,21 +264,23 @@ int32_t execute(const uint8_t* command){
     );
   }
 
+  /* Store terminal's current running process */
+  terminals[cur_terminal].cur_pid = pcb.pid;
+
   /* Place pcb in kernel memory */
-  memcpy((void *)(EIGHT_MB - process_num*EIGHT_KB), &pcb, sizeof(pcb));
+  memcpy((void *)(EIGHT_MB - pcb.pid*EIGHT_KB), &pcb, sizeof(pcb));
 
   /* Set TSS to point to kernel stack */
-  tss.esp0 = EIGHT_MB - (process_num - 1)*EIGHT_KB;
+  tss.esp0 = EIGHT_MB - (pcb.pid - 1)*EIGHT_KB;
   tss.ss0 = KERNEL_DS;
 
 
   /* Get address of first instruction */
   uint32_t program_addr = *(uint32_t*)(ELF_buf + 24);
 
-  if(strncmp((int8_t*)filename, "shell", strlen((int8_t*)filename)) == 0 && proc_shell[current_shell] == -1){
-  	proc_shell[current_shell] = process_num;
-	  shell_num++;
-    program_addr_test[current_shell] = program_addr;
+  if(strncmp((int8_t*)filename, "shell", strlen((int8_t*)filename)) == 0 && proc_shell[cur_terminal] == -1){
+  	proc_shell[cur_terminal] = pcb.pid;
+    program_addr_test[cur_terminal] = program_addr;
   }
 
   /* Put program_addr into ecx and jump to the context switch */
