@@ -10,11 +10,16 @@
 
 /* Maximum number of file descriptor indexes */
 #define MAX_FD_NUM 7
+#define EIGHT_MB        0x800000
+#define FOUR_MB         0x400000
+#define EIGHT_KB        0x2000
+#define USER_PROG       0x8000000
 
 #ifndef ASM
 
 /* Number of active processes */
 extern int32_t process_num;
+extern int32_t cur_terminal;
 
 /* Jump table for system calls */
 typedef struct jump_table{

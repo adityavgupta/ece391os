@@ -3,15 +3,14 @@
 #include "paging.h"
 #include "lib.h"
 #include "kb.h"
+#include "pit.h"
 
-#define EIGHT_MB        0x800000
-#define FOUR_MB         0x400000
-#define USER_PROG       0x8000000
+sched_node terminals[3];
+
 #define PROG_OFFSET     0x00048000
 #define RUNNING         0
 #define STOPPED         1
 #define MAX_PROG_SIZE   FOUR_MB - PROG_OFFSET
-#define EIGHT_KB        0x2000
 #define MAX_PROGS       2
 #define RTC_FILE_TYPE   0
 #define DIR_FILE_TYPE   1
@@ -33,6 +32,7 @@ jump_table stdout_table = {terminal_write, invalid_read, terminal_open, terminal
 /* Process number: 1st process has pid 1, 0 means no processes have been launched */
 int32_t process_num = 0;
 
+int32_t cur_terminal=0;
 /*
  * halt
  *    DESCRIPTION: Halt system call, restores parent process paging and data and closes fds
@@ -59,6 +59,11 @@ int32_t halt(uint8_t status){
   pcb_t* cur_pcb = get_pcb_add();   /* Get the current process pcb */
   cur_pcb->process_state = STOPPED; /* Set process state to stopped */
   tss.esp0 = cur_pcb->parent_esp;   /* Set TSS esp0 back to parent stack pointer */
+
+
+  sched_arr[cur_sched_term].process_num = cur_pcb->parent_pid;
+  sched_arr[cur_sched_term].esp = cur_pcb->parent_esp;
+  sched_arr[cur_sched_term].ebp = cur_pcb->parent_ebp;
 
   /* Remap user program paging back to parent program */
   set_page_dir_entry(USER_PROG, EIGHT_MB + (cur_pcb->parent_pid - 1)*FOUR_MB);
@@ -137,7 +142,34 @@ int32_t execute(const uint8_t* command){
     sti();
     return -1;
   }
-
+  int added_base=0;
+  if(terminals[cur_terminal].process_num==-1){
+    added_base=1;
+    int i=0;
+    while(sched_arr[i].process_num!=-1 && i<SCHED_SIZE){
+      i++;
+    }
+    sched_arr[i].process_num=process_num+1;
+    sched_arr[i].terminal_num=cur_terminal;
+    switch(cur_terminal){
+      case 0:
+        sched_arr[i].video_buffer=FIRST_SHELL;
+        break;
+      case 1:
+        sched_arr[i].video_buffer=SECOND_SHELL;
+        break;
+      case 2:
+        sched_arr[i].video_buffer=THIRD_SHELL;
+        break;
+    }
+    sched_arr[i].esp = EIGHT_MB - (process_num)*EIGHT_KB;
+    sched_arr[i].ebp = EIGHT_MB - (process_num)*EIGHT_KB;
+  }
+  else{
+    sched_arr[cur_sched_term].process_num = process_num+1;
+    sched_arr[cur_sched_term].esp = EIGHT_MB - (process_num)*EIGHT_KB;
+    sched_arr[cur_sched_term].ebp = EIGHT_MB - (process_num)*EIGHT_KB;
+  }
   /* Read the executable */
   uint8_t ELF_buf[NAME_LENGTH];
   uint32_t size; /* Size of executable file */
@@ -187,7 +219,7 @@ int32_t execute(const uint8_t* command){
   args[BUF_LENGTH-1] = '\0';
 
   /* Set up user page */
-  set_page_dir_entry(USER_PROG, EIGHT_MB + (process_num++)*FOUR_MB);
+  if(!added_base)set_page_dir_entry(USER_PROG, EIGHT_MB + (process_num++)*FOUR_MB);
 
   /* Flush tlb */
   asm volatile ("      \n\
@@ -482,7 +514,7 @@ int32_t vidmap(uint8_t** screen_start){
   get_pcb_add()->vidmem = 1;
 
   /* Add page to page table */
-  set_page_table_entry(USER_VIDEO_MEM, VIDEO_MEM_ADDR);
+  set_page_table2_entry(USER_VIDEO_MEM, VIDEO_MEM_ADDR);
 
   /* Flush tlb */
   asm volatile ("      \n\

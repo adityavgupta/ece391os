@@ -42,15 +42,31 @@ int32_t set_page_dir_entry(int32_t virtual, int32_t physical){
 }
 
 /*
- * set_page_table_entry
- *    DESCRIPTION: Enables a page in the page table
+ * set_page_table1_entry
+ *    DESCRIPTION: Enables a page in the 1stpage table
  *    INPUTS: int32_t virtual - virtual address
  *            int32_t physical - physical address to map to
  *    OUTPUTS: none
  *    RETURN VALUE: 0 for success
  *    SIDE EFFECTS: none
  */
-int32_t set_page_table_entry(int32_t virtual, int32_t physical){
+int32_t set_page_table1_entry(int32_t virtual, int32_t physical){
+  first_page_table[(virtual >> PT_OFFSET) & PAGE_INDEX] = physical | USER_MODE;
+
+  /* Return success */
+  return 0;
+}
+
+/*
+ * set_page_table2_entry
+ *    DESCRIPTION: Enables a page in the 2nd page table
+ *    INPUTS: int32_t virtual - virtual address
+ *            int32_t physical - physical address to map to
+ *    OUTPUTS: none
+ *    RETURN VALUE: 0 for success
+ *    SIDE EFFECTS: none
+ */
+int32_t set_page_table2_entry(int32_t virtual, int32_t physical){
   second_page_table[(virtual >> PT_OFFSET) & PAGE_INDEX] = physical | USER_MODE;
 
   /* Return success */

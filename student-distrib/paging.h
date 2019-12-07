@@ -9,8 +9,11 @@
 /* Create an entry in the page directory */
 int32_t set_page_dir_entry(int32_t virtual, int32_t physical);
 
-/* Create an entry in the page table */
-int32_t set_page_table_entry(int32_t virtual, int32_t physical);
+/* Create an entry in the 2nd page table */
+int32_t set_page_table2_entry(int32_t virtual, int32_t physical);
+/* Create an entry in the 1st page table */
+int32_t set_page_table1_entry(int32_t virtual, int32_t physical);
+
 
 int32_t disable_page_entry(int32_t virtual);
 
