@@ -13,11 +13,11 @@ int32_t cur_terminal = 0;
 sched_node sched_arr[SCHED_SIZE];
 
 void init_sched(){
-	sched_arr[0].process_num = -1;
+	sched_arr[0].process_num = 1;
   sched_arr[0].terminal_num = 0;
   sched_arr[0].video_buffer = FIRST_SHELL;
-  sched_arr[0].esp = EIGHT_MB - EIGHT_KB;
-  sched_arr[0].ebp = EIGHT_MB - EIGHT_KB;
+  sched_arr[0].esp = EIGHT_MB;
+  sched_arr[0].ebp = EIGHT_MB;
 
   sched_arr[1].process_num = -1;
   sched_arr[1].terminal_num = -1;
@@ -48,11 +48,10 @@ void pit_init(void){
 }
 
 //next_proc = index into sched_arr
-void switch_process(int32_t next_proc){
-  int32_t cur_proc = (next_proc - 1) % SCHED_SIZE;
-  pcb_t* cur_pcb = get_pcb_add();
+void switch_process(int32_t cur_proc, int32_t next_proc){
+  // pcb_t* cur_pcb = get_pcb_add();
 
-  if((cur_pcb->pid) == sched_arr[next_proc].process_num) return;
+  if(cur_proc == next_proc) return;
 
   asm volatile("    \n\
      movl %%ebp, %0 \n\
@@ -99,6 +98,8 @@ void pit_interrupt_handler(void){
   /* Send EOI signal */
   send_eoi(PIT_IRQ_NUM);
 
+	int32_t cur_proc = cur_sched_term;
+
   cur_sched_term = (cur_sched_term + 1) % SCHED_SIZE;
 
   int32_t init_sched_term = cur_sched_term;
@@ -115,7 +116,7 @@ void pit_interrupt_handler(void){
     }
   }
 
-  switch_process(cur_sched_term);
+  switch_process(cur_proc,cur_sched_term);
 
   /* Re-enable interrupts and restores flags */
   restore_flags(flags);

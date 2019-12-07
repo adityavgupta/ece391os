@@ -37,7 +37,7 @@ void init_shell(void){
 	terminals[0].running = TRUE;
 	terminals[0].x = 0;
 	terminals[0].y = 0;
-	terminals[0].cur_pid = -1;
+	terminals[0].cur_pid = 1;
 	terminals[0].vid_mem = (char*)FIRST_SHELL;
 	terminals[0].line_buffer_flag = 0;
 	terminals[0].buf_index = 0;
