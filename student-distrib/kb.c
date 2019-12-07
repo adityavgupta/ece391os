@@ -2,6 +2,7 @@
 #include "x86_desc.h"
 #include "i8259.h"
 #include "lib.h"
+#include "pit.h"
 
 #define IRQ_NUM           1
 #define RECENT_RELEASE    0x80

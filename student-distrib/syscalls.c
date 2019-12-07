@@ -3,15 +3,11 @@
 #include "paging.h"
 #include "lib.h"
 #include "kb.h"
+#include "pit.h"
 
-#define EIGHT_MB        0x800000
-#define FOUR_MB         0x400000
-#define USER_PROG       0x8000000
-#define PROG_OFFSET     0x00048000
 #define RUNNING         0
 #define STOPPED         1
 #define MAX_PROG_SIZE   FOUR_MB - PROG_OFFSET
-#define EIGHT_KB        0x2000
 #define MAX_PROGS       6
 
 /* Function pointers for rtc */
@@ -222,13 +218,15 @@ int32_t execute(const uint8_t* command){
       break;
     }
   }
-
+  int32_t sched_parent_pid;
   if(terminals[cur_terminal].cur_pid == -1){
     int i=0;
     while(sched_arr[i].process_num != -1 && i < SCHED_SIZE){
       i++;
     }
-    sched_arr[i].process_num = process_num + 1;
+    terminals[cur_terminal].cur_pid = pcb.pid;
+    sched_arr[i].process_num = pcb.pid;
+    sched_parent_pid = pcb.pid;
     sched_arr[i].terminal_num = cur_terminal;
     switch(cur_terminal){
       case 0:
@@ -245,7 +243,8 @@ int32_t execute(const uint8_t* command){
     sched_arr[i].ebp = EIGHT_MB - (process_num)*EIGHT_KB;
   }
   else{
-    sched_arr[cur_sched_term].process_num = process_num + 1;
+    sched_parent_pid = sched_arr[cur_sched_term].process_num;
+    sched_arr[cur_sched_term].process_num = pcb.pid;
     sched_arr[cur_sched_term].esp = EIGHT_MB - (process_num)*EIGHT_KB;
     sched_arr[cur_sched_term].ebp = EIGHT_MB - (process_num)*EIGHT_KB;
   }
@@ -268,7 +267,7 @@ int32_t execute(const uint8_t* command){
     return -1;
   }
 
-  pcb.parent_pid = terminals[cur_terminal].cur_pid;
+  pcb.parent_pid = sched_parent_pid;
   /* Load stdin and stdout jump table and mark as in use */
   pcb.fdt[0].jump_ptr = &stdin_table;
   pcb.fdt[1].jump_ptr = &stdout_table;
@@ -287,7 +286,7 @@ int32_t execute(const uint8_t* command){
 
   /* Set parent esp and ebp for child processes */
   if(process_num >= 2){
-    pcb.parent_esp = EIGHT_MB - (terminals[cur_terminal].cur_pid-1)*EIGHT_KB;
+    pcb.parent_esp = EIGHT_MB - (sched_parent_pid-1)*EIGHT_KB;
 
     asm volatile("  \n\
        movl %%ebp, %0"
@@ -553,7 +552,7 @@ int32_t vidmap(uint8_t** screen_start){
   get_pcb_add()->vidmem = 1;
 
   /* Add page to page table */
-  set_page_table_entry(USER_VIDEO_MEM, VIDEO_MEM_ADDR);
+  set_page_table2_entry(USER_VIDEO_MEM, VIDEO_MEM_ADDR);
 
   /* Flush tlb */
   asm volatile ("      \n\

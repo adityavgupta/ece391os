@@ -14,10 +14,6 @@
 #define NUM_EXCEPTION 32
 #define SYS_CALL_INDEX 0x80
 
-#define EIGHT_MB 0x800000
-#define FOUR_MB 0x400000
-#define USER_PROG 0x08000000
-#define PROG_OFFSET 0x00048000
 #define RUNNING 0
 #define STOPPED 1
 

@@ -6,6 +6,7 @@
 #include "syscalls.h"
 #include "x86_desc.h"
 #include "i8259.h"
+#include "pit.h"
 
 #define VIDEO       0xB8000
 #define PAGE_SIZE	  4096
@@ -20,9 +21,6 @@
 #define TRUE 1
 #define FALSE 0
 #define PAGE_SIZE      4096
-#define FIRST_SHELL    VIDEO+PAGE_SIZE
-#define SECOND_SHELL   VIDEO+2*PAGE_SIZE
-#define THIRD_SHELL    VIDEO+3*PAGE_SIZE
 #define IRQ_NUM        1
 #define USER_PROG      0x8000000
 #define PROG_OFFSET    0x00048000
@@ -39,7 +37,7 @@ void init_shell(void){
 	terminals[0].running = TRUE;
 	terminals[0].x = 0;
 	terminals[0].y = 0;
-	terminals[0].cur_pid = 1;
+	terminals[0].cur_pid = -1;
 	terminals[0].vid_mem = (char*)FIRST_SHELL;
 	terminals[0].line_buffer_flag = 0;
 	terminals[0].buf_index = 0;

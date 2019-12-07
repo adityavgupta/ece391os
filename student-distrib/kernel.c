@@ -161,7 +161,7 @@ void entry(unsigned long magic, unsigned long addr) {
     rtc_init();
 
     /* Initialize PIT */
-    //pit_init();
+    pit_init();
 
   	/*Initialize Shells*/
   	init_shell();

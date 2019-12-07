@@ -5,12 +5,12 @@
 #include "paging.h"
 #include "x86_desc.h"
 
-
 #define OSCILLATOR_FREQ 1193182      /* PIT oscillator runs at approximately 1.193182 MHz */
 #define INTERRUPT_INTERVAL 100    /* we want PIT interrupts every 100Hz = 10ms */
 
 int32_t cur_sched_term = 0;
 int32_t cur_terminal = 0;
+sched_node sched_arr[SCHED_SIZE];
 
 void init_sched(){
 	sched_arr[0].process_num = -1;
@@ -106,6 +106,7 @@ void pit_interrupt_handler(void){
   while(sched_arr[cur_sched_term].process_num == -1){
     cur_sched_term = (cur_sched_term + 1) % SCHED_SIZE;
     if(cur_sched_term == init_sched_term){
+			cur_sched_term=0;
       /* Re-enable interrupts and restores flags */
       restore_flags(flags);
       /* Unmask PIC interrupts*/
