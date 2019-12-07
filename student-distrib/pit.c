@@ -48,17 +48,12 @@ void pit_init(void){
 }
 
 //next_proc = index into sched_arr
-void switch_process(int32_t next_proc){
-  int32_t cur_proc = (next_proc - 1) % SCHED_SIZE;
+void switch_process(int32_t cur_proc,int32_t next_proc){
+  //int32_t cur_proc = next_proc==0?SCHED_SIZE-1:next_proc-1;
   pcb_t* cur_pcb = get_pcb_add();
 
-  if((cur_pcb->pid) == sched_arr[next_proc].process_num) return;
+  //if((cur_pcb->pid) == sched_arr[next_proc].process_num) return;
 
-  asm volatile("    \n\
-     movl %%ebp, %0 \n\
-     movl %%esp, %1"
-     : "=r"(sched_arr[cur_proc].ebp), "=r"(sched_arr[cur_proc].esp)
-  );
 
   tss.esp0 = EIGHT_MB - (sched_arr[next_proc].process_num - 1)*EIGHT_KB;
   // tss.esp0 = sched_arr[next_proc].current_esp;
@@ -70,6 +65,13 @@ void switch_process(int32_t next_proc){
   } else{
     set_page_table1_entry(VIDEO_MEM_ADDR, sched_arr[next_proc].video_buffer);
   }
+
+
+  asm volatile("    \n\
+     movl %%ebp, %0 \n\
+     movl %%esp, %1"
+     : "=r"(sched_arr[cur_proc].ebp), "=r"(sched_arr[cur_proc].esp)
+  );
 
   asm volatile("    \n\
      movl %0, %%esp \n\
@@ -85,6 +87,7 @@ void switch_process(int32_t next_proc){
      :
      : "eax"
 	);
+
 }
 
 void pit_interrupt_handler(void){
@@ -99,23 +102,27 @@ void pit_interrupt_handler(void){
   /* Send EOI signal */
   send_eoi(PIT_IRQ_NUM);
 
+  int32_t init_sched_term = cur_sched_term;
+
   cur_sched_term = (cur_sched_term + 1) % SCHED_SIZE;
 
-  int32_t init_sched_term = cur_sched_term;
 
   while(sched_arr[cur_sched_term].process_num == -1){
     cur_sched_term = (cur_sched_term + 1) % SCHED_SIZE;
     if(cur_sched_term == init_sched_term){
-			cur_sched_term=0;
+			/*
+			cur_sched_term=0;*/
       /* Re-enable interrupts and restores flags */
-      restore_flags(flags);
+      //restore_flags(flags);
       /* Unmask PIC interrupts*/
-      enable_irq(PIT_IRQ_NUM);
-      return;
+      /*
+	  enable_irq(PIT_IRQ_NUM);
+      return;*/
+	  break;
     }
   }
 
-  switch_process(cur_sched_term);
+  switch_process(init_sched_term,cur_sched_term);
 
   /* Re-enable interrupts and restores flags */
   restore_flags(flags);
