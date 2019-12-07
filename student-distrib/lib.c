@@ -34,7 +34,6 @@ static int32_t screen_x;
 static int32_t screen_y;
 static int32_t current_line = 0;
 static char* video_mem = (char *)VIDEO;
-int32_t cur_terminal = 0;
 
 void init_shell(void){
 	terminals[0].running = TRUE;
@@ -52,6 +51,7 @@ void init_shell(void){
 	terminals[1].running = FALSE;
 	terminals[1].x = 0;
 	terminals[1].y = 0;
+	terminals[1].cur_pid = -1;
 	terminals[1].vid_mem = (char*)SECOND_SHELL;
 	terminals[1].line_buffer_flag = 0;
 	terminals[1].buf_index = 0;
@@ -63,6 +63,7 @@ void init_shell(void){
 	terminals[2].running = FALSE;
 	terminals[2].x = 0;
 	terminals[2].y = 0;
+	terminals[2].cur_pid = -1;
 	terminals[2].vid_mem = (char*)THIRD_SHELL;
 	terminals[2].line_buffer_flag = 0;
 	terminals[2].buf_index = 0;
@@ -86,12 +87,12 @@ int32_t change_shell(int32_t shell_num){
 	terminals[cur_terminal].x = screen_x;
 	terminals[cur_terminal].y = screen_y;
 
-	asm volatile("    \n\
+	/* asm volatile("    \n\
      movl %%esp, %0 \n\
 		 movl %%ebp, %1"
      : "=r"(terminals[cur_terminal].esp), "=r"(terminals[cur_terminal].ebp)
   );
-
+ */
 	if(terminals[shell_num].running == FALSE){
 		cur_terminal = shell_num;
 		terminals[shell_num].running = TRUE;
@@ -109,8 +110,8 @@ int32_t change_shell(int32_t shell_num){
 		screen_y = terminals[shell_num].y;
 		move_cursor(screen_x, screen_y);
 
-		set_page_dir_entry(USER_PROG, EIGHT_MB + (terminals[shell_num].cur_pid - 1)*FOUR_MB);
-
+		// set_page_dir_entry(USER_PROG, EIGHT_MB + (terminals[shell_num].cur_pid - 1)*FOUR_MB);
+/*
 		asm volatile ("     \n\
 			movl %%cr3, %%eax \n\
 			movl %%eax, %%cr3"
@@ -127,6 +128,7 @@ int32_t change_shell(int32_t shell_num){
 			:
 			: "r" (terminals[shell_num].esp), "r" (terminals[shell_num].ebp)
 		);
+		*/
 	}
 
 	return 0;

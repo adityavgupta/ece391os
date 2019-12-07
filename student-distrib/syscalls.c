@@ -71,9 +71,13 @@ int32_t halt(uint8_t status){
   process_num--; /* Decrement process number */
   process_array[cur_pcb->pid - 1] = -1;
 
-  terminals[cur_terminal].cur_pid = cur_pcb->parent_pid; /* Update current running process on the terminal */
+  // terminals[cur_terminal].cur_pid = cur_pcb->parent_pid; /* Update current running process on the terminal */
   cur_pcb->process_state = STOPPED; /* Set process state to stopped */
   tss.esp0 = cur_pcb->parent_esp;   /* Set TSS esp0 back to parent stack pointer */
+
+  sched_arr[cur_sched_term].process_num = cur_pcb->parent_pid;
+  sched_arr[cur_sched_term].esp = cur_pcb->parent_esp;
+  sched_arr[cur_sched_term].ebp = cur_pcb->parent_ebp;
 
   /* Remap user program paging back to parent program */
   set_page_dir_entry(USER_PROG, EIGHT_MB + (cur_pcb->parent_pid - 1)*FOUR_MB);
@@ -213,14 +217,41 @@ int32_t execute(const uint8_t* command){
   /* Find a free process slot */
   for(i = 0; i < MAX_PROGS; i++){
     if(process_array[i] == -1){
-      pcb.pid = i;
+      pcb.pid = i + 1;
       process_array[i] = 1; /* Mark process slot as in use */
       break;
     }
   }
 
+  if(terminals[cur_terminal].cur_pid==-1){
+    int i=0;
+    while(sched_arr[i].process_num!=-1 && i<SCHED_SIZE){
+      i++;
+    }
+    sched_arr[i].process_num=process_num+1;
+    sched_arr[i].terminal_num=cur_terminal;
+    switch(cur_terminal){
+      case 0:
+        sched_arr[i].video_buffer=FIRST_SHELL;
+        break;
+      case 1:
+        sched_arr[i].video_buffer=SECOND_SHELL;
+        break;
+      case 2:
+        sched_arr[i].video_buffer=THIRD_SHELL;
+        break;
+    }
+    sched_arr[i].esp = EIGHT_MB - (process_num)*EIGHT_KB;
+    sched_arr[i].ebp = EIGHT_MB - (process_num)*EIGHT_KB;
+  }
+  else{
+    sched_arr[cur_sched_term].process_num = process_num+1;
+    sched_arr[cur_sched_term].esp = EIGHT_MB - (process_num)*EIGHT_KB;
+    sched_arr[cur_sched_term].ebp = EIGHT_MB - (process_num)*EIGHT_KB;
+  }
+
   /* Set up user page */
-  set_page_dir_entry(USER_PROG, EIGHT_MB + (pcb.pid++)*FOUR_MB);
+  set_page_dir_entry(USER_PROG, EIGHT_MB + (pcb.pid - 1)*FOUR_MB);
 
   /* Flush tlb */
   asm volatile ("      \n\
