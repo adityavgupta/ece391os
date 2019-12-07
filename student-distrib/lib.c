@@ -110,6 +110,19 @@ int32_t change_shell(int32_t shell_num){
 		screen_y = terminals[shell_num].y;
 		move_cursor(screen_x, screen_y);
 
+		if(shell_num == cur_sched_term){
+			set_page_table1_entry(VIDEO, VIDEO);
+		}
+
+		asm volatile ("     \n\
+			movl %%cr3, %%eax \n\
+			movl %%eax, %%cr3"
+			:
+			:
+			: "eax"
+		);
+
+
 		// set_page_dir_entry(USER_PROG, EIGHT_MB + (terminals[shell_num].cur_pid - 1)*FOUR_MB);
 /*
 		asm volatile ("     \n\

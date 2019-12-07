@@ -13,35 +13,35 @@ int32_t cur_sched_term = 0;
 int32_t cur_terminal = 0;
 
 void init_sched(){
-	sched_arr[0].process_num=-1;
-  sched_arr[0].terminal_num=0;
-  sched_arr[0].video_buffer=FIRST_SHELL;
-  sched_arr[0].esp= EIGHT_MB - EIGHT_KB;
-  sched_arr[0].ebp= EIGHT_MB - EIGHT_KB;
+	sched_arr[0].process_num = -1;
+  sched_arr[0].terminal_num = 0;
+  sched_arr[0].video_buffer = FIRST_SHELL;
+  sched_arr[0].esp = EIGHT_MB - EIGHT_KB;
+  sched_arr[0].ebp = EIGHT_MB - EIGHT_KB;
 
-  sched_arr[1].process_num=-1;
-  sched_arr[1].terminal_num=-1;
-  sched_arr[1].video_buffer=0;
-  sched_arr[1].esp= 0;
-  sched_arr[1].ebp= 0;
+  sched_arr[1].process_num = -1;
+  sched_arr[1].terminal_num = -1;
+  sched_arr[1].video_buffer = 0;
+  sched_arr[1].esp = 0;
+  sched_arr[1].ebp = 0;
 
-  sched_arr[2].process_num=-1;
-  sched_arr[2].terminal_num=-1;
-  sched_arr[2].video_buffer=0;
-  sched_arr[2].esp= 0;
-  sched_arr[2].ebp= 0;
+  sched_arr[2].process_num = -1;
+  sched_arr[2].terminal_num = -1;
+  sched_arr[2].video_buffer = 0;
+  sched_arr[2].esp = 0;
+  sched_arr[2].ebp = 0;
 }
 
 void pit_init(void){
   uint32_t divisor = OSCILLATOR_FREQ / INTERRUPT_INTERVAL; /* frequency divisor of PIT */
   uint32_t divisor_low = divisor & 0xFF; /* low byte of divisor */
-  uint32_t divisor_high = (divisor>>8) & 0xFF; /* high byte of divisor */
+  uint32_t divisor_high = (divisor >> 8) & 0xFF; /* high byte of divisor */
 
 	init_sched();
 
-  outb(0x36,PIT_COMMAND_PORT); /* 0x36 = command to set PIT to repeating mode */
-  outb(divisor_low,PIT_CHANNEL0); /* write low and high byte of divisor to channel 0 */
-  outb(divisor_high,PIT_CHANNEL0);
+  outb(0x36, PIT_COMMAND_PORT); /* 0x36 = command to set PIT to repeating mode */
+  outb(divisor_low, PIT_CHANNEL0); /* write low and high byte of divisor to channel 0 */
+  outb(divisor_high, PIT_CHANNEL0);
 
   /* Enable PIT interrupts on PIC */
   enable_irq(PIT_IRQ_NUM);
@@ -49,45 +49,42 @@ void pit_init(void){
 
 //next_proc = index into sched_arr
 void switch_process(int32_t next_proc){
-  int32_t cur_proc = (next_proc-1)%SCHED_SIZE;
+  int32_t cur_proc = (next_proc - 1) % SCHED_SIZE;
   pcb_t* cur_pcb = get_pcb_add();
 
-  if((cur_pcb->pid) == sched_arr[next_proc].process_num)return;
+  if((cur_pcb->pid) == sched_arr[next_proc].process_num) return;
 
-  asm volatile(" \n\
-       movl %%ebp, %0 \n\
-       movl %%esp, %1"
-       : "=r"(sched_arr[cur_proc].ebp),"=r"(sched_arr[cur_proc].esp)
-    );
+  asm volatile("    \n\
+     movl %%ebp, %0 \n\
+     movl %%esp, %1"
+     : "=r"(sched_arr[cur_proc].ebp), "=r"(sched_arr[cur_proc].esp)
+  );
 
-    tss.esp0 = EIGHT_MB - (sched_arr[next_proc].process_num - 1)*EIGHT_KB;
-    // tss.esp0 = sched_arr[next_proc].current_esp;
+  tss.esp0 = EIGHT_MB - (sched_arr[next_proc].process_num - 1)*EIGHT_KB;
+  // tss.esp0 = sched_arr[next_proc].current_esp;
 
-    set_page_dir_entry(USER_PROG, EIGHT_MB + (sched_arr[next_proc].process_num-1)*FOUR_MB);
+  set_page_dir_entry(USER_PROG, EIGHT_MB + (sched_arr[next_proc].process_num - 1)*FOUR_MB);
 
-    if(sched_arr[next_proc].terminal_num == cur_terminal){
-      set_page_table1_entry(VIDEO_MEM_ADDR, VIDEO_MEM_ADDR);
-    }
-    else{
-      set_page_table1_entry(VIDEO_MEM_ADDR, sched_arr[next_proc].video_buffer);
-    }
+  if(sched_arr[next_proc].terminal_num == cur_terminal){
+    set_page_table1_entry(VIDEO_MEM_ADDR, VIDEO_MEM_ADDR);
+  } else{
+    set_page_table1_entry(VIDEO_MEM_ADDR, sched_arr[next_proc].video_buffer);
+  }
 
-    asm volatile(" \n\
-         movl %0, %%esp \n\
-         movl %1,%%ebp"
-         :
-         : "r"(sched_arr[next_proc].esp), "r"(sched_arr[next_proc].ebp)
-    );
+  asm volatile("    \n\
+     movl %0, %%esp \n\
+     movl %1,%%ebp"
+     :
+     : "r"(sched_arr[next_proc].esp), "r"(sched_arr[next_proc].ebp)
+  );
 
-    asm volatile ("      \n\
+  asm volatile ("      \n\
      movl %%cr3, %%eax \n\
      movl %%eax, %%cr3"
      :
      :
      : "eax"
 	);
-
-
 }
 
 void pit_interrupt_handler(void){
@@ -102,11 +99,13 @@ void pit_interrupt_handler(void){
   /* Send EOI signal */
   send_eoi(PIT_IRQ_NUM);
 
-  cur_sched_term=(cur_sched_term+1)%SCHED_SIZE;
- int32_t init_sched_term=cur_sched_term;
- while(sched_arr[cur_sched_term].process_num==-1){
-    cur_sched_term=(cur_sched_term+1)%SCHED_SIZE;
-    if(cur_sched_term==init_sched_term){
+  cur_sched_term = (cur_sched_term + 1) % SCHED_SIZE;
+
+  int32_t init_sched_term = cur_sched_term;
+
+  while(sched_arr[cur_sched_term].process_num == -1){
+    cur_sched_term = (cur_sched_term + 1) % SCHED_SIZE;
+    if(cur_sched_term == init_sched_term){
       /* Re-enable interrupts and restores flags */
       restore_flags(flags);
       /* Unmask PIC interrupts*/
@@ -114,7 +113,8 @@ void pit_interrupt_handler(void){
       return;
     }
   }
- switch_process(cur_sched_term);
+
+  switch_process(cur_sched_term);
 
   /* Re-enable interrupts and restores flags */
   restore_flags(flags);

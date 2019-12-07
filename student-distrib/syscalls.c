@@ -223,29 +223,29 @@ int32_t execute(const uint8_t* command){
     }
   }
 
-  if(terminals[cur_terminal].cur_pid==-1){
+  if(terminals[cur_terminal].cur_pid == -1){
     int i=0;
-    while(sched_arr[i].process_num!=-1 && i<SCHED_SIZE){
+    while(sched_arr[i].process_num != -1 && i < SCHED_SIZE){
       i++;
     }
-    sched_arr[i].process_num=process_num+1;
-    sched_arr[i].terminal_num=cur_terminal;
+    sched_arr[i].process_num = process_num + 1;
+    sched_arr[i].terminal_num = cur_terminal;
     switch(cur_terminal){
       case 0:
-        sched_arr[i].video_buffer=FIRST_SHELL;
+        sched_arr[i].video_buffer = FIRST_SHELL;
         break;
       case 1:
-        sched_arr[i].video_buffer=SECOND_SHELL;
+        sched_arr[i].video_buffer = SECOND_SHELL;
         break;
       case 2:
-        sched_arr[i].video_buffer=THIRD_SHELL;
+        sched_arr[i].video_buffer = THIRD_SHELL;
         break;
     }
     sched_arr[i].esp = EIGHT_MB - (process_num)*EIGHT_KB;
     sched_arr[i].ebp = EIGHT_MB - (process_num)*EIGHT_KB;
   }
   else{
-    sched_arr[cur_sched_term].process_num = process_num+1;
+    sched_arr[cur_sched_term].process_num = process_num + 1;
     sched_arr[cur_sched_term].esp = EIGHT_MB - (process_num)*EIGHT_KB;
     sched_arr[cur_sched_term].ebp = EIGHT_MB - (process_num)*EIGHT_KB;
   }
