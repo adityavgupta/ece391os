@@ -94,19 +94,15 @@ int32_t rtc_open(const uint8_t* filename){
   /* Mask interrupts and save flags */
   cli_and_save(flags);
 
-  /* Get the rate needed to set frequency to 2 Hz */
-  // int32_t rate = get_rate(2);
-  //
+  /* Save old REGISTER_A */
   outb(REGISTER_A, RTC_PORT0);
-  //
-  /* Store old register A value */
   uint8_t prevA = inb(RTC_PORT1);
   outb(REGISTER_A, RTC_PORT0);
-  //
-  /* Give the new rate to register A */
-  outb((prevA & 0xF0)|FREQ_2 , RTC_PORT1);
-  //outb((prevA & 0x80)|0x2F , RTC_PORT1);
 
+  /* Give the new rate to register A */
+
+  outb((prevA & 0xF0)|FREQ_2 , RTC_PORT1);
+  get_pcb_add()->freq = 2;
   /* Restore the interrupt flags */
   restore_flags(flags);
 
@@ -123,7 +119,17 @@ int32_t rtc_open(const uint8_t* filename){
  *    SIDE EFFECTS: none
  */
 int32_t rtc_close(int32_t fd){
+  unsigned long flags;
   /* Do nothing for now, until virtualization is added */
+  cli_and_save(flags);
+  /* Save old value of register A */
+  outb(REGISTER_A, RTC_PORT0);
+  uint8_t prevA = inb(RTC_PORT1);
+  outb(REGISTER_A, RTC_PORT0);
+
+  /* Give the new rate to register A */
+  outb((prevA & 0xF0)| FREQ_2, RTC_PORT1);
+  restore_flags(flags);
   return 0;
 }
 
@@ -142,19 +148,22 @@ int32_t rtc_read(int32_t fd, void* buf, int32_t nbytes){
   //rtc_interrupt = 0;
   if(rtc_read_test_flag) printf("Waiting for interrupt\n");
   /* Block until an RTC interrupt occurs */
-  int counter = 1;
-  while(counter!=get_pcb_add()->freq) {
+  int32_t freq;
+  int counter = 0;
+  freq = get_pcb_add()->freq;
+
+  while(counter!=freq) {
     counter++;
-    interrupt_flags[cur_sched_term] = 0;
-    if(counter == get_pcb_add()->freq) {
-      interrupt_flags[cur_sched_term] = 1;
+    interrupt_flags[0] = 0;
+    if(counter == freq) {
+      interrupt_flags[0] = 1;
     }
     while(!interrupt_flags[0]){
 
     }
   }
 
-  //rtc_interrupt = 0;
+  //interrupt_flags[0] = 0;
 
   if(rtc_read_test_flag) printf("Interrupt occurred\n");
   /* Return success */
@@ -237,7 +246,7 @@ int32_t rtc_write(int32_t fd, const void* buf, int32_t nbytes){
   outb(REGISTER_A, RTC_PORT0);
   //
   // /* Give the new rate to register A */
-  outb((prevA & 0x80)| FREQ_1024, RTC_PORT1);
+  outb((prevA & 0xF0)| FREQ_1024, RTC_PORT1);
   //
 
   /* Restore the interrupt flags */

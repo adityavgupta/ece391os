@@ -14,6 +14,7 @@
 #define SLAVE_PIN 2
 #define RTC_IRQ_NUM 8
 
+#define FREQ_0    0x00
 #define FREQ_2    0x0F
 #define FREQ_4    0x0E
 #define FREQ_8    0x0D
