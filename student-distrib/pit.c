@@ -8,6 +8,7 @@
 #define OSCILLATOR_FREQ 1193182      /* PIT oscillator runs at approximately 1.193182 MHz */
 #define INTERRUPT_INTERVAL 100    /* we want PIT interrupts every 100Hz = 10ms */
 
+int32_t prev_sched_term = 0;
 int32_t cur_sched_term = 0;
 int32_t cur_terminal = 0;
 sched_node sched_arr[SCHED_SIZE];
@@ -48,35 +49,35 @@ void pit_init(void){
 }
 
 //next_proc = index into sched_arr
-void switch_process(int32_t cur_proc, int32_t next_proc){
+void switch_process(){
   // pcb_t* cur_pcb = get_pcb_add();
 
-  if(cur_proc == next_proc) return;
+  if(prev_sched_term == cur_sched_term) return;
 
 
-  tss.esp0 = EIGHT_MB - (sched_arr[next_proc].process_num - 1)*EIGHT_KB;
+  tss.esp0 = EIGHT_MB - (sched_arr[cur_sched_term].process_num - 1)*EIGHT_KB;
   // tss.esp0 = sched_arr[next_proc].esp;
 
-  set_page_dir_entry(USER_PROG, EIGHT_MB + (sched_arr[next_proc].process_num - 1)*FOUR_MB);
+  set_page_dir_entry(USER_PROG, EIGHT_MB + (sched_arr[cur_sched_term].process_num - 1)*FOUR_MB);
 
-  if(sched_arr[next_proc].terminal_num == cur_terminal){
+  if(sched_arr[cur_sched_term].terminal_num == cur_terminal){
     set_page_table1_entry(VIDEO_MEM_ADDR, VIDEO_MEM_ADDR);
   } else{
-    set_page_table1_entry(VIDEO_MEM_ADDR, sched_arr[next_proc].video_buffer);
+    set_page_table1_entry(VIDEO_MEM_ADDR, sched_arr[cur_sched_term].video_buffer);
   }
 
 	asm volatile("    \n\
      movl %%esp, %0 \n\
      movl %%ebp, %1"
      :
-     : "r"(sched_arr[cur_proc].esp), "r"(sched_arr[cur_proc].ebp)
+     : "r"(sched_arr[prev_sched_term].esp), "r"(sched_arr[prev_sched_term].ebp)
   );
 
   asm volatile("    \n\
      movl %0, %%esp \n\
      movl %1, %%ebp"
      :
-     : "r"(sched_arr[next_proc].esp), "r"(sched_arr[next_proc].ebp)
+     : "r"(sched_arr[cur_sched_term].esp), "r"(sched_arr[cur_sched_term].ebp)
   );
 
   asm volatile ("      \n\
@@ -100,7 +101,7 @@ void pit_interrupt_handler(void){
   /* Send EOI signal */
   send_eoi(PIT_IRQ_NUM);
 
-	int32_t cur_proc = cur_sched_term;
+	prev_sched_term = cur_sched_term;
 
   cur_sched_term = (cur_sched_term + 1) % SCHED_SIZE;
 
@@ -118,7 +119,7 @@ void pit_interrupt_handler(void){
     }
   }
 
-  switch_process(cur_proc,cur_sched_term);
+  switch_process();
 
   /* Re-enable interrupts and restores flags */
   restore_flags(flags);
