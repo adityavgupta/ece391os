@@ -44,6 +44,7 @@ void init_shell(void){
 	terminals[0].caps_lock = 0;
 	terminals[0].ctrl_pressed = 0;
 	terminals[0].alt_pressed = 0;
+	terminals[0].vid_map = 0;
 
 	terminals[1].x = 0;
 	terminals[1].y = 0;
@@ -54,6 +55,7 @@ void init_shell(void){
 	terminals[1].caps_lock = 0;
 	terminals[1].ctrl_pressed = 0;
 	terminals[1].alt_pressed = 0;
+	terminals[1].vid_map = 0;
 
 	terminals[2].x = 0;
 	terminals[2].y = 0;
@@ -64,6 +66,7 @@ void init_shell(void){
 	terminals[2].caps_lock = 0;
 	terminals[2].ctrl_pressed = 0;
 	terminals[2].alt_pressed = 0;
+	terminals[2].vid_map = 0;
 }
 
 int32_t change_shell(int32_t next){
@@ -78,63 +81,16 @@ int32_t change_shell(int32_t next){
 	/* Copy video memory to buffer */
 	memcpy(terminals[cur_terminal].vid_mem, video_mem, PAGE_SIZE);
 
-	/* Save coordinates */
-	// terminals[cur_terminal].x = screen_x;
-	// terminals[cur_terminal].y = screen_y;
-
-	/*
-	asm volatile("    \n\
-     movl %%esp, %0 \n\
-		 movl %%ebp, %1"
-     : "=r"(terminals[cur_terminal].esp), "=r"(terminals[cur_terminal].ebp)
-  );
-	*/
-
 	/* Set current terminal */
 	cur_terminal = next;
 
 	/* Copy buffer to video memory */
 	memcpy(video_mem, terminals[next].vid_mem, PAGE_SIZE);
 
-	/* Set new coordinates */
-	// screen_x = terminals[next].x;
-	// screen_y = terminals[next].y;
-
 	/* Move cursor */
 	move_cursor(terminals[next].x, terminals[next].y);
 
-	/*
-	set_page_dir_entry(USER_PROG, EIGHT_MB + (terminals[next].cur_pid - 1)*FOUR_MB);
-
-	asm volatile ("     \n\
-		movl %%cr3, %%eax \n\
-		movl %%eax, %%cr3"
-		:
-		:
-		: "eax"
-	);
-
-	tss.esp0 = EIGHT_MB - (terminals[next].cur_pid - 1)*EIGHT_KB;
-
-	if(terminals[next].esp == -1){
-		enable_irq(IRQ_NUM);
-	  asm volatile("       \n\
-	    movl %0, %%ecx     \n\
-	    jmp context_switch"
-	    :
-	    : "r"(program_addr_test[next])
-	    : "ecx"
-	  );
-	}
-
-	asm volatile ("  \n\
-	  movl %0, %%esp \n\
-		movl %1, %%ebp"
-		:
-		: "r" (terminals[next].esp), "r" (terminals[next].ebp)
-	);
-	*/
-
+	/* Return success */
 	return 0;
 }
 
@@ -192,7 +148,7 @@ void scroll_up(void){
 			*(uint8_t*)(video_mem + (i << 1)) = *(uint8_t *)(video_mem+((i + NUM_COLS) << 1));
 			*(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
 	}
-	for(i = NUM_ROWS*NUM_COLS-NUM_COLS; i <  NUM_ROWS*NUM_COLS; i++){
+	for(i = NUM_ROWS*NUM_COLS-NUM_COLS; i < NUM_ROWS*NUM_COLS; i++){
 		*(uint8_t*)(video_mem + (i << 1)) = ' '; /* put empty space character in the index */
 		*(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
 	}

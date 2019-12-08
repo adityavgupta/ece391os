@@ -17,18 +17,21 @@ void init_sched(){
 	sched_arr[0].process_num = 1;
   sched_arr[0].terminal_num = 0;
   sched_arr[0].video_buffer = FIRST_SHELL;
+	sched_arr[0].vid_map = 0;
   sched_arr[0].esp = EIGHT_MB;
   sched_arr[0].ebp = EIGHT_MB;
 
   sched_arr[1].process_num = 2;
   sched_arr[1].terminal_num = 1;
   sched_arr[1].video_buffer = SECOND_SHELL;
+	sched_arr[1].vid_map = 0;
   sched_arr[1].esp = -1;
   sched_arr[1].ebp = -1;
 
   sched_arr[2].process_num = 3;
   sched_arr[2].terminal_num = 2;
   sched_arr[2].video_buffer = THIRD_SHELL;
+	sched_arr[2].vid_map = 0;
   sched_arr[2].esp = -1;
   sched_arr[2].ebp = -1;
 }
@@ -58,8 +61,14 @@ void switch_process(){
 
 	/* Remap video memory paging */
   if(cur_sched_term == cur_terminal){
+		if(sched_arr[cur_sched_term].vid_map == 1){
+			set_page_table2_entry(USER_VIDEO_MEM, VIDEO_MEM_ADDR);
+		}
     set_page_table1_entry(VIDEO_MEM_ADDR, VIDEO_MEM_ADDR);
   } else{
+		if(sched_arr[cur_sched_term].vid_map == 1){
+			set_page_table2_entry(USER_VIDEO_MEM, sched_arr[cur_sched_term].video_buffer);
+		}
     set_page_table1_entry(VIDEO_MEM_ADDR, sched_arr[cur_sched_term].video_buffer);
   }
 

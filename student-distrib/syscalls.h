@@ -51,6 +51,7 @@ typedef struct{
   uint8_t process_state;  /* State of process */
 	uint8_t args[BUF_LENGTH];     /* Commands passed in */
 	int32_t vidmem;
+	int32_t freq;
 } pcb_t;
 
 int32_t launch(void);

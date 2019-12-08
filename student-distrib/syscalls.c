@@ -75,7 +75,8 @@ int32_t halt(uint8_t status){
 
   /* Check if program was using video memory */
   if(cur_pcb->vidmem){
-    disable_page_entry(USER_VIDEO_MEM);
+    //disable_page_entry(USER_VIDEO_MEM);
+    sched_arr[cur_sched_term].vid_map = 0;
   }
 
   /* Flush tlb */
@@ -652,6 +653,7 @@ int32_t vidmap(uint8_t** screen_start){
 
   /* Mark pcb as having video memory page */
   get_pcb_add()->vidmem = 1;
+  sched_arr[cur_sched_term].vid_map = 1;
 
   /* Add page to page table */
   set_page_table2_entry(USER_VIDEO_MEM, VIDEO_MEM_ADDR);

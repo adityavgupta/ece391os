@@ -14,6 +14,7 @@ typedef struct sched{
 	int32_t process_num;
 	int32_t terminal_num;
   int32_t video_buffer;
+	int32_t vid_map;
   int32_t esp;
   int32_t ebp;
 } sched_node;

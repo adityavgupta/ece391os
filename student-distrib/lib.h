@@ -45,6 +45,7 @@ typedef struct shell{
 	uint8_t caps_lock;
 	uint8_t ctrl_pressed;
 	uint8_t alt_pressed;
+	int32_t vid_map;
 } shell_t;
 
 shell_t terminals[SHELL_NUM];
