@@ -410,16 +410,18 @@ void keyboard_interrupt_handler(void){
       after_release_exec(scan_code);
 		}
 
-    set_page_table1_entry(VIDEO_MEM_ADDR, sched_arr[cur_sched_term].video_buffer);
+    if(cur_sched_term != cur_terminal){
+      set_page_table1_entry(VIDEO_MEM_ADDR, sched_arr[cur_sched_term].video_buffer);
 
-    /* Flush TLB */
-    asm volatile ("     \n\
-      movl %%cr3, %%eax \n\
-      movl %%eax, %%cr3"
-      :
-      :
-      : "eax"
-    );
+      /* Flush TLB */
+      asm volatile ("     \n\
+        movl %%cr3, %%eax \n\
+        movl %%eax, %%cr3"
+        :
+        :
+        : "eax"
+      );
+    }
 
     print_terminal = cur_sched_term;
 

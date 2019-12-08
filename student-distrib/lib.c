@@ -16,7 +16,6 @@
 #define COL_END     79
 #define PORT_3D4		0x3D4
 #define PORT_3D5    0x3D5
-#define L_SHIFT     1
 #define BUF_LENGTH 128
 #define TRUE 1
 #define FALSE 0
@@ -74,20 +73,6 @@ int32_t change_shell(int32_t next){
 
 	if(next == cur_terminal){
 		return 0;
-	}
-
-	/* Remap map video memory paging */
-	if(next == cur_sched_term){
-		set_page_table1_entry(VIDEO, VIDEO);
-
-		/* Flush TLB */
-		asm volatile ("     \n\
-			movl %%cr3, %%eax \n\
-			movl %%eax, %%cr3"
-			:
-			:
-			: "eax"
-		);
 	}
 
 	/* Copy video memory to buffer */
@@ -191,7 +176,7 @@ void clear_l(void){
   terminals[print_terminal].x = x;
 
   /* Move cursor to new position */
-  move_cursor(terminals[print_terminal].x, terminals[print_terminal].y);
+  move_cursor(terminals[cur_terminal].x, terminals[cur_terminal].y);
 }
 
 
@@ -204,10 +189,12 @@ void clear_l(void){
 void scroll_up(void){
 	int32_t i;
 	for(i = 0; i < NUM_ROWS*NUM_COLS-NUM_COLS; i++){
-			*(uint8_t*)(video_mem+(i << L_SHIFT))= *(uint8_t *)(video_mem+((i+NUM_COLS)<<1));
+			*(uint8_t*)(video_mem + (i << 1)) = *(uint8_t *)(video_mem+((i + NUM_COLS) << 1));
+			*(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
 	}
-	for(i = NUM_ROWS*NUM_COLS-NUM_COLS; i<  NUM_ROWS*NUM_COLS; i++){
-		*(uint8_t*)(video_mem+(i << L_SHIFT)) = ' '; /* put empty space character in the index */
+	for(i = NUM_ROWS*NUM_COLS-NUM_COLS; i <  NUM_ROWS*NUM_COLS; i++){
+		*(uint8_t*)(video_mem + (i << 1)) = ' '; /* put empty space character in the index */
+		*(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
 	}
 }
 
@@ -227,7 +214,7 @@ void new_line(void){
 			terminals[print_terminal].x = 0;
 		}
 
-		move_cursor(terminals[print_terminal].x, terminals[print_terminal].y);
+		move_cursor(terminals[cur_terminal].x, terminals[cur_terminal].y);
 }
 
 /* reset_screen
@@ -240,7 +227,7 @@ void reset_screen(void){
 		terminals[print_terminal].x = 0; /* set start of column to 0*/
     current_line = 0;
 
-		move_cursor(terminals[print_terminal].x, terminals[print_terminal].y); /* move cursor to start of screen */
+		move_cursor(terminals[cur_terminal].x, terminals[cur_terminal].y); /* move cursor to start of screen */
 }
 
 /* back_space
@@ -250,14 +237,14 @@ void reset_screen(void){
  * */
 void back_space(void){
 	/* decrement column value to get new column value */
-	if(--terminals[print_terminal].x < 0){
-		terminals[print_terminal].x = NUM_COLS - 1; /* Set to previous line */
-    terminals[print_terminal].y--; /* Move up */
+	if(--terminals[cur_terminal].x < 0){
+		terminals[cur_terminal].x = NUM_COLS - 1; /* Set to previous line */
+    terminals[cur_terminal].y--; /* Move up */
 	}
   /* Put empty space character in the index */
-	*(uint8_t *)(video_mem + ((NUM_COLS * terminals[print_terminal].y + terminals[print_terminal].x) << L_SHIFT)) = ' ';
+	*(uint8_t *)(video_mem + ((NUM_COLS * terminals[cur_terminal].y + terminals[cur_terminal].x) << 1)) = ' ';
 
-	move_cursor(terminals[print_terminal].x, terminals[print_terminal].y); /* update cursor position */
+	move_cursor(terminals[cur_terminal].x, terminals[cur_terminal].y); /* update cursor position */
 }
 
 /* move_cursor
@@ -431,7 +418,7 @@ void putc(uint8_t c) {
         terminals[print_terminal].y = (terminals[print_terminal].y + (terminals[print_terminal].x / NUM_COLS)) % NUM_ROWS;
     }
 
-	move_cursor(terminals[print_terminal].x, terminals[print_terminal].y);
+	move_cursor(terminals[cur_terminal].x, terminals[cur_terminal].y);
 }
 
 /* int8_t* itoa(uint32_t value, int8_t* buf, int32_t radix);
