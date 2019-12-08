@@ -66,16 +66,15 @@ void switch_process(int32_t cur_proc, int32_t next_proc){
   }
 
 	asm volatile("    \n\
-		 movl %%ebp, %%eax \n\
-		 movl %%esp, %%ebx"
-		 :
-		 :
-		 : "eax","ebx"
-	);
+     movl %%esp, %0 \n\
+     movl %%ebp, %1"
+     :
+     : "r"(sched_arr[cur_proc].esp), "r"(sched_arr[cur_proc].ebp)
+  );
 
   asm volatile("    \n\
      movl %0, %%esp \n\
-     movl %1,%%ebp"
+     movl %1, %%ebp"
      :
      : "r"(sched_arr[next_proc].esp), "r"(sched_arr[next_proc].ebp)
   );
