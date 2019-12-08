@@ -52,7 +52,7 @@ void pit_init(void){
 void switch_process(){
   // pcb_t* cur_pcb = get_pcb_add();
 
-  if(prev_sched_term == cur_sched_term) return;
+  // if(prev_sched_term == cur_sched_term) return;
 
 
   tss.esp0 = EIGHT_MB - (sched_arr[cur_sched_term].process_num - 1)*EIGHT_KB;
@@ -69,8 +69,8 @@ void switch_process(){
 	asm volatile("    \n\
      movl %%esp, %0 \n\
      movl %%ebp, %1"
+     :	"=r"(sched_arr[prev_sched_term].esp), "=r"(sched_arr[prev_sched_term].ebp)
      :
-     : "r"(sched_arr[prev_sched_term].esp), "r"(sched_arr[prev_sched_term].ebp)
   );
 
   asm volatile("    \n\

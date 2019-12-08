@@ -241,19 +241,19 @@ int32_t execute(const uint8_t* command){
         sched_arr[i].video_buffer = THIRD_SHELL;
         break;
     }
-    sched_arr[i].esp = EIGHT_MB - (process_num-1)*EIGHT_KB;
-    sched_arr[i].ebp = EIGHT_MB - (process_num-1)*EIGHT_KB;
+    sched_arr[i].esp = EIGHT_MB - (pcb.pid-1)*EIGHT_KB;
+    sched_arr[i].ebp = EIGHT_MB - (pcb.pid-1)*EIGHT_KB;
   }
   else{
     added_new_term=0;
     sched_parent_pid = sched_arr[cur_sched_term].process_num;
     sched_arr[cur_sched_term].process_num = pcb.pid;
-    sched_arr[cur_sched_term].esp = EIGHT_MB - (process_num-1)*EIGHT_KB;
-    sched_arr[cur_sched_term].ebp = EIGHT_MB - (process_num-1)*EIGHT_KB;
+    sched_arr[cur_sched_term].esp = EIGHT_MB - (pcb.pid-1)*EIGHT_KB;
+    sched_arr[cur_sched_term].ebp = EIGHT_MB - (pcb.pid-1)*EIGHT_KB;
   }
 
   /* Set up user page */
-  if(!added_new_term)set_page_dir_entry(USER_PROG, EIGHT_MB + (pcb.pid - 1)*FOUR_MB);
+  set_page_dir_entry(USER_PROG, EIGHT_MB + (pcb.pid - 1)*FOUR_MB);
 
   /* Flush tlb */
   asm volatile ("      \n\
@@ -304,7 +304,7 @@ int32_t execute(const uint8_t* command){
   memcpy((void *)(EIGHT_MB - pcb.pid*EIGHT_KB), &pcb, sizeof(pcb));
 
   /* Set TSS to point to kernel stack */
-  if(!added_new_term)tss.esp0 = EIGHT_MB - (pcb.pid - 1)*EIGHT_KB;
+  tss.esp0 = EIGHT_MB - (pcb.pid - 1)*EIGHT_KB;
   tss.ss0 = KERNEL_DS;
 
 
@@ -315,7 +315,19 @@ int32_t execute(const uint8_t* command){
   	proc_shell[cur_terminal] = pcb.pid;
     program_addr_test[cur_terminal] = program_addr;
   }
+  if(added_new_term){
+    prev_sched_term = cur_sched_term;
 
+    cur_sched_term = (cur_sched_term + 1) % SCHED_SIZE;
+    set_page_table1_entry(VIDEO_MEM_ADDR, VIDEO_MEM_ADDR);
+    asm volatile ("      \n\
+       movl %%cr3, %%eax \n\
+       movl %%eax, %%cr3"
+       :
+       :
+       : "eax"
+  	);
+  }
   /* Put program_addr into ecx and jump to the context switch */
   asm volatile("       \n\
     movl %0, %%ecx     \n\

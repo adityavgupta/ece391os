@@ -20,6 +20,7 @@ typedef struct sched{
 
 extern int32_t cur_terminal;
 extern int32_t cur_sched_term;
+extern int32_t prev_sched_term;
 extern sched_node sched_arr[SCHED_SIZE];
 
 /* initialize the pit */
