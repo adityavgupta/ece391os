@@ -4,12 +4,12 @@
 #include "syscalls.h"
 
 /* Interrupt flag */
-volatile uint32_t rtc_interrupt;
+//volatile uint32_t rtc_interrupt;
 
 /* Flag to allow prints for test cases */
 uint32_t rtc_test_flag = 0;
 uint32_t rtc_read_test_flag = 0;
-
+volatile uint32_t interrupt_flags[3] = {0, 0, 0};
 
 /*
  * rtc_init
@@ -46,7 +46,7 @@ void rtc_init(void){
  */
 void rtc_interrupt_handler(void){
   unsigned long flags; /* Hold the current flags */
-  //int32_t i;
+  int32_t i;
   /* Mask interrupt flags */
   cli_and_save(flags);
 
@@ -56,7 +56,10 @@ void rtc_interrupt_handler(void){
   /* Send EOI signal */
   send_eoi(RTC_IRQ_NUM);
 
-  rtc_interrupt = 1;
+  for(i = 0; i < 3; i++) {
+    interrupt_flags[i] = 1;
+  }
+  //rtc_interrupt = 1;
 
   //test_interrupts();
   if(rtc_test_flag){
@@ -136,13 +139,23 @@ int32_t rtc_close(int32_t fd){
  */
 int32_t rtc_read(int32_t fd, void* buf, int32_t nbytes){
   /* Reset interrupt flag */
-  rtc_interrupt = 0;
+  //rtc_interrupt = 0;
   if(rtc_read_test_flag) printf("Waiting for interrupt\n");
   /* Block until an RTC interrupt occurs */
-  while(!rtc_interrupt){
+  int counter = 1;
+  while(counter!=get_pcb_add()->freq) {
+    counter++;
+    interrupt_flags[cur_sched_term] = 0;
+    if(counter == get_pcb_add()->freq) {
+      interrupt_flags[cur_sched_term] = 1;
+    }
+    while(!interrupt_flags[0]){
 
+    }
   }
+
   //rtc_interrupt = 0;
+
   if(rtc_read_test_flag) printf("Interrupt occurred\n");
   /* Return success */
   return 0;
@@ -175,6 +188,7 @@ int32_t rtc_write(int32_t fd, const void* buf, int32_t nbytes){
 
   /* Get the frequency */
   freq = *(int32_t*)buf;
+  get_pcb_add()->freq = freq;
 
   outb(REGISTER_A, RTC_PORT0);
   uint8_t prevA = inb(RTC_PORT1);
@@ -223,7 +237,7 @@ int32_t rtc_write(int32_t fd, const void* buf, int32_t nbytes){
   outb(REGISTER_A, RTC_PORT0);
   //
   // /* Give the new rate to register A */
-  outb((prevA & 0x80)| rate, RTC_PORT1);
+  outb((prevA & 0x80)| FREQ_1024, RTC_PORT1);
   //
 
   /* Restore the interrupt flags */

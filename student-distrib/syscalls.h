@@ -48,6 +48,7 @@ typedef struct{
 	uint8_t args[BUF_LENGTH];     /* Commands passed in */
 	int32_t vidmem;
 	int32_t terminal_num;
+	int32_t freq;
 } pcb_t;
 
 /*Gets the current process number*/
