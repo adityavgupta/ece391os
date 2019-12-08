@@ -3,6 +3,7 @@
 #include "paging.h"
 #include "lib.h"
 #include "kb.h"
+#include "linkage.h"
 
 #define EIGHT_MB        0x800000
 #define FOUR_MB         0x400000
@@ -32,11 +33,6 @@ jump_table stdout_table = {terminal_write, invalid_read, terminal_open, terminal
 /* Process number: 1st process has pid 1, 0 means no processes have been launched */
 int32_t process_num = 0;
 
-/* Keeps track of the process numbers of the terminals */
-int32_t proc_shell[3] = {-1, -1, -1};
-
-uint32_t program_addr_test[3];
-
 int32_t process_array[MAX_PROGS];
 
 /*
@@ -51,7 +47,7 @@ int32_t halt(uint8_t status){
   /* If shell tries to halt, just launch shell again */
   pcb_t* cur_pcb = get_pcb_add();   /* Get the current process pcb */
 
-  if(cur_pcb->pid == proc_shell[cur_terminal]){
+  if(cur_pcb->pid == 1 || cur_pcb->pid == 2 || cur_pcb->pid == 3){
     asm volatile("       \n\
       movl %0, %%ecx     \n\
       jmp context_switch"
@@ -106,6 +102,144 @@ int32_t halt(uint8_t status){
      :
      : "r" (cur_pcb->parent_ebp)
      : "ebp", "eax"
+  );
+
+  return 0;
+}
+
+int32_t launch(){
+  cli();
+
+  int32_t i;
+  for(i = 0; i < MAX_PROGS; i++) process_array[i] = -1;
+
+  dentry_t file_dentry;
+  /* Get shell's data */
+  if(read_dentry_by_name((uint8_t*)"shell", &file_dentry) == -1){
+    /* Return failure */
+    sti();
+    return -1;
+  }
+
+  /* Read the executable */
+  uint8_t ELF_buf[NAME_LENGTH];
+  uint32_t size; /* Size of executable file */
+  if((size = read_data(file_dentry.inode_num, 0, ELF_buf, NAME_LENGTH)) == -1){
+    /* Return failure */
+    sti();
+    return -1;
+  }
+
+  /* Check if file is an executable */
+  if(ELF_buf[0] != 0x7F || ELF_buf[1] != 0x45 || ELF_buf[2] != 0x4C || ELF_buf[3] != 0x46){
+    /* Return failure */
+    sti();
+    return -1;
+  }
+
+  /* Create pcb */
+  pcb_t pcb;
+  /* Mark first three shells as first three processes */
+  for(i = 0; i < 3; i++){
+    process_array[i] = 1;
+  }
+
+  /* Set up third shell page */
+  set_page_dir_entry(USER_PROG, EIGHT_MB + 2*FOUR_MB);
+
+  /* Flush tlb */
+  asm volatile ("      \n\
+     movl %%cr3, %%eax \n\
+     movl %%eax, %%cr3"
+     :
+     :
+     : "eax"
+  );
+
+  /* Copy executable to 128MB */
+  if((size = read_data(file_dentry.inode_num, 0, (uint8_t*)(USER_PROG + PROG_OFFSET), MAX_PROG_SIZE)) == -1){
+    /* Return failure */
+    return -1;
+  }
+
+  /* Set up second shell page */
+  set_page_dir_entry(USER_PROG, EIGHT_MB + FOUR_MB);
+
+  /* Flush tlb */
+  asm volatile ("      \n\
+     movl %%cr3, %%eax \n\
+     movl %%eax, %%cr3"
+     :
+     :
+     : "eax"
+  );
+
+  /* Copy executable to 128MB */
+  if((size = read_data(file_dentry.inode_num, 0, (uint8_t*)(USER_PROG + PROG_OFFSET), MAX_PROG_SIZE)) == -1){
+    /* Return failure */
+    return -1;
+  }
+
+  /* Set up first shell page */
+  set_page_dir_entry(USER_PROG, EIGHT_MB);
+
+  /* Flush tlb */
+  asm volatile ("      \n\
+     movl %%cr3, %%eax \n\
+     movl %%eax, %%cr3"
+     :
+     :
+     : "eax"
+  );
+
+  /* Copy executable to 128MB */
+  if((size = read_data(file_dentry.inode_num, 0, (uint8_t*)(USER_PROG + PROG_OFFSET), MAX_PROG_SIZE)) == -1){
+    /* Return failure */
+    return -1;
+  }
+
+  pcb.parent_pid = 0;
+  /* Load stdin and stdout jump table and mark as in use */
+  pcb.fdt[0].jump_ptr = &stdin_table;
+  pcb.fdt[1].jump_ptr = &stdout_table;
+  pcb.fdt[0].flags = 1;
+  pcb.fdt[1].flags = 1;
+  pcb.process_state = RUNNING;
+  pcb.vidmem = 0;
+  /* Set arguments to an empty string */
+  strncpy((int8_t*)pcb.args, (int8_t*)"", BUF_LENGTH);
+  /* Mark remaining file descriptors as not in use */
+  for(i = 2; i <= MAX_FD_NUM; i++){
+    pcb.fdt[i].flags = -1;
+  }
+
+  /* Set count of process numbers to 3 */
+  process_num = 3;
+
+  for(i = 0; i < 3; i++){
+    pcb.pid = i + 1;
+    /* Place pcb in kernel memory */
+    memcpy((void *)(EIGHT_MB - pcb.pid*EIGHT_KB), &pcb, sizeof(pcb));
+  }
+
+  /* Set TSS to point to kernel stack */
+  tss.esp0 = EIGHT_MB;
+  tss.ss0 = KERNEL_DS;
+
+  /* Get address of first instruction */
+  uint32_t program_addr = *(uint32_t*)(ELF_buf + 24);
+
+  for(i = 0; i < 3; i++){
+    program_addr_test[i] = program_addr;
+  }
+
+  /* Put program_addr into ecx and jump to the context switch */
+  asm volatile("       \n\
+    movl %0, %%ecx     \n\
+    jmp context_switch"
+    :
+    : "r"(program_addr)
+    : "ecx"
   );
 
   return 0;
@@ -252,17 +386,16 @@ int32_t execute(const uint8_t* command){
     pcb.fdt[i].flags = -1;
   }
 
+  /* Increment process count */
   process_num++;
 
   /* Set parent esp and ebp for child processes */
-  if(process_num >= 2){
-    pcb.parent_esp = EIGHT_MB - (terminals[cur_terminal].cur_pid-1)*EIGHT_KB;
+  pcb.parent_esp = EIGHT_MB - (terminals[cur_terminal].cur_pid-1)*EIGHT_KB;
 
-    asm volatile("  \n\
-       movl %%ebp, %0"
-       : "=r"(pcb.parent_ebp)
-    );
-  }
+  asm volatile("  \n\
+     movl %%ebp, %0"
+     : "=r"(pcb.parent_ebp)
+  );
 
   /* Store terminal's current running process */
   terminals[cur_terminal].cur_pid = pcb.pid;
@@ -274,14 +407,8 @@ int32_t execute(const uint8_t* command){
   tss.esp0 = EIGHT_MB - (pcb.pid - 1)*EIGHT_KB;
   tss.ss0 = KERNEL_DS;
 
-
   /* Get address of first instruction */
   uint32_t program_addr = *(uint32_t*)(ELF_buf + 24);
-
-  if(strncmp((int8_t*)filename, "shell", strlen((int8_t*)filename)) == 0 && proc_shell[cur_terminal] == -1){
-  	proc_shell[cur_terminal] = pcb.pid;
-    program_addr_test[cur_terminal] = program_addr;
-  }
 
   /* Put program_addr into ecx and jump to the context switch */
   asm volatile("       \n\

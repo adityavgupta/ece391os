@@ -17,6 +17,8 @@
 /* Number of active processes */
 extern int32_t process_num;
 
+uint32_t program_addr_test[3];
+
 /* Jump table for system calls */
 typedef struct jump_table{
 	int32_t(*write)(int32_t, const void*, int32_t);
@@ -45,6 +47,8 @@ typedef struct{
 	uint8_t args[BUF_LENGTH];     /* Commands passed in */
 	int32_t vidmem;
 } pcb_t;
+
+int32_t launch(void);
 
 /* Halt system call, stop a process */
 int32_t halt(uint8_t status);

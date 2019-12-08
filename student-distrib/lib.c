@@ -37,7 +37,6 @@ static char* video_mem = (char *)VIDEO;
 int32_t cur_terminal = 0;
 
 void init_shell(void){
-	terminals[0].running = TRUE;
 	terminals[0].x = 0;
 	terminals[0].y = 0;
 	terminals[0].cur_pid = 1;
@@ -49,9 +48,9 @@ void init_shell(void){
 	terminals[0].ctrl_pressed = 0;
 	terminals[0].alt_pressed = 0;
 
-	terminals[1].running = FALSE;
 	terminals[1].x = 0;
 	terminals[1].y = 0;
+	terminals[1].cur_pid = 2;
 	terminals[1].vid_mem = (char*)SECOND_SHELL;
 	terminals[1].line_buffer_flag = 0;
 	terminals[1].buf_index = 0;
@@ -59,10 +58,11 @@ void init_shell(void){
 	terminals[1].caps_lock = 0;
 	terminals[1].ctrl_pressed = 0;
 	terminals[1].alt_pressed = 0;
+	terminals[1].esp = -1;
 
-	terminals[2].running = FALSE;
 	terminals[2].x = 0;
 	terminals[2].y = 0;
+	terminals[2].cur_pid = 3;
 	terminals[2].vid_mem = (char*)THIRD_SHELL;
 	terminals[2].line_buffer_flag = 0;
 	terminals[2].buf_index = 0;
@@ -70,14 +70,15 @@ void init_shell(void){
 	terminals[2].caps_lock = 0;
 	terminals[2].ctrl_pressed = 0;
 	terminals[2].alt_pressed = 0;
+	terminals[2].esp = -1;
 }
 
-int32_t change_shell(int32_t shell_num){
-	if(shell_num < 0 || shell_num >= 3){
+int32_t change_shell(int32_t next){
+	if(next < 0 || next >= 3){
 		return -1;
 	}
 
-	if(shell_num == cur_terminal){
+	if(next == cur_terminal){
 		return 0;
 	}
 
@@ -92,42 +93,45 @@ int32_t change_shell(int32_t shell_num){
      : "=r"(terminals[cur_terminal].esp), "=r"(terminals[cur_terminal].ebp)
   );
 
-	if(terminals[shell_num].running == FALSE){
-		cur_terminal = shell_num;
-		terminals[shell_num].running = TRUE;
+	cur_terminal = next;
 
-		clear();
-		screen_x = 0;
-		screen_y = 0;
-    /* Unmask the IRQ1 on the PIC */
+	memcpy(video_mem, terminals[next].vid_mem, PAGE_SIZE);
+
+	screen_x = terminals[next].x;
+	screen_y = terminals[next].y;
+
+	move_cursor(screen_x, screen_y);
+
+	set_page_dir_entry(USER_PROG, EIGHT_MB + (terminals[next].cur_pid - 1)*FOUR_MB);
+
+	asm volatile ("     \n\
+		movl %%cr3, %%eax \n\
+		movl %%eax, %%cr3"
+		:
+		:
+		: "eax"
+	);
+
+	tss.esp0 = EIGHT_MB - (terminals[next].cur_pid - 1)*EIGHT_KB;
+
+	if(terminals[next].esp == -1){
+		/* Put program_addr into ecx and jump to the context switch */
 		enable_irq(IRQ_NUM);
-		execute((uint8_t*)"shell"); //may need to change this is the future
-	} else{
-		cur_terminal = shell_num;
-		memcpy(video_mem, terminals[shell_num].vid_mem, PAGE_SIZE);
-		screen_x = terminals[shell_num].x;
-		screen_y = terminals[shell_num].y;
-		move_cursor(screen_x, screen_y);
-
-		set_page_dir_entry(USER_PROG, EIGHT_MB + (terminals[shell_num].cur_pid - 1)*FOUR_MB);
-
-		asm volatile ("     \n\
-			movl %%cr3, %%eax \n\
-			movl %%eax, %%cr3"
-			:
-			:
-			: "eax"
-		);
-
-		tss.esp0 = EIGHT_MB - (terminals[shell_num].cur_pid - 1)*EIGHT_KB;
-
-		asm volatile ("  \n\
-		  movl %0, %%esp \n\
-			movl %1, %%ebp"
-			:
-			: "r" (terminals[shell_num].esp), "r" (terminals[shell_num].ebp)
-		);
+	  asm volatile("       \n\
+	    movl %0, %%ecx     \n\
+	    jmp context_switch"
+	    :
+	    : "r"(program_addr_test[next])
+	    : "ecx"
+	  );
 	}
+
+	asm volatile ("  \n\
+	  movl %0, %%esp \n\
+		movl %1, %%ebp"
+		:
+		: "r" (terminals[next].esp), "r" (terminals[next].ebp)
+	);
 
 	return 0;
 }
