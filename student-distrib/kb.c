@@ -279,7 +279,8 @@ int caps_no_shift (void) {
 void recent_release_exec (uint8_t scan_code) {
   if(scan_code == CTRL){ //If the CTRL button is pressed
     terminals[cur_terminal].ctrl_pressed = 1;
-  } else if(terminals[cur_terminal].alt_pressed == 1 && (scan_code == F1_CHAR || scan_code == F2_CHAR || scan_code == F3_CHAR)){
+  }
+  else if(terminals[cur_terminal].alt_pressed == 1 && (scan_code == F1_CHAR || scan_code == F2_CHAR || scan_code == F3_CHAR)){
 	int32_t terminal;
 	switch(scan_code){
 		case F1_CHAR:
@@ -297,7 +298,12 @@ void recent_release_exec (uint8_t scan_code) {
 
   }
   else if(scan_code == L_CHAR && terminals[cur_terminal].ctrl_pressed == 1) {
-    clear_l();
+    int32_t i;
+    clear();
+    reset_screen();
+    for(i = 0; i < terminals[cur_terminal].buf_index; i++){
+      putc(terminals[cur_terminal].kb_buf[i]);
+    }
   }
   else if(scan_code == BACK_SPACE){
     /* Deletes a buffer character if it is allowed */
@@ -379,8 +385,6 @@ void keyboard_interrupt_handler(void){
 
     /* Read the keyboard data buffer to get the current character */
 		uint8_t scan_code = inb(0x60);
-
-		//printf("\n%d\n",scan_code);
 
 		if((scan_code >= CAP_OFFSET && scan_code <= UP_BOUND) || (scan_code >= (CAP_OFFSET + UP_BOUND))){
       /* Allow interrupts again */

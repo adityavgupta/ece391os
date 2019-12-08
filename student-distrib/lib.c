@@ -106,37 +106,6 @@ void clear(void) {
     }
 }
 
-/*
- * clear_l
- *    DESCRIPTION: Clears the screen when ctrl l is pressed
- *    INPUTS: none
- *    OUTPUTS: Moves current typed line to the top of the screen
- *    RETURN VALUE: none
- *    SIDE EFFECTS: none
- */
-void clear_l(void){
-	int32_t diff, i, x; /* Loop variable and value holders */
-  x = terminals[print_terminal].x; /* Store current screen_x value */
-
-  /* Difference between the beginning of the typing and the current screen position */
-  diff = terminals[print_terminal].y - current_line;
-
-  /* Add newlines to force the screen upwards */
-  for(i = 0; i < (NUM_ROWS - (1 + diff)); i++){
-    new_line();
-  }
-
-  /* Set new values */
-  current_line = 0;
-  terminals[print_terminal].y = diff;
-  terminals[print_terminal].x = x;
-
-  /* Move cursor to new position */
-  move_cursor(terminals[cur_terminal].x, terminals[cur_terminal].y);
-}
-
-
-
 /* scroll_up
  * Inputs: void
  * Outputs: none
@@ -179,8 +148,8 @@ void new_line(void){
  * Effects: moves cursor to top left (start) of screen
  */
 void reset_screen(void){
-		terminals[print_terminal].y = 0; /* set start of rows to 0 */
-		terminals[print_terminal].x = 0; /* set start of column to 0*/
+		terminals[cur_terminal].y = 0; /* set start of rows to 0 */
+		terminals[cur_terminal].x = 0; /* set start of column to 0*/
     current_line = 0;
 
 		move_cursor(terminals[cur_terminal].x, terminals[cur_terminal].y); /* move cursor to start of screen */

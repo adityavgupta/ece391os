@@ -7,8 +7,10 @@
 /* Flag to allow prints for test cases */
 uint32_t rtc_test_flag = 0;
 uint32_t rtc_read_test_flag = 0;
+
 volatile uint32_t interrupt_flags[3] = {0, 0, 0};
-uint32_t count[3] = {0, 0, 0};
+int32_t count[3] = {0, 0, 0};
+
 int32_t frequencies[3] = {0, 0, 0};
 
 /*
@@ -38,7 +40,7 @@ void rtc_init(void){
 
     /* Give the new rate to register A */
 
-    outb((prevA & 0xF0) | FREQ_1024, RTC_PORT1);
+    outb((prevA & 0xF0) | 0x06, RTC_PORT1);
 
     /* Enable RTC PIC interrupts */
     enable_irq(RTC_IRQ_NUM);
@@ -54,7 +56,6 @@ void rtc_init(void){
  */
 void rtc_interrupt_handler(void){
   unsigned long flags; /* Hold the current flags */
-  int32_t i;
   /* Mask interrupt flags */
   cli_and_save(flags);
 
@@ -64,13 +65,18 @@ void rtc_interrupt_handler(void){
   /* Send EOI signal */
   send_eoi(RTC_IRQ_NUM);
 
-  interrupt_flags[cur_sched_term] = 1;
-
-  //test_interrupts();
-  if(rtc_test_flag){
-    uint8_t c = 'f';
-    putc(c);
+  int32_t i;
+  for(i = 0; i < 3; i++){
+    if(count[i]++ == frequencies[i] - 1){
+      interrupt_flags[i] = 1;
+    }
   }
+
+  // //test_interrupts();
+  // if(rtc_test_flag){
+  //   uint8_t c = 'f';
+  //   putc(c);
+  // }
 
   /* Read register C */
   outb(REGISTER_C, RTC_PORT0);
@@ -78,11 +84,11 @@ void rtc_interrupt_handler(void){
   /* Clear contents of RTC to allow RTC interrupts again */
   inb(RTC_PORT1);
 
+  // /* Unmask PIC interrupts*/
+  enable_irq(RTC_IRQ_NUM);
+
   /* Re-enable interrupts and restores flags */
   restore_flags(flags);
-
-  /* Unmask PIC interrupts*/
-  enable_irq(RTC_IRQ_NUM);
 }
 
 /*
@@ -99,8 +105,7 @@ int32_t rtc_open(const uint8_t* filename){
   /* Mask interrupts and save flags */
   cli_and_save(flags);
 
-  frequencies[cur_sched_term] = 2;
-  count[cur_sched_term] = 0;
+  frequencies[cur_sched_term] = 512;
 
   /* Restore the interrupt flags */
   restore_flags(flags);
@@ -118,11 +123,6 @@ int32_t rtc_open(const uint8_t* filename){
  *    SIDE EFFECTS: none
  */
 int32_t rtc_close(int32_t fd){
-  unsigned long flags;
-  /* Do nothing for now, until virtualization is added */
-  cli_and_save(flags);
-
-  restore_flags(flags);
   return 0;
 }
 
@@ -137,24 +137,18 @@ int32_t rtc_close(int32_t fd){
  *    SIDE EFFECTS: none
  */
 int32_t rtc_read(int32_t fd, void* buf, int32_t nbytes){
-  /* Reset interrupt flag */
-  if(rtc_read_test_flag) printf("Waiting for interrupt\n");
-
-  /* Block until an RTC interrupt occurs */
-  while(count[cur_sched_term] != frequencies[cur_sched_term]) {
-    count[cur_sched_term]++;
-    interrupt_flags[cur_sched_term] = 0;
-    if(count[cur_sched_term] == frequencies[cur_sched_term]) {
-      interrupt_flags[cur_sched_term] = 1;
-    }
-    while(!interrupt_flags[cur_sched_term]){
-
-    }
-  }
+  cli();
 
   count[cur_sched_term] = 0;
+  interrupt_flags[cur_sched_term] = 0;
 
-  if(rtc_read_test_flag) printf("Interrupt occurred\n");
+  sti();
+
+  /* Block until an RTC interrupt occurs */
+  while(!interrupt_flags[cur_sched_term]) {
+
+  }
+
   /* Return success */
   return 0;
 }
@@ -187,58 +181,40 @@ int32_t rtc_write(int32_t fd, const void* buf, int32_t nbytes){
   /* Get the frequency */
   freq = *(int32_t*)buf;
 
-  // outb(REGISTER_A, RTC_PORT0);
-  // uint8_t prevA = inb(RTC_PORT1);
-
-  switch(freq)
-  {
+  switch(freq){
     case 2:
-      rate = 2;
+      rate = 1024 / 2;
       break;
     case 4:
-      rate = 4;
+      rate = 1024 / 4;
       break;
     case 8:
-      rate = 8;
+      rate = 1024 / 8;
       break;
     case 16:
-      rate = 16;
+      rate = 1024 / 16;
       break;
     case 32:
-      rate = 32;
+      rate = 1024 / 32;
       break;
     case 64:
-      rate = 64;
+      rate = 1024 / 64;
       break;
     case 128:
-      rate = 128;
+      rate = 1024 / 128;
       break;
     case 512:
-      rate = 512;
+      rate = 1024 / 512;
       break;
     case 1024:
-      rate = 1024;
+      rate = 1;
       break;
     default:
       restore_flags(flags);
       return -1;
   }
 
-  //get_pcb_add()->freq = rate;
   frequencies[cur_sched_term] = rate;
-
-  /* Get 4 least significant bits */
-  // // rate &= 0x0F;
-  // //
-  // //outb(REGISTER_A, RTC_PORT0);
-  // //
-  // /* Store old register A value */
-  //
-  // outb(REGISTER_A, RTC_PORT0);
-  // //
-  // // /* Give the new rate to register A */
-  // outb((prevA & 0xF0)| FREQ_1024, RTC_PORT1);
-  // //
 
   /* Restore the interrupt flags */
   restore_flags(flags);
