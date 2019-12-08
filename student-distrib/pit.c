@@ -53,14 +53,9 @@ void switch_process(int32_t cur_proc, int32_t next_proc){
 
   if(cur_proc == next_proc) return;
 
-  asm volatile("    \n\
-     movl %%ebp, %0 \n\
-     movl %%esp, %1"
-     : "=r"(sched_arr[cur_proc].ebp), "=r"(sched_arr[cur_proc].esp)
-  );
 
   tss.esp0 = EIGHT_MB - (sched_arr[next_proc].process_num - 1)*EIGHT_KB;
-  // tss.esp0 = sched_arr[next_proc].current_esp;
+  // tss.esp0 = sched_arr[next_proc].esp;
 
   set_page_dir_entry(USER_PROG, EIGHT_MB + (sched_arr[next_proc].process_num - 1)*FOUR_MB);
 
@@ -69,6 +64,14 @@ void switch_process(int32_t cur_proc, int32_t next_proc){
   } else{
     set_page_table1_entry(VIDEO_MEM_ADDR, sched_arr[next_proc].video_buffer);
   }
+
+	asm volatile("    \n\
+		 movl %%ebp, %%eax \n\
+		 movl %%esp, %%ebx"
+		 :
+		 :
+		 : "eax","ebx"
+	);
 
   asm volatile("    \n\
      movl %0, %%esp \n\
