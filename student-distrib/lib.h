@@ -32,13 +32,10 @@ void init_shell(void);
 int32_t change_shell(int32_t shell_num);
 
 extern int32_t cur_terminal;
+extern int32_t print_terminal;
 
 typedef struct shell{
-	int8_t running;
 	int8_t* vid_mem;
-	int32_t cur_pid;
-	int32_t esp;
-	int32_t	ebp;
 	int32_t x;
 	int32_t y;
 	uint8_t kb_buf[BUF_LENGTH]; // Buffer of size that is 128;

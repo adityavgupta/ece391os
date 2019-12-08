@@ -4,15 +4,12 @@
 #include "lib.h"
 #include "kb.h"
 #include "linkage.h"
+#include "pit.h"
 
-#define EIGHT_MB        0x800000
-#define FOUR_MB         0x400000
-#define USER_PROG       0x8000000
 #define PROG_OFFSET     0x00048000
 #define RUNNING         0
 #define STOPPED         1
 #define MAX_PROG_SIZE   FOUR_MB - PROG_OFFSET
-#define EIGHT_KB        0x2000
 #define MAX_PROGS       6
 
 /* Function pointers for rtc */
@@ -33,6 +30,7 @@ jump_table stdout_table = {terminal_write, invalid_read, terminal_open, terminal
 /* Process number: 1st process has pid 1, 0 means no processes have been launched */
 int32_t process_num = 0;
 
+/* Process slots */
 int32_t process_array[MAX_PROGS];
 
 /*
@@ -52,7 +50,7 @@ int32_t halt(uint8_t status){
       movl %0, %%ecx     \n\
       jmp context_switch"
       :
-      : "r" (program_addr_test[cur_terminal])
+      : "r" (program_addr_test)
       : "ecx"
     );
   }
@@ -65,11 +63,12 @@ int32_t halt(uint8_t status){
   }
 
   process_num--; /* Decrement process number */
-  process_array[cur_pcb->pid - 1] = -1;
-
-  terminals[cur_terminal].cur_pid = cur_pcb->parent_pid; /* Update current running process on the terminal */
-  cur_pcb->process_state = STOPPED; /* Set process state to stopped */
+  process_array[cur_pcb->pid - 1] = -1; /* Mark process slot as free */
   tss.esp0 = cur_pcb->parent_esp;   /* Set TSS esp0 back to parent stack pointer */
+
+  sched_arr[cur_sched_term].process_num = cur_pcb->parent_pid;
+  sched_arr[cur_sched_term].esp = cur_pcb->parent_esp;
+  sched_arr[cur_sched_term].ebp = cur_pcb->parent_ebp;
 
   /* Remap user program paging back to parent program */
   set_page_dir_entry(USER_PROG, EIGHT_MB + (cur_pcb->parent_pid - 1)*FOUR_MB);
@@ -111,6 +110,7 @@ int32_t launch(){
   cli();
 
   int32_t i;
+  /* Mark process slots as free */
   for(i = 0; i < MAX_PROGS; i++) process_array[i] = -1;
 
   dentry_t file_dentry;
@@ -216,9 +216,9 @@ int32_t launch(){
   /* Set count of process numbers to 3 */
   process_num = 3;
 
+  /* Place pcb in kernel memory */
   for(i = 0; i < 3; i++){
     pcb.pid = i + 1;
-    /* Place pcb in kernel memory */
     memcpy((void *)(EIGHT_MB - pcb.pid*EIGHT_KB), &pcb, sizeof(pcb));
   }
 
@@ -229,9 +229,12 @@ int32_t launch(){
   /* Get address of first instruction */
   uint32_t program_addr = *(uint32_t*)(ELF_buf + 24);
 
-  for(i = 0; i < 3; i++){
-    program_addr_test[i] = program_addr;
-  }
+  /* Save instruction address */
+  program_addr_test = program_addr;
+
+  /* Initialize PIT */
+  //pit_init();
+  prev_sched_term = 0;
 
   /* Put program_addr into ecx and jump to the context switch */
   asm volatile("       \n\
@@ -347,14 +350,14 @@ int32_t execute(const uint8_t* command){
   /* Find a free process slot */
   for(i = 0; i < MAX_PROGS; i++){
     if(process_array[i] == -1){
-      pcb.pid = i;
+      pcb.pid = i + 1;
       process_array[i] = 1; /* Mark process slot as in use */
       break;
     }
   }
 
   /* Set up user page */
-  set_page_dir_entry(USER_PROG, EIGHT_MB + (pcb.pid++)*FOUR_MB);
+  set_page_dir_entry(USER_PROG, EIGHT_MB + (pcb.pid - 1)*FOUR_MB);
 
   /* Flush tlb */
   asm volatile ("      \n\
@@ -371,7 +374,7 @@ int32_t execute(const uint8_t* command){
     return -1;
   }
 
-  pcb.parent_pid = terminals[cur_terminal].cur_pid;
+  pcb.parent_pid = sched_arr[cur_sched_term].process_num;
   /* Load stdin and stdout jump table and mark as in use */
   pcb.fdt[0].jump_ptr = &stdin_table;
   pcb.fdt[1].jump_ptr = &stdout_table;
@@ -390,15 +393,17 @@ int32_t execute(const uint8_t* command){
   process_num++;
 
   /* Set parent esp and ebp for child processes */
-  pcb.parent_esp = EIGHT_MB - (terminals[cur_terminal].cur_pid-1)*EIGHT_KB;
+  pcb.parent_esp = EIGHT_MB - (pcb.parent_pid - 1)*EIGHT_KB;
+  //pcb.parent_ebp = sched_arr[cur_sched_term].ebp;
 
-  asm volatile("  \n\
+  asm volatile("     \n\
      movl %%ebp, %0"
      : "=r"(pcb.parent_ebp)
   );
 
   /* Store terminal's current running process */
-  terminals[cur_terminal].cur_pid = pcb.pid;
+  // terminals[cur_terminal].cur_pid = pcb.pid;
+  sched_arr[cur_sched_term].process_num = pcb.pid;
 
   /* Place pcb in kernel memory */
   memcpy((void *)(EIGHT_MB - pcb.pid*EIGHT_KB), &pcb, sizeof(pcb));
@@ -649,7 +654,7 @@ int32_t vidmap(uint8_t** screen_start){
   get_pcb_add()->vidmem = 1;
 
   /* Add page to page table */
-  set_page_table_entry(USER_VIDEO_MEM, VIDEO_MEM_ADDR);
+  set_page_table2_entry(USER_VIDEO_MEM, VIDEO_MEM_ADDR);
 
   /* Flush tlb */
   asm volatile ("      \n\

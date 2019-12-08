@@ -2,6 +2,9 @@
 #include "x86_desc.h"
 #include "i8259.h"
 #include "lib.h"
+#include "pit.h"
+#include "paging.h"
+#include "lib.h"
 
 #define IRQ_NUM           1
 #define RECENT_RELEASE    0x80
@@ -179,16 +182,19 @@ int32_t terminal_close(int32_t fd){
  */
 int terminal_read(int32_t fd, void* buf, int32_t nbytes){
     int32_t bytes_read = 0; /* Number of bytes read */
-		terminals[cur_terminal].line_buffer_flag = 0; /* Sets the flag for determining whether enter is pressed */
 
 		if(buf == NULL || nbytes < 0){
       /* Return failure */
 			return -1;
 		}
 
+    terminals[cur_sched_term].line_buffer_flag = 0; /* Sets the flag for determining whether enter is pressed */
+
     /* Wait until the line is finsied */
-		while(!terminals[cur_terminal].line_buffer_flag){
+		while(!terminals[cur_sched_term].line_buffer_flag){
 		}
+
+    cli();
 
     /* Print the number of bytes desired or the number of bytes typed */
     bytes_read = nbytes < terminals[cur_terminal].buf_index ? nbytes : terminals[cur_terminal].buf_index;
@@ -196,6 +202,7 @@ int terminal_read(int32_t fd, void* buf, int32_t nbytes){
 
     terminals[cur_terminal].buf_index = 0;
 
+    sti();
     return bytes_read;
 }
 
@@ -247,6 +254,7 @@ void print_scancode (uint8_t scan_code) {
   }
 
   putc(kbdus[scan_code]); // Prints this scan code to the screen
+
   terminals[cur_terminal].kb_buf[terminals[cur_terminal].buf_index] = kbdus[scan_code];
   terminals[cur_terminal].buf_index++;
 }
@@ -382,12 +390,38 @@ void keyboard_interrupt_handler(void){
 			return;
 		}
 
+    print_terminal = cur_terminal;
+
+    set_page_table1_entry(VIDEO_MEM_ADDR, VIDEO_MEM_ADDR);
+
+    /* Flush TLB */
+    asm volatile ("     \n\
+      movl %%cr3, %%eax \n\
+      movl %%eax, %%cr3"
+      :
+      :
+      : "eax"
+    );
+
     /* Tests to see whether the key is being presed versus being released */
 		if(scan_code < RECENT_RELEASE){
       recent_release_exec(scan_code);
 		} else{
       after_release_exec(scan_code);
 		}
+
+    set_page_table1_entry(VIDEO_MEM_ADDR, sched_arr[cur_sched_term].video_buffer);
+
+    /* Flush TLB */
+    asm volatile ("     \n\
+      movl %%cr3, %%eax \n\
+      movl %%eax, %%cr3"
+      :
+      :
+      : "eax"
+    );
+
+    print_terminal = cur_sched_term;
 
     /* Allow interrupts again */
 		restore_flags(flags);

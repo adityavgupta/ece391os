@@ -6,6 +6,7 @@
 #include "syscalls.h"
 #include "x86_desc.h"
 #include "i8259.h"
+#include "pit.h"
 
 #define VIDEO       0xB8000
 #define PAGE_SIZE	  4096
@@ -20,9 +21,6 @@
 #define TRUE 1
 #define FALSE 0
 #define PAGE_SIZE      4096
-#define FIRST_SHELL    VIDEO+PAGE_SIZE
-#define SECOND_SHELL   VIDEO+2*PAGE_SIZE
-#define THIRD_SHELL    VIDEO+3*PAGE_SIZE
 #define IRQ_NUM        1
 #define USER_PROG      0x8000000
 #define PROG_OFFSET    0x00048000
@@ -30,16 +28,16 @@
 #define EIGHT_KB       0x2000
 #define FOUR_MB        0x400000
 
-static int32_t screen_x;
-static int32_t screen_y;
+// static int32_t screen_x;
+// static int32_t screen_y;
 static int32_t current_line = 0;
 static char* video_mem = (char *)VIDEO;
 int32_t cur_terminal = 0;
+int32_t print_terminal = 0;
 
 void init_shell(void){
 	terminals[0].x = 0;
 	terminals[0].y = 0;
-	terminals[0].cur_pid = 1;
 	terminals[0].vid_mem = (char*)FIRST_SHELL;
 	terminals[0].line_buffer_flag = 0;
 	terminals[0].buf_index = 0;
@@ -50,7 +48,6 @@ void init_shell(void){
 
 	terminals[1].x = 0;
 	terminals[1].y = 0;
-	terminals[1].cur_pid = 2;
 	terminals[1].vid_mem = (char*)SECOND_SHELL;
 	terminals[1].line_buffer_flag = 0;
 	terminals[1].buf_index = 0;
@@ -58,11 +55,9 @@ void init_shell(void){
 	terminals[1].caps_lock = 0;
 	terminals[1].ctrl_pressed = 0;
 	terminals[1].alt_pressed = 0;
-	terminals[1].esp = -1;
 
 	terminals[2].x = 0;
 	terminals[2].y = 0;
-	terminals[2].cur_pid = 3;
 	terminals[2].vid_mem = (char*)THIRD_SHELL;
 	terminals[2].line_buffer_flag = 0;
 	terminals[2].buf_index = 0;
@@ -70,7 +65,6 @@ void init_shell(void){
 	terminals[2].caps_lock = 0;
 	terminals[2].ctrl_pressed = 0;
 	terminals[2].alt_pressed = 0;
-	terminals[2].esp = -1;
 }
 
 int32_t change_shell(int32_t next){
@@ -82,26 +76,49 @@ int32_t change_shell(int32_t next){
 		return 0;
 	}
 
+	/* Remap map video memory paging */
+	if(next == cur_sched_term){
+		set_page_table1_entry(VIDEO, VIDEO);
+
+		/* Flush TLB */
+		asm volatile ("     \n\
+			movl %%cr3, %%eax \n\
+			movl %%eax, %%cr3"
+			:
+			:
+			: "eax"
+		);
+	}
+
+	/* Copy video memory to buffer */
 	memcpy(terminals[cur_terminal].vid_mem, video_mem, PAGE_SIZE);
 
-	terminals[cur_terminal].x = screen_x;
-	terminals[cur_terminal].y = screen_y;
+	/* Save coordinates */
+	// terminals[cur_terminal].x = screen_x;
+	// terminals[cur_terminal].y = screen_y;
 
+	/*
 	asm volatile("    \n\
      movl %%esp, %0 \n\
 		 movl %%ebp, %1"
      : "=r"(terminals[cur_terminal].esp), "=r"(terminals[cur_terminal].ebp)
   );
+	*/
 
+	/* Set current terminal */
 	cur_terminal = next;
 
+	/* Copy buffer to video memory */
 	memcpy(video_mem, terminals[next].vid_mem, PAGE_SIZE);
 
-	screen_x = terminals[next].x;
-	screen_y = terminals[next].y;
+	/* Set new coordinates */
+	// screen_x = terminals[next].x;
+	// screen_y = terminals[next].y;
 
-	move_cursor(screen_x, screen_y);
+	/* Move cursor */
+	move_cursor(terminals[next].x, terminals[next].y);
 
+	/*
 	set_page_dir_entry(USER_PROG, EIGHT_MB + (terminals[next].cur_pid - 1)*FOUR_MB);
 
 	asm volatile ("     \n\
@@ -115,7 +132,6 @@ int32_t change_shell(int32_t next){
 	tss.esp0 = EIGHT_MB - (terminals[next].cur_pid - 1)*EIGHT_KB;
 
 	if(terminals[next].esp == -1){
-		/* Put program_addr into ecx and jump to the context switch */
 		enable_irq(IRQ_NUM);
 	  asm volatile("       \n\
 	    movl %0, %%ecx     \n\
@@ -132,6 +148,7 @@ int32_t change_shell(int32_t next){
 		:
 		: "r" (terminals[next].esp), "r" (terminals[next].ebp)
 	);
+	*/
 
 	return 0;
 }
@@ -158,10 +175,10 @@ void clear(void) {
  */
 void clear_l(void){
 	int32_t diff, i, x; /* Loop variable and value holders */
-  x = screen_x; /* Store current screen_x value */
+  x = terminals[print_terminal].x; /* Store current screen_x value */
 
   /* Difference between the beginning of the typing and the current screen position */
-  diff = screen_y - current_line;
+  diff = terminals[print_terminal].y - current_line;
 
   /* Add newlines to force the screen upwards */
   for(i = 0; i < (NUM_ROWS - (1 + diff)); i++){
@@ -170,11 +187,11 @@ void clear_l(void){
 
   /* Set new values */
   current_line = 0;
-  screen_y = diff;
-  screen_x = x;
+  terminals[print_terminal].y = diff;
+  terminals[print_terminal].x = x;
 
   /* Move cursor to new position */
-  move_cursor(screen_x, screen_y);
+  move_cursor(terminals[print_terminal].x, terminals[print_terminal].y);
 }
 
 
@@ -201,16 +218,16 @@ void scroll_up(void){
  */
 void new_line(void){
   	/* if at the last row */
-		if(screen_y == (NUM_ROWS - 1)){
+		if(terminals[print_terminal].y == (NUM_ROWS - 1)){
 			scroll_up();
-			screen_x = 0; /* set start of column (screen_x) to 0*/
-			move_cursor(screen_x, screen_y);
+			terminals[print_terminal].x = 0; /* set start of column (screen_x) to 0*/
 		}
   	else{
-			screen_y++;
-			screen_x = 0;
-			move_cursor(screen_x, screen_y);
+			terminals[print_terminal].y++;
+			terminals[print_terminal].x = 0;
 		}
+
+		move_cursor(terminals[print_terminal].x, terminals[print_terminal].y);
 }
 
 /* reset_screen
@@ -219,11 +236,11 @@ void new_line(void){
  * Effects: moves cursor to top left (start) of screen
  */
 void reset_screen(void){
-		screen_y = 0; /* set start of rows to 0 */
-		screen_x = 0; /* set start of column to 0*/
+		terminals[print_terminal].y = 0; /* set start of rows to 0 */
+		terminals[print_terminal].x = 0; /* set start of column to 0*/
     current_line = 0;
 
-		move_cursor(screen_x,screen_y); /* move cursor to start of screen */
+		move_cursor(terminals[print_terminal].x, terminals[print_terminal].y); /* move cursor to start of screen */
 }
 
 /* back_space
@@ -233,14 +250,14 @@ void reset_screen(void){
  * */
 void back_space(void){
 	/* decrement column value to get new column value */
-	if(--screen_x < 0){
-		screen_x = NUM_COLS - 1; /* Set to previous line */
-    screen_y--; /* Move up */
+	if(--terminals[print_terminal].x < 0){
+		terminals[print_terminal].x = NUM_COLS - 1; /* Set to previous line */
+    terminals[print_terminal].y--; /* Move up */
 	}
   /* Put empty space character in the index */
-	*(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << L_SHIFT)) = ' ';
+	*(uint8_t *)(video_mem + ((NUM_COLS * terminals[print_terminal].y + terminals[print_terminal].x) << L_SHIFT)) = ' ';
 
-	move_cursor(screen_x, screen_y); /* update cursor position */
+	move_cursor(terminals[print_terminal].x, terminals[print_terminal].y); /* update cursor position */
 }
 
 /* move_cursor
@@ -403,18 +420,18 @@ int32_t puts(int8_t* s) {
 void putc(uint8_t c) {
     if(c == '\n' || c == '\r') {
         new_line();
-        current_line = screen_y;
+        current_line = terminals[print_terminal].y;
     } else {
-        *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = c;
-        *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
-        screen_x++;
-        if(screen_x == NUM_COLS){
+        *(uint8_t *)(video_mem + ((NUM_COLS * terminals[print_terminal].y + terminals[print_terminal].x) << 1)) = c;
+        *(uint8_t *)(video_mem + ((NUM_COLS * terminals[print_terminal].y + terminals[print_terminal].x) << 1) + 1) = ATTRIB;
+        terminals[print_terminal].x++;
+        if(terminals[print_terminal].x == NUM_COLS){
           new_line();
         }
-        screen_y = (screen_y + (screen_x / NUM_COLS)) % NUM_ROWS;
+        terminals[print_terminal].y = (terminals[print_terminal].y + (terminals[print_terminal].x / NUM_COLS)) % NUM_ROWS;
     }
 
-	move_cursor(screen_x, screen_y);
+	move_cursor(terminals[print_terminal].x, terminals[print_terminal].y);
 }
 
 /* int8_t* itoa(uint32_t value, int8_t* buf, int32_t radix);
