@@ -104,6 +104,14 @@ int32_t halt(uint8_t status){
   return 0;
 }
 
+/*
+ * launch
+ *    DESCRIPTION: Create 3 shell programs
+ *    INPUTS: none
+ *    OUTPUTS: none
+ *    RETURN VALUE: 0 for success, -1 for failure
+ *    SIDE EFFECTS: 3 shell programs are created
+ */
 int32_t launch(){
   cli();
 
@@ -137,63 +145,28 @@ int32_t launch(){
 
   /* Create pcb */
   pcb_t pcb;
-  /* Mark first three shells as first three processes */
-  for(i = 0; i < 3; i++){
+
+  for(i = SHELL_NUM - 1; i >= 0; i--){
+    /* Set up shell page */
+    set_page_dir_entry(USER_PROG, EIGHT_MB + i*FOUR_MB);
+
+    /* Flush tlb */
+    asm volatile ("      \n\
+       movl %%cr3, %%eax \n\
+       movl %%eax, %%cr3"
+       :
+       :
+       : "eax"
+    );
+
+    /* Copy executable to 128MB */
+    if((size = read_data(file_dentry.inode_num, 0, (uint8_t*)(USER_PROG + PROG_OFFSET), MAX_PROG_SIZE)) == -1){
+      /* Return failure */
+      return -1;
+    }
+
+    /* Mark process as in use */
     process_array[i] = 1;
-  }
-
-  /* Set up third shell page */
-  set_page_dir_entry(USER_PROG, EIGHT_MB + 2*FOUR_MB);
-
-  /* Flush tlb */
-  asm volatile ("      \n\
-     movl %%cr3, %%eax \n\
-     movl %%eax, %%cr3"
-     :
-     :
-     : "eax"
-  );
-
-  /* Copy executable to 128MB */
-  if((size = read_data(file_dentry.inode_num, 0, (uint8_t*)(USER_PROG + PROG_OFFSET), MAX_PROG_SIZE)) == -1){
-    /* Return failure */
-    return -1;
-  }
-
-  /* Set up second shell page */
-  set_page_dir_entry(USER_PROG, EIGHT_MB + FOUR_MB);
-
-  /* Flush tlb */
-  asm volatile ("      \n\
-     movl %%cr3, %%eax \n\
-     movl %%eax, %%cr3"
-     :
-     :
-     : "eax"
-  );
-
-  /* Copy executable to 128MB */
-  if((size = read_data(file_dentry.inode_num, 0, (uint8_t*)(USER_PROG + PROG_OFFSET), MAX_PROG_SIZE)) == -1){
-    /* Return failure */
-    return -1;
-  }
-
-  /* Set up first shell page */
-  set_page_dir_entry(USER_PROG, EIGHT_MB);
-
-  /* Flush tlb */
-  asm volatile ("      \n\
-     movl %%cr3, %%eax \n\
-     movl %%eax, %%cr3"
-     :
-     :
-     : "eax"
-  );
-
-  /* Copy executable to 128MB */
-  if((size = read_data(file_dentry.inode_num, 0, (uint8_t*)(USER_PROG + PROG_OFFSET), MAX_PROG_SIZE)) == -1){
-    /* Return failure */
-    return -1;
   }
 
   pcb.parent_pid = 0;
@@ -211,11 +184,11 @@ int32_t launch(){
     pcb.fdt[i].flags = -1;
   }
 
-  /* Set count of process numbers to 3 */
-  process_num = 3;
+  /* Set count of process numbers to number of terminals */
+  process_num = SHELL_NUM;
 
   /* Place pcb in kernel memory */
-  for(i = 0; i < 3; i++){
+  for(i = 0; i < SHELL_NUM; i++){
     pcb.pid = i + 1;
     memcpy((void *)(EIGHT_MB - pcb.pid*EIGHT_KB), &pcb, sizeof(pcb));
   }
@@ -230,8 +203,7 @@ int32_t launch(){
   /* Save instruction address */
   program_addr_test = program_addr;
 
-  /* Initialize PIT */
-  //pit_init();
+  /* Allow pit interrupts */
   prev_sched_term = 0;
 
   /* Put program_addr into ecx and jump to the context switch */
