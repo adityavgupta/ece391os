@@ -10,9 +10,13 @@
 uint32_t rtc_test_flag = 0;
 uint32_t rtc_read_test_flag = 0;
 
+/* Flags to show interrupts occured */
 volatile uint32_t interrupt_flags[3] = {0, 0, 0};
+
+/* Number of occured interrupts */
 int32_t count[3] = {0, 0, 0};
 
+/* Frequency requests of processes */
 int32_t frequencies[3] = {0, 0, 0};
 
 /*
