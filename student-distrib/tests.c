@@ -827,7 +827,7 @@ void open_null_test(void){
   pcb.fdt[1].jump_ptr = &stdout_table_1;
   pcb.fdt[0].flags = 1;
   pcb.fdt[1].flags = 1;
-  pcb.process_state = 0;
+
   /* Place pcb in kernel memory */
   memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
 
@@ -857,7 +857,7 @@ void open_test_fail(void){
   pcb.fdt[1].jump_ptr = &stdout_table_1;
   pcb.fdt[0].flags = 1;
   pcb.fdt[1].flags = 1;
-  pcb.process_state = 0;
+
   /* Place pcb in kernel memory */
   memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
 
@@ -886,7 +886,7 @@ void close_test_fail_1(void){
   pcb.fdt[1].jump_ptr = &stdout_table_1;
   pcb.fdt[0].flags = 1;
   pcb.fdt[1].flags = 1;
-  pcb.process_state = 0;
+
   /* Place pcb in kernel memory */
   memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
 
@@ -914,7 +914,7 @@ void close_test_fail_2(void){
   pcb.fdt[1].jump_ptr = &stdout_table_1;
   pcb.fdt[0].flags = 1;
   pcb.fdt[1].flags = 1;
-  pcb.process_state = 0;
+
 
   /* Place pcb in kernel memory */
   memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
@@ -944,7 +944,7 @@ void read_test_fail_1(void){
   pcb.fdt[1].jump_ptr = &stdout_table_1;
   pcb.fdt[0].flags = 1;
   pcb.fdt[1].flags = 1;
-  pcb.process_state = 0;
+
 
   /* Place pcb in kernel memory */
   memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
@@ -975,7 +975,7 @@ void read_test_fail_2(void){
   pcb.fdt[1].jump_ptr = &stdout_table_1;
   pcb.fdt[0].flags = 1;
   pcb.fdt[1].flags = 1;
-  pcb.process_state = 0;
+
 
   /* Place pcb in kernel memory */
   memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
@@ -1006,7 +1006,7 @@ void read_test_fail_3(void){
   pcb.fdt[1].jump_ptr = &stdout_table_1;
   pcb.fdt[0].flags = 1;
   pcb.fdt[1].flags = 1;
-  pcb.process_state = 0;
+
 
   /* Place pcb in kernel memory */
   memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
@@ -1036,7 +1036,7 @@ void read_test_fail_4(void){
   pcb.fdt[1].jump_ptr = &stdout_table_1;
   pcb.fdt[0].flags = 1;
   pcb.fdt[1].flags = 1;
-  pcb.process_state = 0;
+
   /* Place pcb in kernel memory */
   memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
   unsigned char read_buf[128];
@@ -1066,7 +1066,7 @@ void read_test_fail_5(void){
   pcb.fdt[1].jump_ptr = &stdout_table_1;
   pcb.fdt[0].flags = 1;
   pcb.fdt[1].flags = 1;
-  pcb.process_state = 0;
+
   /* Place pcb in kernel memory */
   memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
   unsigned char read_buf[128];
@@ -1096,7 +1096,7 @@ void write_test_fail_1(void){
   pcb.fdt[1].jump_ptr = &stdout_table_1;
   pcb.fdt[0].flags = 1;
   pcb.fdt[1].flags = 1;
-  pcb.process_state = 0;
+
 
   /* Place pcb in kernel memory */
   memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
@@ -1127,7 +1127,7 @@ void write_test_fail_2(void){
   pcb.fdt[1].jump_ptr = &stdout_table_1;
   pcb.fdt[0].flags = 1;
   pcb.fdt[1].flags = 1;
-  pcb.process_state = 0;
+
 
   /* Place pcb in kernel memory */
   memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
@@ -1158,7 +1158,7 @@ void write_test_fail_3(void){
   pcb.fdt[1].jump_ptr = &stdout_table_1;
   pcb.fdt[0].flags = 1;
   pcb.fdt[1].flags = 1;
-  pcb.process_state = 0;
+
 
   /* Place pcb in kernel memory */
   memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
@@ -1189,7 +1189,7 @@ void write_test_fail_4(void){
   pcb.fdt[1].jump_ptr = &stdout_table_1;
   pcb.fdt[0].flags = 1;
   pcb.fdt[1].flags = 1;
-  pcb.process_state = 0;
+
   /* Place pcb in kernel memory */
   memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
   unsigned char write_buf[128];
@@ -1219,7 +1219,7 @@ void write_test_fail_5(void){
   pcb.fdt[1].jump_ptr = &stdout_table_1;
   pcb.fdt[0].flags = 1;
   pcb.fdt[1].flags = 1;
-  pcb.process_state = 0;
+
   /* Place pcb in kernel memory */
   memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
   unsigned char write_buf[128];
@@ -1251,7 +1251,7 @@ void write_test_fail_6(void){
 	pcb.fdt[0].flags=1;
 	pcb.fdt[1].flags=1;
 	pcb.fdt[2].flags=1;
-	pcb.process_state=0;
+	
 
 	memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
 	open((uint8_t*)"pingpong");
@@ -1281,7 +1281,7 @@ void close_fail_1(){
   pcb.fdt[1].jump_ptr = &stdout_table_1;
   pcb.fdt[0].flags = 1;
   pcb.fdt[1].flags = 1;
-  pcb.process_state = 0;
+
   /* Place pcb in kernel memory */
   memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
   int ret=close(-1);
@@ -1309,7 +1309,7 @@ void close_fail_2(){
   pcb.fdt[1].jump_ptr = &stdout_table_1;
   pcb.fdt[0].flags = 1;
   pcb.fdt[1].flags = 1;
-  pcb.process_state = 0;
+
   /* Place pcb in kernel memory */
   memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
   int ret=close(3);
@@ -1337,7 +1337,7 @@ void close_fail_3(){
   pcb.fdt[1].jump_ptr = &stdout_table_1;
   pcb.fdt[0].flags = 1;
   pcb.fdt[1].flags = 1;
-  pcb.process_state = 0;
+
   /* Place pcb in kernel memory */
   memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
   int ret=close(8);
@@ -1365,7 +1365,7 @@ void close_fail_4(){
   pcb.fdt[1].jump_ptr = &stdout_table_1;
   pcb.fdt[0].flags = 1;
   pcb.fdt[1].flags = 1;
-  pcb.process_state = 0;
+
   /* Place pcb in kernel memory */
   memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
   int ret=close(0);
@@ -1393,7 +1393,7 @@ void close_fail_5(){
   pcb.fdt[1].jump_ptr = &stdout_table_1;
   pcb.fdt[0].flags = 1;
   pcb.fdt[1].flags = 1;
-  pcb.process_state = 0;
+
   /* Place pcb in kernel memory */
   memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
   int ret=close(1);
@@ -1421,7 +1421,7 @@ void read_write(){
   pcb.fdt[1].jump_ptr = &stdout_table_1;
   pcb.fdt[0].flags = 1;
   pcb.fdt[1].flags = 1;
-  pcb.process_state = 0;
+
   /* Place pcb in kernel memory */
   memcpy((void *)(EIGHT_MB - 1*0x2000), &pcb, sizeof(pcb));
   unsigned char read_buf[128];
@@ -1446,7 +1446,7 @@ void fd_file_read_test(){
   pcb.fdt[1].jump_ptr = &stdout_table_1;
   pcb.fdt[0].flags = 1;
   pcb.fdt[1].flags = 1;
-  pcb.process_state = 0;
+
 	int i;
 	for(i = 2; i < 8; i++){
     pcb.fdt[i].flags = -1;
@@ -1476,7 +1476,7 @@ void fd_dir_read_test(){
   pcb.fdt[1].jump_ptr = &stdout_table_1;
   pcb.fdt[0].flags = 1;
   pcb.fdt[1].flags = 1;
-  pcb.process_state = 0;
+
 	int i;
 	for(i = 2; i < 8; i++){
     pcb.fdt[i].flags = -1;
@@ -1512,7 +1512,7 @@ void rtc_system_call_test(){
   pcb.fdt[1].jump_ptr = &stdout_table_1;
   pcb.fdt[0].flags = 1;
   pcb.fdt[1].flags = 1;
-  pcb.process_state = 0;
+
 	int i;
 	for(i = 2; i < 8; i++){
     pcb.fdt[i].flags = -1;
@@ -1573,7 +1573,7 @@ void pcb_overflow(){
   pcb.fdt[1].jump_ptr = &stdout_table_1;
   pcb.fdt[0].flags = 1;
   pcb.fdt[1].flags = 1;
-  pcb.process_state = 0;
+
 	int i;
 	for(i = 2; i < 8; i++){
     pcb.fdt[i].flags = -1;
@@ -1766,7 +1766,7 @@ void launch_tests(){
 	// fd_dir_read_test();
 	// rtc_system_call_test();
 	// pcb_overflow();
-	
+
 	vidmap_test_1();
 	vidmap_test_2();
 	getargs_test_1();

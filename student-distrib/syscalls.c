@@ -175,7 +175,6 @@ int32_t launch(){
   pcb.fdt[1].jump_ptr = &stdout_table;
   pcb.fdt[0].flags = 1;
   pcb.fdt[1].flags = 1;
-  pcb.process_state = RUNNING;
   pcb.vidmem = 0;
   /* Set arguments to an empty string */
   strncpy((int8_t*)pcb.args, (int8_t*)"", BUF_LENGTH);
@@ -344,7 +343,6 @@ int32_t execute(const uint8_t* command){
   pcb.fdt[1].jump_ptr = &stdout_table;
   pcb.fdt[0].flags = 1;
   pcb.fdt[1].flags = 1;
-  pcb.process_state = RUNNING;
   pcb.vidmem = 0;
   /* Copy arguments to the pcb */
   strncpy((int8_t*)pcb.args, (const int8_t*)args, BUF_LENGTH);

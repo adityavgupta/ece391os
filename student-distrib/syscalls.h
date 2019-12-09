@@ -51,7 +51,6 @@ typedef struct {
   int32_t parent_esp; 					/* Parent's esp */
   int32_t parent_ebp; 					/* Parent's ebp */
   file_desc fdt[MAX_FD_NUM+1]; 	/* File Descriptor Table */
-  uint8_t process_state;        /* State of process */
 	uint8_t args[BUF_LENGTH];     /* Commands passed in */
 	int32_t vidmem;
 	int32_t freq;
