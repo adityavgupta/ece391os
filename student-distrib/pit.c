@@ -12,7 +12,6 @@ int32_t prev_sched_term = -1; /* the scheduled process right before scheduling s
 int32_t cur_sched_term = 0;	/* the next scheduled process */
 sched_node sched_arr[SCHED_SIZE];	/* scheduling data strucute */
 
-
 /*
  * pit_init
  *    DESCRIPTION: Initialize the PIT and set up the scheduling structure
