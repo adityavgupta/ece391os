@@ -10,7 +10,7 @@
 #include "paging.h"
 
 /* Maximum number of file descriptor indexes */
-#define MAX_FD_NUM 7
+#define MAX_FD_NUM      7
 #define EIGHT_KB        0x2000
 #define EIGHT_MB        0x800000
 #define FOUR_MB         0x400000

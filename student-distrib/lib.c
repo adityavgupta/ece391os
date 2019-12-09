@@ -16,16 +16,6 @@
 #define COL_END     79
 #define PORT_3D4		0x3D4
 #define PORT_3D5    0x3D5
-#define BUF_LENGTH 128
-#define TRUE 1
-#define FALSE 0
-#define PAGE_SIZE      4096
-#define IRQ_NUM        1
-#define USER_PROG      0x8000000
-#define PROG_OFFSET    0x00048000
-#define EIGHT_MB       0x800000
-#define EIGHT_KB       0x2000
-#define FOUR_MB        0x400000
 
 static int32_t current_line = 0;
 static char* video_mem = (char *)VIDEO;
