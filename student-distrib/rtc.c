@@ -4,6 +4,8 @@
 #include "syscalls.h"
 #include "pit.h"
 
+#define MAX_FREQ 1024
+
 /* Flag to allow prints for test cases */
 uint32_t rtc_test_flag = 0;
 uint32_t rtc_read_test_flag = 0;
@@ -40,7 +42,7 @@ void rtc_init(void){
 
     /* Give the new rate to register A */
 
-    outb((prevA & 0xF0) | 0x06, RTC_PORT1);
+    outb((prevA & 0xF0) | FREQ_1024, RTC_PORT1);
 
     /* Enable RTC PIC interrupts */
     enable_irq(RTC_IRQ_NUM);
@@ -65,18 +67,20 @@ void rtc_interrupt_handler(void){
   /* Send EOI signal */
   send_eoi(RTC_IRQ_NUM);
 
-  int32_t i;
+  int32_t i; /* Loop variable */
+  /* Check if required frequencies have been reached */
   for(i = 0; i < 3; i++){
     if(count[i]++ == frequencies[i] - 1){
+      /* Simulate interrupt */
       interrupt_flags[i] = 1;
     }
   }
 
-  // //test_interrupts();
-  // if(rtc_test_flag){
-  //   uint8_t c = 'f';
-  //   putc(c);
-  // }
+  //test_interrupts();
+  if(rtc_test_flag){
+    uint8_t c = 'f';
+    putc(c);
+  }
 
   /* Read register C */
   outb(REGISTER_C, RTC_PORT0);
@@ -105,6 +109,7 @@ int32_t rtc_open(const uint8_t* filename){
   /* Mask interrupts and save flags */
   cli_and_save(flags);
 
+  /* Set frequency to 2 Hz */
   frequencies[cur_sched_term] = 512;
 
   /* Restore the interrupt flags */
@@ -139,6 +144,7 @@ int32_t rtc_close(int32_t fd){
 int32_t rtc_read(int32_t fd, void* buf, int32_t nbytes){
   cli();
 
+  /* Set number of occured interrupts */
   count[cur_sched_term] = 0;
   interrupt_flags[cur_sched_term] = 0;
 
@@ -181,39 +187,42 @@ int32_t rtc_write(int32_t fd, const void* buf, int32_t nbytes){
   /* Get the frequency */
   freq = *(int32_t*)buf;
 
+  /* Check for valid frequency and set the rate */
   switch(freq){
     case 2:
-      rate = 1024 / 2;
+      rate = MAX_FREQ / 2;
       break;
     case 4:
-      rate = 1024 / 4;
+      rate = MAX_FREQ / 4;
       break;
     case 8:
-      rate = 1024 / 8;
+      rate = MAX_FREQ / 8;
       break;
     case 16:
-      rate = 1024 / 16;
+      rate = MAX_FREQ / 16;
       break;
     case 32:
-      rate = 1024 / 32;
+      rate = MAX_FREQ / 32;
       break;
     case 64:
-      rate = 1024 / 64;
+      rate = MAX_FREQ / 64;
       break;
     case 128:
-      rate = 1024 / 128;
+      rate = MAX_FREQ / 128;
       break;
     case 512:
-      rate = 1024 / 512;
+      rate = MAX_FREQ / 512;
       break;
     case 1024:
-      rate = 1;
+      rate = MAX_FREQ / 1024;
       break;
     default:
       restore_flags(flags);
+      /* Return failure */
       return -1;
   }
 
+  /* Set the process' rate */
   frequencies[cur_sched_term] = rate;
 
   /* Restore the interrupt flags */

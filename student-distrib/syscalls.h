@@ -28,7 +28,7 @@ uint32_t program_addr_test;
 int32_t process_array[MAX_PROGS];
 
 /* Jump table for system calls */
-typedef struct jump_table{
+typedef struct jump_table {
 	int32_t(*write)(int32_t, const void*, int32_t);
 	int32_t(*read)(int32_t, void*, int32_t);
 	int32_t(*open)(const uint8_t*);
@@ -36,7 +36,7 @@ typedef struct jump_table{
 } jump_table;
 
 /* File descriptor struct */
-typedef struct file_desc{
+typedef struct file_desc {
 	jump_table* jump_ptr;     /* Jump table to file's system calls */
 	int32_t inode;            /* File inode number */
 	int32_t file_position;    /* Current position of the file */
@@ -44,19 +44,20 @@ typedef struct file_desc{
 } file_desc;
 
 /* PCB struct,  */
-typedef struct{
+typedef struct {
   int32_t pid; 									/* Process identification number */
   int32_t parent_pid; 					/* Parent process identification number */
   int32_t current_esp; 					/* Current esp */
   int32_t parent_esp; 					/* Parent's esp */
   int32_t parent_ebp; 					/* Parent's ebp */
   file_desc fdt[MAX_FD_NUM+1]; 	/* File Descriptor Table */
-  uint8_t process_state;  /* State of process */
+  uint8_t process_state;        /* State of process */
 	uint8_t args[BUF_LENGTH];     /* Commands passed in */
 	int32_t vidmem;
 	int32_t freq;
 } pcb_t;
 
+/* Launch 3 shells for 3 terminals */
 int32_t launch(void);
 
 /* Halt system call, stop a process */
@@ -83,10 +84,10 @@ int32_t getargs(uint8_t* buf, int32_t nbytes);
 /* Map video memory to userspace */
 int32_t vidmap(uint8_t** screen_start);
 
-/* */
+/* Does nothing */
 int32_t set_handler(int32_t signum, void* handler_address);
 
-/* */
+/* Does nothing */
 int32_t sigreturn(void);
 
 /* Function for bad read system calls */

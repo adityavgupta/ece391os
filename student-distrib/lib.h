@@ -27,13 +27,20 @@ void back_space(void);
 void reset_screen(void);
 void move_cursor(int screen_x, int screen_y);
 
+/* Initialize terminal structs */
 void init_shell(void);
+
+/* View a different terminal */
 int32_t change_shell(int32_t shell_num);
 
+/* Current viewing terminal */
 extern int32_t cur_terminal;
+
+/* Current printing terminal */
 extern int32_t print_terminal;
 
-typedef struct shell{
+/* Struct to hold terminal state */
+typedef struct {
 	int8_t* vid_mem;
 	int32_t x;
 	int32_t y;
@@ -47,6 +54,7 @@ typedef struct shell{
 	int32_t vid_map;
 } shell_t;
 
+/* Array of terminals */
 shell_t terminals[SHELL_NUM];
 
 

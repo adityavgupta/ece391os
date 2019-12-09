@@ -27,13 +27,23 @@
 #define EIGHT_KB       0x2000
 #define FOUR_MB        0x400000
 
-// static int32_t screen_x;
-// static int32_t screen_y;
 static int32_t current_line = 0;
 static char* video_mem = (char *)VIDEO;
+
+/* Current viewing terminal */
 int32_t cur_terminal = 0;
+
+/* Current printing terminal */
 int32_t print_terminal = 0;
 
+/*
+ * init_shell
+ *    DESCRIPTION: Initializes the terminal structs
+ *    INPUTS: none
+ *    OUTPUTS: none
+ *    RETURN VALUE: none
+ *    SIDE EFFECTS: Sets the terminal flags and positions
+ */
 void init_shell(void){
 	terminals[0].x = 0;
 	terminals[0].y = 0;
@@ -69,13 +79,19 @@ void init_shell(void){
 	terminals[2].vid_map = 0;
 }
 
+/*
+ * change_shell
+ *    DESCRIPTION: Switches to a different terminal
+ *    INPUTS: int32_t next - terminal number to change to
+ *    OUTPUTS: none
+ *    RETURN VALUE: 0 for success, -1 for failure
+ *    SIDE EFFECTS: Copies physical video memory to the current terminal's buffer, and sets the memory to the next terminal
+ */
 int32_t change_shell(int32_t next){
+	/* Check for valid terminal */
 	if(next < 0 || next >= 3){
+		/* Return failure */
 		return -1;
-	}
-
-	if(next == cur_terminal){
-		return 0;
 	}
 
 	/* Copy video memory to buffer */
