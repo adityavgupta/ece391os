@@ -10,7 +10,7 @@
 
 #define VIDEO       0xB8000
 #define PAGE_SIZE	  4096
-#define ATTRIB      0xE
+#define ATTRIB      0x7
 
 /* Some helpful constants for the terminal driver*/
 #define COL_END     79
