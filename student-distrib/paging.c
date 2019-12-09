@@ -12,7 +12,6 @@
 #define KERNEL_ADDR    0x400000
 #define PT_OFFSET      12
 #define PD_OFFSET      22
-#define PAGE_SIZE      4096
 #define FOUR_MB        0x400000
 #define PAGE_INDEX     0x3FF
 #define NOT_PRESENT    0xFFFFFFFE
@@ -42,15 +41,33 @@ int32_t set_page_dir_entry(int32_t virtual, int32_t physical){
 }
 
 /*
- * set_page_table_entry
- *    DESCRIPTION: Enables a page in the page table
+ * set_page_table1_entry
+ *    DESCRIPTION: Enables a page in the 1stpage table
  *    INPUTS: int32_t virtual - virtual address
  *            int32_t physical - physical address to map to
  *    OUTPUTS: none
  *    RETURN VALUE: 0 for success
  *    SIDE EFFECTS: none
  */
-int32_t set_page_table_entry(int32_t virtual, int32_t physical){
+int32_t set_page_table1_entry(int32_t virtual, int32_t physical){
+  /* Set entry to user mode */
+  first_page_table[(virtual >> PT_OFFSET) & PAGE_INDEX] = physical | USER_MODE;
+
+  /* Return success */
+  return 0;
+}
+
+/*
+ * set_page_table2_entry
+ *    DESCRIPTION: Enables a page in the 2nd page table
+ *    INPUTS: int32_t virtual - virtual address
+ *            int32_t physical - physical address to map to
+ *    OUTPUTS: none
+ *    RETURN VALUE: 0 for success
+ *    SIDE EFFECTS: none
+ */
+int32_t set_page_table2_entry(int32_t virtual, int32_t physical){
+  /* Set entry to user mode */
   second_page_table[(virtual >> PT_OFFSET) & PAGE_INDEX] = physical | USER_MODE;
 
   /* Return success */
@@ -166,6 +183,11 @@ void init_page_table(void){
 
     /* Set video memory page to present, read/write, and supervisor mode */
     first_page_table[VIDEO_MEM_ADDR >> PT_OFFSET] |= RW_PRESENT;
+
+    /*Sets up temporary buffers for when the process is not the visible process*/
+    first_page_table[FIRST_SHELL >> PT_OFFSET] |= RW_PRESENT;
+    first_page_table[SECOND_SHELL >> PT_OFFSET] |= RW_PRESENT;
+    first_page_table[THIRD_SHELL >> PT_OFFSET] |= RW_PRESENT;
 }
 
 /*

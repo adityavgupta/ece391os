@@ -2,22 +2,113 @@
  * vim:ts=4 noexpandtab */
 
 #include "lib.h"
+#include "kb.h"
+#include "syscalls.h"
+#include "x86_desc.h"
+#include "i8259.h"
+#include "pit.h"
 
 #define VIDEO       0xB8000
-#define NUM_COLS    80
-#define NUM_ROWS    25
+#define PAGE_SIZE	  4096
 #define ATTRIB      0xE
 
 /* Some helpful constants for the terminal driver*/
 #define COL_END     79
 #define PORT_3D4		0x3D4
 #define PORT_3D5    0x3D5
-#define L_SHIFT     1
+#define BUF_LENGTH 128
+#define TRUE 1
+#define FALSE 0
+#define PAGE_SIZE      4096
+#define IRQ_NUM        1
+#define USER_PROG      0x8000000
+#define PROG_OFFSET    0x00048000
+#define EIGHT_MB       0x800000
+#define EIGHT_KB       0x2000
+#define FOUR_MB        0x400000
 
-static int screen_x;
-static int screen_y;
-static int current_line = 0;
+static int32_t current_line = 0;
 static char* video_mem = (char *)VIDEO;
+
+/* Current viewing terminal */
+int32_t cur_terminal = 0;
+
+/* Current printing terminal */
+int32_t print_terminal = 0;
+
+/*
+ * init_shell
+ *    DESCRIPTION: Initializes the terminal structs
+ *    INPUTS: none
+ *    OUTPUTS: none
+ *    RETURN VALUE: none
+ *    SIDE EFFECTS: Sets the terminal flags and positions
+ */
+void init_shell(void){
+	terminals[0].x = 0;
+	terminals[0].y = 0;
+	terminals[0].vid_mem = (char*)FIRST_SHELL;
+	terminals[0].line_buffer_flag = 0;
+	terminals[0].buf_index = 0;
+	terminals[0].shift_pressed = 0;
+	terminals[0].caps_lock = 0;
+	terminals[0].ctrl_pressed = 0;
+	terminals[0].alt_pressed = 0;
+	terminals[0].vid_map = 0;
+
+	terminals[1].x = 0;
+	terminals[1].y = 0;
+	terminals[1].vid_mem = (char*)SECOND_SHELL;
+	terminals[1].line_buffer_flag = 0;
+	terminals[1].buf_index = 0;
+	terminals[1].shift_pressed = 0;
+	terminals[1].caps_lock = 0;
+	terminals[1].ctrl_pressed = 0;
+	terminals[1].alt_pressed = 0;
+	terminals[1].vid_map = 0;
+
+	terminals[2].x = 0;
+	terminals[2].y = 0;
+	terminals[2].vid_mem = (char*)THIRD_SHELL;
+	terminals[2].line_buffer_flag = 0;
+	terminals[2].buf_index = 0;
+	terminals[2].shift_pressed = 0;
+	terminals[2].caps_lock = 0;
+	terminals[2].ctrl_pressed = 0;
+	terminals[2].alt_pressed = 0;
+	terminals[2].vid_map = 0;
+}
+
+/*
+ * change_shell
+ *    DESCRIPTION: Switches to a different terminal
+ *    INPUTS: int32_t next - terminal number to change to
+ *    OUTPUTS: none
+ *    RETURN VALUE: 0 for success, -1 for failure
+ *    SIDE EFFECTS: Copies physical video memory to the current terminal's buffer, and sets the memory to the next terminal
+ */
+int32_t change_shell(int32_t next){
+	/* Check for valid terminal */
+	if(next < 0 || next >= 3){
+		/* Return failure */
+		return -1;
+	}
+
+	/* Copy video memory to buffer */
+	memcpy(terminals[cur_terminal].vid_mem, video_mem, PAGE_SIZE);
+
+	/* Set current terminal */
+	cur_terminal = next;
+
+	/* Copy buffer to video memory */
+	memcpy(video_mem, terminals[next].vid_mem, PAGE_SIZE);
+
+	/* Move cursor */
+	move_cursor(terminals[next].x, terminals[next].y);
+
+	/* Return success */
+	return 0;
+}
 
 /* void clear(void);
  * Inputs: void
@@ -31,35 +122,6 @@ void clear(void) {
     }
 }
 
-/*
- * clear_l
- *    DESCRIPTION: Clears the screen when ctrl l is pressed
- *    INPUTS: none
- *    OUTPUTS: Moves current typed line to the top of the screen
- *    RETURN VALUE: none
- *    SIDE EFFECTS: none
- */
-void clear_l(void){
-	int32_t diff, i, x; /* Loop variable and value holders */
-  x = screen_x; /* Store current screen_x value */
-
-  /* Difference between the beginning of the typing and the current screen position */
-  diff = screen_y - current_line;
-
-  /* Add newlines to force the screen upwards */
-  for(i = 0; i < (NUM_ROWS - (1 + diff)); i++){
-    new_line();
-  }
-
-  /* Set new values */
-  current_line = 0;
-  screen_y = diff;
-  screen_x = x;
-
-  /* Move cursor to new position */
-  move_cursor(screen_x, screen_y);
-}
-
 /* scroll_up
  * Inputs: void
  * Outputs: none
@@ -68,10 +130,12 @@ void clear_l(void){
 void scroll_up(void){
 	int32_t i;
 	for(i = 0; i < NUM_ROWS*NUM_COLS-NUM_COLS; i++){
-			*(uint8_t*)(video_mem+(i << L_SHIFT))= *(uint8_t *)(video_mem+((i+NUM_COLS)<<1));
+			*(uint8_t*)(video_mem + (i << 1)) = *(uint8_t *)(video_mem+((i + NUM_COLS) << 1));
+			*(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
 	}
-	for(i = NUM_ROWS*NUM_COLS-NUM_COLS; i<  NUM_ROWS*NUM_COLS; i++){
-		*(uint8_t*)(video_mem+(i << L_SHIFT)) = ' '; /* put empty space character in the index */
+	for(i = NUM_ROWS*NUM_COLS-NUM_COLS; i < NUM_ROWS*NUM_COLS; i++){
+		*(uint8_t*)(video_mem + (i << 1)) = ' '; /* put empty space character in the index */
+		*(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
 	}
 }
 
@@ -82,16 +146,16 @@ void scroll_up(void){
  */
 void new_line(void){
   	/* if at the last row */
-		if(screen_y == (NUM_ROWS - 1)){
+		if(terminals[print_terminal].y == (NUM_ROWS - 1)){
 			scroll_up();
-			screen_x = 0; /* set start of column (screen_x) to 0*/
-			move_cursor(screen_x, screen_y);
+			terminals[print_terminal].x = 0; /* set start of column (screen_x) to 0*/
 		}
   	else{
-			screen_y++;
-			screen_x = 0;
-			move_cursor(screen_x, screen_y);
+			terminals[print_terminal].y++;
+			terminals[print_terminal].x = 0;
 		}
+
+		move_cursor(terminals[cur_terminal].x, terminals[cur_terminal].y);
 }
 
 /* reset_screen
@@ -100,11 +164,11 @@ void new_line(void){
  * Effects: moves cursor to top left (start) of screen
  */
 void reset_screen(void){
-		screen_y = 0; /* set start of rows to 0 */
-		screen_x = 0; /* set start of column to 0*/
+		terminals[cur_terminal].y = 0; /* set start of rows to 0 */
+		terminals[cur_terminal].x = 0; /* set start of column to 0*/
     current_line = 0;
 
-		move_cursor(screen_x,screen_y); /* move cursor to start of screen */
+		move_cursor(terminals[cur_terminal].x, terminals[cur_terminal].y); /* move cursor to start of screen */
 }
 
 /* back_space
@@ -114,14 +178,14 @@ void reset_screen(void){
  * */
 void back_space(void){
 	/* decrement column value to get new column value */
-	if(--screen_x < 0){
-		screen_x = NUM_COLS - 1; /* Set to previous line */
-    screen_y--; /* Move up */
+	if(--terminals[cur_terminal].x < 0){
+		terminals[cur_terminal].x = NUM_COLS - 1; /* Set to previous line */
+    terminals[cur_terminal].y--; /* Move up */
 	}
   /* Put empty space character in the index */
-	*(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << L_SHIFT)) = ' ';
+	*(uint8_t *)(video_mem + ((NUM_COLS * terminals[cur_terminal].y + terminals[cur_terminal].x) << 1)) = ' ';
 
-	move_cursor(screen_x, screen_y); /* update cursor position */
+	move_cursor(terminals[cur_terminal].x, terminals[cur_terminal].y); /* update cursor position */
 }
 
 /* move_cursor
@@ -284,18 +348,18 @@ int32_t puts(int8_t* s) {
 void putc(uint8_t c) {
     if(c == '\n' || c == '\r') {
         new_line();
-        current_line = screen_y;
+        current_line = terminals[print_terminal].y;
     } else {
-        *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = c;
-        *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
-        screen_x++;
-        if(screen_x == NUM_COLS){
+        *(uint8_t *)(video_mem + ((NUM_COLS * terminals[print_terminal].y + terminals[print_terminal].x) << 1)) = c;
+        *(uint8_t *)(video_mem + ((NUM_COLS * terminals[print_terminal].y + terminals[print_terminal].x) << 1) + 1) = ATTRIB;
+        terminals[print_terminal].x++;
+        if(terminals[print_terminal].x == NUM_COLS){
           new_line();
         }
-        screen_y = (screen_y + (screen_x / NUM_COLS)) % NUM_ROWS;
+        terminals[print_terminal].y = (terminals[print_terminal].y + (terminals[print_terminal].x / NUM_COLS)) % NUM_ROWS;
     }
 
-	move_cursor(screen_x, screen_y);
+	move_cursor(terminals[cur_terminal].x, terminals[cur_terminal].y);
 }
 
 /* int8_t* itoa(uint32_t value, int8_t* buf, int32_t radix);

@@ -1,12 +1,13 @@
 #define ASM 1
 #include "kb.h"
 #include "rtc.h"
+#include "pit.h"
 #include "linkage.h"
 #include "syscalls.h"
 #include "x86_desc.h"
 
 .text
-.globl keyboard_linkage, rtc_linkage, system_call_handler, context_switch
+.globl keyboard_linkage, rtc_linkage, pit_linkage, system_call_handler, context_switch
 
 # Switch to user space
 context_switch:
@@ -94,6 +95,30 @@ rtc_linkage:
     pushl %ebx
 
     call rtc_interrupt_handler
+
+		# Restore the registers
+    popl %ebx
+    popl %ecx
+    popl %edx
+    popl %esi
+    popl %edi
+    popl %ebp
+    popl %eax
+		# Return from interrupt
+    iret
+
+# Linkage for the PIT handler
+pit_linkage:
+		# Save all registers
+		pushl %eax
+	  pushl %ebp
+    pushl %edi
+    pushl %esi
+    pushl %edx
+    pushl %ecx
+    pushl %ebx
+
+    call pit_interrupt_handler
 
 		# Restore the registers
     popl %ebx

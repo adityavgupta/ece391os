@@ -17,6 +17,9 @@ extern void keyboard_linkage();
 /* Save registers for rtc handler */
 extern void rtc_linkage();
 
+/* Save registers for pit handler */
+extern void pit_linkage();
+
 #endif /* ASM */
 
 #endif /* _LINKAGE_H */

@@ -9,6 +9,11 @@
 
 #ifndef ASM
 
+#define NUM_COLS    80
+#define NUM_ROWS    25
+#define BUF_LENGTH 128
+#define SHELL_NUM 3
+
 void test_interrupts(void);
 int32_t printf(int8_t *format, ...);
 void putc(uint8_t c);
@@ -17,11 +22,41 @@ int8_t *itoa(uint32_t value, int8_t* buf, int32_t radix);
 int8_t *strrev(int8_t* s);
 uint32_t strlen(const int8_t* s);
 void clear(void);
-void clear_l(void);
 void new_line(void);
 void back_space(void);
 void reset_screen(void);
 void move_cursor(int screen_x, int screen_y);
+
+/* Initialize terminal structs */
+void init_shell(void);
+
+/* View a different terminal */
+int32_t change_shell(int32_t shell_num);
+
+/* Current viewing terminal */
+extern int32_t cur_terminal;
+
+/* Current printing terminal */
+extern int32_t print_terminal;
+
+/* Struct to hold terminal state */
+typedef struct {
+	int8_t* vid_mem;
+	int32_t x;
+	int32_t y;
+	uint8_t kb_buf[BUF_LENGTH]; // Buffer of size that is 128;
+	volatile int32_t line_buffer_flag;
+	int32_t buf_index; //Index of the current element in the buffer
+	uint8_t shift_pressed;
+	uint8_t caps_lock;
+	uint8_t ctrl_pressed;
+	uint8_t alt_pressed;
+	int32_t vid_map;
+} shell_t;
+
+/* Array of terminals */
+shell_t terminals[SHELL_NUM];
+
 
 void* memset(void* s, int32_t c, uint32_t n);
 void* memset_word(void* s, int32_t c, uint32_t n);

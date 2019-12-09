@@ -13,6 +13,7 @@
 #define REGISTER_C 0x8C
 #define SLAVE_PIN 2
 #define RTC_IRQ_NUM 8
+#define FREQ_1024 0x06
 
 #ifndef ASM
 
@@ -38,8 +39,6 @@ int32_t rtc_read(int32_t fd, void* buf, int32_t nbytes);
 /* Set the frequency of the RTC */
 int32_t rtc_write(int32_t fd, const void* buf, int32_t nbytes);
 
-/* Get rtc rate needed for desired frequency*/
-int32_t get_rate(int32_t freq);
 
 #endif /* ASM */
 

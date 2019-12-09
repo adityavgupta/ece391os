@@ -4,6 +4,7 @@
 #define _KB_H
 
 #include "types.h"
+#include "lib.h"
 
 #define BUF_LENGTH 128
 
@@ -47,6 +48,7 @@ void after_release_exec (uint8_t scan_code);
 
 /* Handler for keyboard interrupts */
 void keyboard_interrupt_handler(void);
+
 
 #endif /* ASM */
 

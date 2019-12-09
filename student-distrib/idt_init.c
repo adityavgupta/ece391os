@@ -4,6 +4,7 @@
 #include "x86_desc.h"
 #include "rtc.h"
 #include "lib.h"
+#include "pit.h"
 #include "i8259.h"
 #include "kb.h"
 #include "linkage.h"
@@ -15,19 +16,9 @@
 
 #define EIGHT_MB 0x800000
 #define FOUR_MB 0x400000
-#define USER_PROG 0x08000000
 #define PROG_OFFSET 0x00048000
 #define RUNNING 0
 #define STOPPED 1
-/*
- * irq0_handler
- *    DESCRIPTION: Handles IRQ0 interrupts
- *    OUTPUTS: Prints IRQ number to screen, and sends EOI for IRQ0
- */
-void irq0_handler(void){
-  send_eoi(0);
-  printf("timer chip interrupt\n");
-}
 
 /*
  * irq1_handler
@@ -206,16 +197,23 @@ void test_interrupt(void){
 	void x(void){ \
     cli(); \
 		printf("Exception: %s\n",msg); \
-      process_num--; \
-      set_page_dir_entry(USER_PROG, EIGHT_MB);\
-      asm volatile ("      \n\
-         movl %%cr3, %%eax \n\
-         movl %%eax, %%cr3" \
-         :  \
-         :  \
-         : "eax"  \
-      );  \
-      pcb_t* cur_pcb = get_pcb_add(); /* Get the current process pcb */ \
+    pcb_t* cur_pcb = get_pcb_add(); /* Get the current process pcb */ \
+    process_num--; \
+    process_array[(cur_pcb->pid)-1]=-1; \
+    sched_arr[cur_sched_term].process_num = cur_pcb->parent_pid; \
+    sched_arr[cur_sched_term].esp = cur_pcb->parent_esp; \
+    sched_arr[cur_sched_term].ebp = cur_pcb->parent_ebp; \
+    set_page_dir_entry(USER_PROG, EIGHT_MB + (cur_pcb->parent_pid - 1)*FOUR_MB); \
+    if(cur_pcb->vidmem)sched_arr[cur_sched_term].vid_map = 0; \
+    int i; \
+    for(i = 0; i <= MAX_FD_NUM; i++) close(i);\
+    asm volatile ("      \n\
+       movl %%cr3, %%eax \n\
+       movl %%eax, %%cr3" \
+       :  \
+       :  \
+       : "eax"  \
+    );  \
       tss.esp0 = cur_pcb->parent_esp; /* Set TSS esp0 back to parent stack pointer */ \
       asm volatile ("      \n\
          movl $256,%%eax \n\
@@ -224,7 +222,7 @@ void test_interrupt(void){
          leave             \n\
          ret" \
          :  \
-         : "r"(cur_pcb->parent_ebp) \
+         : "r"(cur_pcb->parent_ebp)\
          : "ebp","eax"  \
       );  \
      }
@@ -345,7 +343,7 @@ void initialize_idt(void){
     /* Set IRQ entries in the IDT */
     SET_IDT_ENTRY(idt[0x28], rtc_linkage);
     SET_IDT_ENTRY(idt[0x21], keyboard_linkage);
-  	SET_IDT_ENTRY(idt[0x20], irq0_handler);
+  	SET_IDT_ENTRY(idt[0x20], pit_linkage);
     SET_IDT_ENTRY(idt[0x22], irq2_handler);
     SET_IDT_ENTRY(idt[0x23], irq3_handler);
   	SET_IDT_ENTRY(idt[0x24], irq4_handler);

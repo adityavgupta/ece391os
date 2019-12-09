@@ -1,13 +1,23 @@
 #include "lib.h"
 #include "rtc.h"
 #include "i8259.h"
+#include "syscalls.h"
+#include "pit.h"
 
-/* Interrupt flag */
-volatile uint32_t rtc_interrupt;
+#define MAX_FREQ 1024
 
 /* Flag to allow prints for test cases */
 uint32_t rtc_test_flag = 0;
 uint32_t rtc_read_test_flag = 0;
+
+/* Flags to show interrupts occured */
+volatile uint32_t interrupt_flags[3] = {0, 0, 0};
+
+/* Number of occured interrupts */
+int32_t count[3] = {0, 0, 0};
+
+/* Frequency requests of processes */
+int32_t frequencies[3] = {0, 0, 0};
 
 /*
  * rtc_init
@@ -30,6 +40,14 @@ void rtc_init(void){
     /* 0x40 allows periodic RTC interrupts */
     outb(prevB | 0x40, RTC_PORT1);
 
+    outb(REGISTER_A, RTC_PORT0);
+    uint8_t prevA = inb(RTC_PORT1);
+    outb(REGISTER_A, RTC_PORT0);
+
+    /* Give the new rate to register A */
+
+    outb((prevA & 0xF0) | FREQ_1024, RTC_PORT1);
+
     /* Enable RTC PIC interrupts */
     enable_irq(RTC_IRQ_NUM);
 }
@@ -44,7 +62,6 @@ void rtc_init(void){
  */
 void rtc_interrupt_handler(void){
   unsigned long flags; /* Hold the current flags */
-
   /* Mask interrupt flags */
   cli_and_save(flags);
 
@@ -54,7 +71,14 @@ void rtc_interrupt_handler(void){
   /* Send EOI signal */
   send_eoi(RTC_IRQ_NUM);
 
-  rtc_interrupt = 1;
+  int32_t i; /* Loop variable */
+  /* Check if required frequencies have been reached */
+  for(i = 0; i < 3; i++){
+    if(count[i]++ == frequencies[i] - 1){
+      /* Simulate interrupt */
+      interrupt_flags[i] = 1;
+    }
+  }
 
   //test_interrupts();
   if(rtc_test_flag){
@@ -68,39 +92,11 @@ void rtc_interrupt_handler(void){
   /* Clear contents of RTC to allow RTC interrupts again */
   inb(RTC_PORT1);
 
+  // /* Unmask PIC interrupts*/
+  enable_irq(RTC_IRQ_NUM);
+
   /* Re-enable interrupts and restores flags */
   restore_flags(flags);
-
-  /* Unmask PIC interrupts*/
-  enable_irq(RTC_IRQ_NUM);
-}
-
-
-/*
- * get_rate
- *    DESCRIPTION: Get rtc rate for the desired frequency
- *    INPUTS: int32_t freq - desired frequency
- *    OUTPUTS: none
- *    RETURN VALUE: -1 for failure, rate to set rtc to get the desired frequency
- *    SIDE EFFECTS: None
- */
-int32_t get_rate(int32_t freq){
-  /* Rate of the RTC */
-  int32_t rate = 0;
-
-  /* Get log base 2 of the frequency */
-  while(freq > 1){
-    /* Check if power of 2 */
-    if(freq % 2 != 0){
-      /* Return failure */
-      return -1;
-    }
-    freq /= 2;
-    rate++;
-  }
-
-  /* Rate begins at 15, so must subtract */
-  return (16 - rate);
 }
 
 /*
@@ -117,17 +113,8 @@ int32_t rtc_open(const uint8_t* filename){
   /* Mask interrupts and save flags */
   cli_and_save(flags);
 
-  /* Get the rate needed to set frequency to 2 Hz */
-  int32_t rate = get_rate(2);
-
-  outb(REGISTER_A, RTC_PORT0);
-
-  /* Store old register A value */
-  uint8_t prevA = inb(RTC_PORT1);
-  outb(REGISTER_A, RTC_PORT0);
-
-  /* Give the new rate to register A */
-  outb((prevA & 0xF0)|rate , RTC_PORT1);
+  /* Set frequency to 2 Hz */
+  frequencies[cur_sched_term] = 512;
 
   /* Restore the interrupt flags */
   restore_flags(flags);
@@ -145,7 +132,6 @@ int32_t rtc_open(const uint8_t* filename){
  *    SIDE EFFECTS: none
  */
 int32_t rtc_close(int32_t fd){
-  /* Do nothing for now, until virtualization is added */
   return 0;
 }
 
@@ -160,15 +146,19 @@ int32_t rtc_close(int32_t fd){
  *    SIDE EFFECTS: none
  */
 int32_t rtc_read(int32_t fd, void* buf, int32_t nbytes){
-  /* Reset interrupt flag */
-  rtc_interrupt = 0;
+  cli();
 
-  if(rtc_read_test_flag) printf("Waiting for interrupt\n");
+  /* Set number of occured interrupts */
+  count[cur_sched_term] = 0;
+  interrupt_flags[cur_sched_term] = 0;
+
+  sti();
+
   /* Block until an RTC interrupt occurs */
-  while(!rtc_interrupt){
+  while(!interrupt_flags[cur_sched_term]) {
 
   }
-  if(rtc_read_test_flag) printf("Interrupt occurred\n");
+
   /* Return success */
   return 0;
 }
@@ -201,33 +191,43 @@ int32_t rtc_write(int32_t fd, const void* buf, int32_t nbytes){
   /* Get the frequency */
   freq = *(int32_t*)buf;
 
-  /* Check if frequency is valid */
-  if(freq < 0 || freq > 1024){
-    /* Restore the interrupt flags */
-    restore_flags(flags);
-    /* Return failure */
-    return -1;
+  /* Check for valid frequency and set the rate */
+  switch(freq){
+    case 2:
+      rate = MAX_FREQ / 2;
+      break;
+    case 4:
+      rate = MAX_FREQ / 4;
+      break;
+    case 8:
+      rate = MAX_FREQ / 8;
+      break;
+    case 16:
+      rate = MAX_FREQ / 16;
+      break;
+    case 32:
+      rate = MAX_FREQ / 32;
+      break;
+    case 64:
+      rate = MAX_FREQ / 64;
+      break;
+    case 128:
+      rate = MAX_FREQ / 128;
+      break;
+    case 512:
+      rate = MAX_FREQ / 512;
+      break;
+    case 1024:
+      rate = MAX_FREQ / 1024;
+      break;
+    default:
+      restore_flags(flags);
+      /* Return failure */
+      return -1;
   }
 
-  /* Check if frequency is a power of 2 */
-  if(-1 == (rate = get_rate(freq))){
-    /* Restore the interrupt flags */
-    restore_flags(flags);
-    /* Return failure */
-    return -1;
-  }
-
-  /* Get 4 least significant bits */
-  rate &= 0x0F;
-
-  outb(REGISTER_A, RTC_PORT0);
-
-  /* Store old register A value */
-  uint8_t prevA = inb(RTC_PORT1);
-  outb(REGISTER_A, RTC_PORT0);
-
-  /* Give the new rate to register A */
-  outb((prevA & 0xF0)| rate, RTC_PORT1);
+  /* Set the process' rate */
+  frequencies[cur_sched_term] = rate;
 
   /* Restore the interrupt flags */
   restore_flags(flags);
