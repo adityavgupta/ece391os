@@ -8,7 +8,7 @@ Checkpoint 1:
 
 -> Error in linkage.S: Page faults occurred after typing in multiple characters. We needed to do assembly linkage for keyboard interrupt handler. Without the linkage, registers containing addresses were clobbered and accessed unallocated memory. (5 hrs)
 
--> Error in init_idt: When exceptions were called, the while(1) loop wasn’t running. Interrupts could still be typed to the screen even though the while loop should have been running. Included cli to mask interrupts, which stopped allowed the while(1) loop to run continuously.(1 hrs)	
+-> Error in init_idt: When exceptions were called, the while(1) loop wasn’t running. Interrupts could still be typed to the screen even though the while loop should have been running. Included cli to mask interrupts, which stopped allowed the while(1) loop to run continuously.(1 hrs)
 
 Checkpoint 2:
 Terminal driver:
@@ -21,7 +21,7 @@ Terminal driver:
 
 -> Buffer was taking more than 128 characters. This was another off by one error (15 min).
 
--> Global variables not changing. Had to change to be static in order to get this to work also moved the terminal driver into keyboard. This error happened multiple times (2-3 hours). 
+-> Global variables not changing. Had to change to be static in order to get this to work also moved the terminal driver into keyboard. This error happened multiple times (2-3 hours).
 
 File system:
 -> Reading wrong data blocks when trying to read file data. Turned out to be an issue with pointer arithmetic, we were offsetting the starting data block address by four times more than needed. (1 hour)
@@ -33,7 +33,7 @@ Checkpoint 3:
 
 -> Page fault when trying to run a command in shell. The parent esp in the child process’ pcb turned out to be calculated incorrectly and paging was being mapped to the wrong place. (Took 1.5 hour)
 
--> Page fault when trying to launch the shell. We were passing in the physical address of the eip instead of the virtual address for the shell. (Took 1 hour) 
+-> Page fault when trying to launch the shell. We were passing in the physical address of the eip instead of the virtual address for the shell. (Took 1 hour)
 
 -> Open crashes when NULL point is passed. We did not place checks for null pointers. This error took approximately 1 minute to fix. (1 min)
 
@@ -47,3 +47,13 @@ Checkpoint 4:
 
 ->Grep was reading fish executable incorrectly(finding |/\_ in fish when it shouldn’t). We had an issue with our read_data implementation so that when we were reading the fish executable, we accidentally read the wrong data block(of frame0.txt) as well. (45 minutes)
 
+Checkpoint 5:
+-> Switch process was page faulting. Was an issue with illegal memory access, fixed by stopping modification of the stack (12 hours)
+
+-> RTC was not virtualized. Fixed this by setting the initialized freq to a high value and then setting the rate by MAX_FREQ/(freq of the program) (6 hours)
+
+-> Video was not getting mapped correctly. Fixed this by remapping video paging to the correct buffer. (6 hours)
+
+-> Wrong shell was being exited. This turned out to be an error with how the parent pid was being calculated. (roughly a day)
+
+-> switch_process not being called. This was due to an error with how the scheduling structures were being initialized. (5 hours)
