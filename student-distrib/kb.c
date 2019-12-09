@@ -222,20 +222,26 @@ void keyboard_init(void){
 
 /* Some helper funstions for keyboard_interrupt_handler*/
 
-/* caps_and_shift
- * checks is caps lock and shift are pressed
- * input: void
- * output: 1 or 0
- */
+ /*
+  * caps_and_shift
+  *    DESCRIPTION: Checks if caps lock and shift are pressed
+  *    INPUTS: none
+  *    OUTPUTS: none
+  *    RETURN VALUE: 1 for pressed, 0 for not pressed
+  *    SIDE EFFECTS: none
+  */
 int32_t caps_and_shift (void) {
   return ((terminals[cur_terminal].caps_lock == 1) && (terminals[cur_terminal].shift_pressed == 1));
 }
 
-/* in_char_range
- * input: scan_code
- * output: 1 or 0
- * effects: checks if scan code is in between q to p (16-25), a to l (30-38), z to m (44-50)
- */
+ /*
+  * in_char_range
+  *    DESCRIPTION: Checks if scan code is in between q to p (16-25), a to l (30-38), z to m (44-50)
+  *    INPUTS: uint8_t scan_code - scan code of the pressed character
+  *    OUTPUTS: none
+  *    RETURN VALUE: 1 for in range, 0 for not in range
+  *    SIDE EFFECTS: none
+  */
 int32_t in_char_range (uint8_t scan_code) {
   return ((scan_code >= Q_CHAR && scan_code <= P_CHAR) || (scan_code >= A_CHAR && scan_code <= L_CHAR) || (scan_code >= Z_CHAR && scan_code <= M_CHAR));
 }
@@ -249,21 +255,26 @@ int32_t in_char_range (uint8_t scan_code) {
  *    SIDE EFFECTS: prints the matching characters of the scan_code
  */
 void print_scancode (uint8_t scan_code) {
+  /* Check for a full terminal buffer */
   if((terminals[cur_terminal].buf_index >= (BUF_LENGTH - 1) && scan_code != NEW_LINE) || terminals[cur_terminal].line_buffer_flag){
     return;
   }
 
   putc(kbdus[scan_code]); // Prints this scan code to the screen
 
+  /* Store character in terminal buffer */
   terminals[cur_terminal].kb_buf[terminals[cur_terminal].buf_index] = kbdus[scan_code];
   terminals[cur_terminal].buf_index++;
 }
 
-/* caps_no_shift
- * checks is caps lock and shift not pressed
- * input: void
- * output: 1 or 0
- */
+ /*
+  * caps_no_shift
+  *    DESCRIPTION: Checks if caps lock and shift are not pressed
+  *    INPUTS: none
+  *    OUTPUTS: none
+  *    RETURN VALUE: 1 for not pressed, 0 for pressed
+  *    SIDE EFFECTS: none
+  */
 int caps_no_shift (void) {
   return ((terminals[cur_terminal].caps_lock == 1) && (terminals[cur_terminal].shift_pressed != 1));
 }
@@ -294,6 +305,7 @@ void recent_release_exec (uint8_t scan_code) {
 			break;
 	}
 
+    /* Change terminals */
 		change_shell(terminal);
 
   }
@@ -339,6 +351,7 @@ void recent_release_exec (uint8_t scan_code) {
     print_scancode(scan_code + CAP_OFFSET);
   }
   else{
+    /* Print character to screen */
     print_scancode(scan_code);
   }
 }
@@ -394,8 +407,10 @@ void keyboard_interrupt_handler(void){
 			return;
 		}
 
+    /* Print to the viewing terminal */
     print_terminal = cur_terminal;
 
+    /* Map video paging to physical video memory */
     set_page_table1_entry(VIDEO_MEM_ADDR, VIDEO_MEM_ADDR);
 
     /* Flush TLB */
@@ -414,6 +429,7 @@ void keyboard_interrupt_handler(void){
       after_release_exec(scan_code);
 		}
 
+    /* Remap video paging to buffer */
     if(cur_sched_term != cur_terminal){
       set_page_table1_entry(VIDEO_MEM_ADDR, sched_arr[cur_sched_term].video_buffer);
 
@@ -427,6 +443,7 @@ void keyboard_interrupt_handler(void){
       );
     }
 
+    /* Print to the scheduled terminal */
     print_terminal = cur_sched_term;
 
     /* Allow interrupts again */
