@@ -23,9 +23,6 @@ static uint32_t first_page_table[TABLE_ENTRIES]  __attribute__((aligned (PAGE_SI
 /* Second page table array */
 static uint32_t second_page_table[TABLE_ENTRIES] __attribute__((aligned (PAGE_SIZE)));
 
-
-
-
 /*
  * set_page_dir_entry
  *    DESCRIPTION: Creates an entry in the page directory
@@ -53,6 +50,7 @@ int32_t set_page_dir_entry(int32_t virtual, int32_t physical){
  *    SIDE EFFECTS: none
  */
 int32_t set_page_table1_entry(int32_t virtual, int32_t physical){
+  /* Set entry to user mode */
   first_page_table[(virtual >> PT_OFFSET) & PAGE_INDEX] = physical | USER_MODE;
 
   /* Return success */
@@ -69,6 +67,7 @@ int32_t set_page_table1_entry(int32_t virtual, int32_t physical){
  *    SIDE EFFECTS: none
  */
 int32_t set_page_table2_entry(int32_t virtual, int32_t physical){
+  /* Set entry to user mode */
   second_page_table[(virtual >> PT_OFFSET) & PAGE_INDEX] = physical | USER_MODE;
 
   /* Return success */
