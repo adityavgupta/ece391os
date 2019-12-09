@@ -10,7 +10,6 @@
 #define RUNNING         0
 #define STOPPED         1
 #define MAX_PROG_SIZE   FOUR_MB - PROG_OFFSET
-#define MAX_PROGS       6
 
 /* Function pointers for rtc */
 jump_table rtc_table = {rtc_write, rtc_read, rtc_open, rtc_close};
@@ -30,8 +29,6 @@ jump_table stdout_table = {terminal_write, invalid_read, terminal_open, terminal
 /* Process number: 1st process has pid 1, 0 means no processes have been launched */
 int32_t process_num = 0;
 
-/* Process slots */
-int32_t process_array[MAX_PROGS];
 
 /*
  * halt
@@ -332,12 +329,6 @@ int32_t execute(const uint8_t* command){
   while(j < BUF_LENGTH && command_args[j] != '\0'){
     args[j] = command_args[j];
     j++;
-  }
-  int32_t k = j - 1;  /* Index of last character copied */
-  /* Remove trailing white spaces */
-  while(k >= 0 && args[k] == ' '){
-    args[k] = '\0';
-    k--;
   }
 
   /* Null terminate the arguments */

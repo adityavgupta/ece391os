@@ -15,6 +15,7 @@
 #define EIGHT_MB        0x800000
 #define FOUR_MB         0x400000
 #define USER_PROG       0x8000000
+#define MAX_PROGS       6
 
 #ifndef ASM
 
@@ -23,6 +24,8 @@ extern int32_t process_num;
 
 /* Address of first instruction of shell */
 uint32_t program_addr_test;
+/* Process slots */
+int32_t process_array[MAX_PROGS];
 
 /* Jump table for system calls */
 typedef struct jump_table{

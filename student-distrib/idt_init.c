@@ -197,16 +197,23 @@ void test_interrupt(void){
 	void x(void){ \
     cli(); \
 		printf("Exception: %s\n",msg); \
-      process_num--; \
-      set_page_dir_entry(USER_PROG, EIGHT_MB);\
-      asm volatile ("      \n\
-         movl %%cr3, %%eax \n\
-         movl %%eax, %%cr3" \
-         :  \
-         :  \
-         : "eax"  \
-      );  \
-      pcb_t* cur_pcb = get_pcb_add(); /* Get the current process pcb */ \
+    pcb_t* cur_pcb = get_pcb_add(); /* Get the current process pcb */ \
+    process_num--; \
+    process_array[(cur_pcb->pid)-1]=-1; \
+    sched_arr[cur_sched_term].process_num = cur_pcb->parent_pid; \
+    sched_arr[cur_sched_term].esp = cur_pcb->parent_esp; \
+    sched_arr[cur_sched_term].ebp = cur_pcb->parent_ebp; \
+    set_page_dir_entry(USER_PROG, EIGHT_MB + (cur_pcb->parent_pid - 1)*FOUR_MB); \
+    if(cur_pcb->vidmem)sched_arr[cur_sched_term].vid_map = 0; \
+    int i; \
+    for(i = 0; i <= MAX_FD_NUM; i++) close(i);\
+    asm volatile ("      \n\
+       movl %%cr3, %%eax \n\
+       movl %%eax, %%cr3" \
+       :  \
+       :  \
+       : "eax"  \
+    );  \
       tss.esp0 = cur_pcb->parent_esp; /* Set TSS esp0 back to parent stack pointer */ \
       asm volatile ("      \n\
          movl $256,%%eax \n\
@@ -215,7 +222,7 @@ void test_interrupt(void){
          leave             \n\
          ret" \
          :  \
-         : "r"(cur_pcb->parent_ebp) \
+         : "r"(cur_pcb->parent_ebp)\
          : "ebp","eax"  \
       );  \
      }

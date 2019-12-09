@@ -13,7 +13,12 @@ int32_t prev_sched_term = -1;
 int32_t cur_sched_term = 0;
 sched_node sched_arr[SCHED_SIZE];
 
-void init_sched(){
+
+void pit_init(void){
+  uint32_t divisor = OSCILLATOR_FREQ / INTERRUPT_INTERVAL; /* frequency divisor of PIT */
+  uint32_t divisor_low = divisor & 0xFF; /* low byte of divisor */
+  uint32_t divisor_high = (divisor >> 8) & 0xFF; /* high byte of divisor */
+
 	sched_arr[0].process_num = 1;
   sched_arr[0].terminal_num = 0;
   sched_arr[0].video_buffer = FIRST_SHELL;
@@ -34,14 +39,6 @@ void init_sched(){
 	sched_arr[2].vid_map = 0;
   sched_arr[2].esp = -1;
   sched_arr[2].ebp = -1;
-}
-
-void pit_init(void){
-  uint32_t divisor = OSCILLATOR_FREQ / INTERRUPT_INTERVAL; /* frequency divisor of PIT */
-  uint32_t divisor_low = divisor & 0xFF; /* low byte of divisor */
-  uint32_t divisor_high = (divisor >> 8) & 0xFF; /* high byte of divisor */
-
-	init_sched();
 
   outb(0x36, PIT_COMMAND_PORT); /* 0x36 = command to set PIT to repeating mode */
   outb(divisor_low, PIT_CHANNEL0); /* write low and high byte of divisor to channel 0 */
