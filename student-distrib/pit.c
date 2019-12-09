@@ -20,7 +20,6 @@ sched_node sched_arr[SCHED_SIZE];	/* scheduling data strucute */
  *    RETURN VALUE: none
  *    SIDE EFFECTS: enables PIT interrupts at desired frequency and set up scheduling data structure
  */
-
 void pit_init(void){
   uint32_t divisor = OSCILLATOR_FREQ / INTERRUPT_INTERVAL; /* frequency divisor of PIT */
   uint32_t divisor_low = divisor & 0xFF; /* low byte of divisor */
@@ -59,12 +58,11 @@ void pit_init(void){
  *    OUTPUTS: none
  *    RETURN VALUE: none
  *    SIDE EFFECTS: restores info of next process and saves current process ebp,esp
- 										remaps video memory paging
- 										starts executing the next scheduled process
-										remaps vidmap system call's paging if needed
-										changes the terminal that terminal_write prints to
+ *									remaps video memory paging
+ *									starts executing the next scheduled process
+ *									remaps vidmap system call's paging if needed
+ *									changes the terminal that terminal_write prints to
  */
-
 void switch_process(){
 	/* Set TSS to next process */
   tss.esp0 = EIGHT_MB - (sched_arr[cur_sched_term].process_num - 1)*EIGHT_KB;
@@ -139,7 +137,6 @@ void switch_process(){
  *    RETURN VALUE: none
  *    SIDE EFFECTS: switch to next scheduled process
  */
-
 void pit_interrupt_handler(void){
   unsigned long flags; /* Hold the current flags */
 
@@ -152,6 +149,7 @@ void pit_interrupt_handler(void){
   /* Send EOI signal */
   send_eoi(PIT_IRQ_NUM);
 
+  /* Check if interrupts are allowed */
 	if(prev_sched_term == -1){
 		/* Unmask PIC interrupts*/
 	  enable_irq(PIT_IRQ_NUM);
@@ -163,11 +161,12 @@ void pit_interrupt_handler(void){
 	}
 
 	/* move to next scheduled process */
-
 	prev_sched_term = cur_sched_term;
 
+  /* Increment schedule number */
   cur_sched_term = (cur_sched_term + 1) % SCHED_SIZE;
 
+  /* Change process */
   switch_process();
 
   /* Unmask PIC interrupts*/
