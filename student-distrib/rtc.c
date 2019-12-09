@@ -114,7 +114,7 @@ int32_t rtc_open(const uint8_t* filename){
   cli_and_save(flags);
 
   /* Set frequency to 2 Hz */
-  frequencies[cur_sched_term] = 512;
+  frequencies[cur_sched_term] = MAX_FREQ / 2;
 
   /* Restore the interrupt flags */
   restore_flags(flags);
