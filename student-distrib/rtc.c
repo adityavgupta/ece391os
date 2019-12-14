@@ -74,9 +74,10 @@ void rtc_interrupt_handler(void){
   int32_t i; /* Loop variable */
   /* Check if required frequencies have been reached */
   for(i = 0; i < 3; i++){
-    if(count[i]++ == frequencies[i] - 1){
+    if(count[i]++ >= frequencies[i] - 1){
       /* Simulate interrupt */
       interrupt_flags[i] = 1;
+      count[i] = 0;
     }
   }
 
@@ -149,7 +150,6 @@ int32_t rtc_read(int32_t fd, void* buf, int32_t nbytes){
   cli();
 
   /* Set number of occured interrupts */
-  count[cur_sched_term] = 0;
   interrupt_flags[cur_sched_term] = 0;
 
   sti();
